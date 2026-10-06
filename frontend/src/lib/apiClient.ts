@@ -5,20 +5,29 @@
 
 import { supabase } from './supabaseClient';
 
-const DEFAULT_PROD_API_URL = 'https://7dc5714dd1d687.lhr.life';
-
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
   if (envUrl) {
-    if (import.meta.env.PROD && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
-      return DEFAULT_PROD_API_URL;
+    if (import.meta.env.PROD && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1') || envUrl.startsWith('http:'))) {
+      return '/api/v1';
     }
     return envUrl.replace(/\/+$/, '');
   }
-  return import.meta.env.DEV ? 'http://localhost:8080' : DEFAULT_PROD_API_URL;
+  return import.meta.env.DEV ? 'http://localhost:8080' : '/api/v1';
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+export function buildUrl(base: string, path: string): string {
+  const cleanBase = base.replace(/\/+$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+  // Deduplicate /api/v1 if both base and path specify it
+  if (cleanBase.endsWith('/api/v1') && cleanPath.startsWith('/api/v1')) {
+    return `${cleanBase}${cleanPath.slice('/api/v1'.length)}`;
+  }
+  return `${cleanBase}${cleanPath}`;
+}
 
 // ==============================================================================
 // TYPE DEFINITIONS (Matching Spring Boot DTOs)
@@ -256,7 +265,7 @@ async function request<T>(
   options: RequestInit = {},
   requiresAuth: boolean = false
 ): Promise<T> {
-  const url = `${API_BASE_URL}${path}`;
+  const url = buildUrl(API_BASE_URL, path);
   const authHeaders = requiresAuth ? await getAuthHeader() : {};
 
   if (requiresAuth && !('Authorization' in authHeaders)) {
