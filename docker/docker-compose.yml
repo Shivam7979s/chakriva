@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  # Redis (Cache, Rate Limiting, and Submission Queue)
+  redis:
+    image: redis:7.2-alpine
+    container_name: verniq-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
   # AI Microservice (FastAPI)
   ai-service:
     build:
@@ -13,6 +28,9 @@ services:
       - SUPABASE_URL=http://host.docker.internal:54321
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
 
   # Online Judge Worker (Local Sandbox Container)
   judge-worker:
@@ -27,6 +45,15 @@ services:
       - MAX_CPU_TIME_SECONDS=2.0
       - MAX_MEMORY_MB=256
       - MAX_CONCURRENT_JOBS=2
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - VERNIQ_JUDGE_INTERNAL_SECRET=${VERNIQ_JUDGE_INTERNAL_SECRET:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  redis-data:

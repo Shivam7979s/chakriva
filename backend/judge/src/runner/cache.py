@@ -77,11 +77,11 @@ class CompilationCache:
         except Exception as err:
             logger.warning(f"Error warming cache index: {err}")
 
-    def compute_key(self, language: str, source_code: str, compiler_flags: Optional[List[str]] = None) -> str:
+    def compute_key(self, language: str, source_code: str, compiler_flags: Optional[List[str]] = None, env_tag: str = "") -> str:
         """Computes a cryptographic SHA-256 cache key deterministically."""
         compiler_version = get_compiler_version(language)
         flags_str = " ".join(compiler_flags or [])
-        raw = f"{language.lower().strip()}::{compiler_version}::{flags_str}::{source_code.strip()}"
+        raw = f"{language.lower().strip()}::{env_tag}::{compiler_version}::{flags_str}::{source_code.strip()}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     def get(self, key: str, destination_dir: str) -> Optional[List[str]]:

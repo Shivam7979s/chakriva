@@ -1,9 +1,10 @@
+import os
 import json
 import unittest
 import urllib.request
 import time
 
-JUDGE_URL = "http://127.0.0.1:8080"
+JUDGE_URL = os.getenv("JUDGE_URL", "http://127.0.0.1:8085")
 
 class TestAllVerdicts(unittest.TestCase):
     def _execute(self, lang, code, test_cases, mode="RUN", exec_id=None):
@@ -21,7 +22,7 @@ class TestAllVerdicts(unittest.TestCase):
             data=payload,
             headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=10.0) as resp:
+        with urllib.request.urlopen(req, timeout=20.0) as resp:
             self.assertEqual(resp.status, 200)
             self.assertEqual(resp.headers.get("Connection"), "close")
             self.assertIsNotNone(resp.headers.get("Content-Length"))

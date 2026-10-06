@@ -55,11 +55,12 @@ def get_language_profile(language: str) -> LanguageProfile:
         )
 
     elif lang == "go":
+        binary_name = "solution.exe" if is_windows else "./solution"
         return LanguageProfile(
             name="go",
             source_filename="main.go",
-            compile_cmd=None,
-            run_cmd=["go", "run", "main.go"],
+            compile_cmd=["go", "build", "-o", "solution.exe" if is_windows else "solution", "main.go"],
+            run_cmd=[binary_name],
             time_limit_multiplier=1.5,
         )
 

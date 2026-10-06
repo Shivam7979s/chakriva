@@ -1,0 +1,15 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 3
+
+logging:
+  level:
+    com.verniq.api: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO

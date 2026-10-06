@@ -1,0 +1,52 @@
+# ==============================================================================
+# CHAKRIVA / VERNIQ Candidate Execution Sandbox Image (Phase J.6)
+# Languages: GCC 14 (C++20), OpenJDK 21, Python 3.12, Node.js 20/tsx, Go 1.22
+# Strictly unprivileged, air-gapped, zero-secret candidate execution runtime.
+# ==============================================================================
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV GOCACHE=/tmp/go-cache
+ENV GOTMPDIR=/tmp
+
+# Layer 1: Base utilities and C/C++ toolchain
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 2: Java OpenJDK 21 headless
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-21-jdk-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 3: Python 3
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 4: Node.js & TypeScript execution runner (tsx)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nodejs \
+    npm \
+    && npm install -g tsx \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 5: Go toolchain
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    golang-go \
+    && rm -rf /var/lib/apt/lists/*
+
+# Use non-root user (Ubuntu 24.04 provides uid:gid 1000:1000)
+RUN usermod -l sandboxuser ubuntu && groupmod -n sandboxuser ubuntu
+
+# Restrict default permissions and set working directory
+USER sandboxuser
+WORKDIR /tmp
+
+# Default command
+CMD ["/bin/bash"]

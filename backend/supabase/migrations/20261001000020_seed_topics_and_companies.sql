@@ -1,0 +1,113 @@
+-- ==============================================================================
+-- VERNIQ Seed Migration: Canonical Topics and Companies for Published Problems
+-- Migration: 20261001000020_seed_topics_and_companies.sql
+-- ==============================================================================
+
+-- 1. SEED TOPICS
+INSERT INTO public.topics (id, name, slug, order_index)
+VALUES
+  ('11111111-0000-0000-0000-000000000001', 'Arrays & Hashing', 'arrays', 1),
+  ('11111111-0000-0000-0000-000000000002', 'Two Pointers', 'two-pointers', 2),
+  ('11111111-0000-0000-0000-000000000003', 'Binary Search', 'binary-search', 3),
+  ('11111111-0000-0000-0000-000000000004', 'Dynamic Programming', 'dynamic-programming', 4),
+  ('11111111-0000-0000-0000-000000000005', 'Hash Table', 'hash-table', 5)
+ON CONFLICT (slug) DO UPDATE
+SET name = EXCLUDED.name, order_index = EXCLUDED.order_index;
+
+-- 2. SEED COMPANIES
+INSERT INTO public.companies (id, name, slug)
+VALUES
+  ('22222222-0000-0000-0000-000000000001', 'Google', 'google'),
+  ('22222222-0000-0000-0000-000000000002', 'Amazon', 'amazon'),
+  ('22222222-0000-0000-0000-000000000003', 'Meta', 'meta'),
+  ('22222222-0000-0000-0000-000000000004', 'Microsoft', 'microsoft')
+ON CONFLICT (slug) DO UPDATE
+SET name = EXCLUDED.name;
+
+-- 3. LINK PROBLEM TOPICS
+-- VRQ-000001: Two Sum
+INSERT INTO public.problem_topics (problem_id, topic_id, role)
+VALUES
+  ('00000000-0000-0000-0000-000000000301', '11111111-0000-0000-0000-000000000001', 'primary'),
+  ('00000000-0000-0000-0000-000000000301', '11111111-0000-0000-0000-000000000005', 'secondary')
+ON CONFLICT (problem_id, topic_id) DO NOTHING;
+
+-- VRQ-000006: Best Time to Buy and Sell Stock
+INSERT INTO public.problem_topics (problem_id, topic_id, role)
+VALUES
+  ('00000000-0000-0000-0000-000000000302', '11111111-0000-0000-0000-000000000001', 'primary'),
+  ('00000000-0000-0000-0000-000000000302', '11111111-0000-0000-0000-000000000004', 'secondary')
+ON CONFLICT (problem_id, topic_id) DO NOTHING;
+
+-- VRQ-000008: 3Sum
+INSERT INTO public.problem_topics (problem_id, topic_id, role)
+VALUES
+  ('00000000-0000-0000-0000-000000000303', '11111111-0000-0000-0000-000000000001', 'primary'),
+  ('00000000-0000-0000-0000-000000000303', '11111111-0000-0000-0000-000000000002', 'secondary')
+ON CONFLICT (problem_id, topic_id) DO NOTHING;
+
+-- VRQ-000012: Search in Rotated Sorted Array
+INSERT INTO public.problem_topics (problem_id, topic_id, role)
+VALUES
+  ('00000000-0000-0000-0000-000000000304', '11111111-0000-0000-0000-000000000001', 'primary'),
+  ('00000000-0000-0000-0000-000000000304', '11111111-0000-0000-0000-000000000003', 'secondary')
+ON CONFLICT (problem_id, topic_id) DO NOTHING;
+
+-- VRQ-000011: Container With Most Water
+INSERT INTO public.problem_topics (problem_id, topic_id, role)
+VALUES
+  ('00000000-0000-0000-0000-000000000305', '11111111-0000-0000-0000-000000000001', 'primary'),
+  ('00000000-0000-0000-0000-000000000305', '11111111-0000-0000-0000-000000000002', 'secondary')
+ON CONFLICT (problem_id, topic_id) DO NOTHING;
+
+-- VRQ-000010: Trapping Rain Water
+INSERT INTO public.problem_topics (problem_id, topic_id, role)
+VALUES
+  ('00000000-0000-0000-0000-000000000306', '11111111-0000-0000-0000-000000000001', 'primary'),
+  ('00000000-0000-0000-0000-000000000306', '11111111-0000-0000-0000-000000000002', 'secondary'),
+  ('00000000-0000-0000-0000-000000000306', '11111111-0000-0000-0000-000000000004', 'secondary')
+ON CONFLICT (problem_id, topic_id) DO NOTHING;
+
+-- 4. LINK PROBLEM COMPANIES
+-- VRQ-000001
+INSERT INTO public.problem_companies (problem_id, company_id)
+VALUES
+  ('00000000-0000-0000-0000-000000000301', '22222222-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000301', '22222222-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000301', '22222222-0000-0000-0000-000000000003')
+ON CONFLICT (problem_id, company_id) DO NOTHING;
+
+-- VRQ-000006
+INSERT INTO public.problem_companies (problem_id, company_id)
+VALUES
+  ('00000000-0000-0000-0000-000000000302', '22222222-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000302', '22222222-0000-0000-0000-000000000004')
+ON CONFLICT (problem_id, company_id) DO NOTHING;
+
+-- VRQ-000008
+INSERT INTO public.problem_companies (problem_id, company_id)
+VALUES
+  ('00000000-0000-0000-0000-000000000303', '22222222-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000303', '22222222-0000-0000-0000-000000000003')
+ON CONFLICT (problem_id, company_id) DO NOTHING;
+
+-- VRQ-000012
+INSERT INTO public.problem_companies (problem_id, company_id)
+VALUES
+  ('00000000-0000-0000-0000-000000000304', '22222222-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000304', '22222222-0000-0000-0000-000000000004')
+ON CONFLICT (problem_id, company_id) DO NOTHING;
+
+-- VRQ-000011
+INSERT INTO public.problem_companies (problem_id, company_id)
+VALUES
+  ('00000000-0000-0000-0000-000000000305', '22222222-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000305', '22222222-0000-0000-0000-000000000003')
+ON CONFLICT (problem_id, company_id) DO NOTHING;
+
+-- VRQ-000010
+INSERT INTO public.problem_companies (problem_id, company_id)
+VALUES
+  ('00000000-0000-0000-0000-000000000306', '22222222-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000306', '22222222-0000-0000-0000-000000000002')
+ON CONFLICT (problem_id, company_id) DO NOTHING;

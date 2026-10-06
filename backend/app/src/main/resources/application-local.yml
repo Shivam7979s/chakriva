@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+logging:
+  level:
+    com.verniq.api: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: DEBUG
+
+verniq:
+  judge:
+    internal-secret: ${VERNIQ_JUDGE_INTERNAL_SECRET:verniq-local-dev-judge-secret-token}
+    queue-name: ${VERNIQ_JUDGE_QUEUE_NAME:verniq:submissions:queue}
+
+app:
+  judge:
+    internal-secret: ${VERNIQ_JUDGE_INTERNAL_SECRET:verniq-local-dev-judge-secret-token}
+  supabase:
+    jwt-jwk-set-uri: http://127.0.0.1:54321/auth/v1/.well-known/jwks.json

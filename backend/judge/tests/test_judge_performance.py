@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.runner.cache import CompilationCache
 from src.runner.sandbox import SandboxRunner, TestCaseItem, job_registry
 
-JUDGE_URL = os.getenv("JUDGE_URL", "http://127.0.0.1:8080")
+JUDGE_URL = os.getenv("JUDGE_URL", "http://127.0.0.1:8085")
 
 class TestJudgeOptimizations(unittest.TestCase):
     @classmethod

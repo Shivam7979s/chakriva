@@ -76,3 +76,6 @@ desktop.ini
 backend/supabase/.temp/
 .cache/
 
+
+# Judge generated compilation/runtime cache
+backend/judge/.cache/
