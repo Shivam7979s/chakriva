@@ -80,7 +80,50 @@ public class SubmissionMetrics {
             .increment();
     }
 
+    public void recordRecoveryDetected(int count) {
+        if (meterRegistry == null || count <= 0) return;
+        Counter.builder("verniq.submission.recovery.detected.total")
+            .description("Total number of stale submissions detected for recovery")
+            .register(meterRegistry)
+            .increment(count);
+    }
+
+    public void recordRecoveryCompleted(int count) {
+        if (meterRegistry == null || count <= 0) return;
+        Counter.builder("verniq.submission.recovery.completed.total")
+            .description("Total number of stale submissions successfully recovered")
+            .register(meterRegistry)
+            .increment(count);
+    }
+
+    public void recordRecoveryFailed(int count) {
+        if (meterRegistry == null || count <= 0) return;
+        Counter.builder("verniq.submission.recovery.failed.total")
+            .description("Total number of recovery operations that failed")
+            .register(meterRegistry)
+            .increment(count);
+    }
+
+    public void recordCallbackReceived(String verdict) {
+        if (meterRegistry == null) return;
+        Counter.builder("verniq.judge.callback.received.total")
+            .description("Total number of judge callbacks received")
+            .tag("verdict", sanitize(verdict))
+            .register(meterRegistry)
+            .increment();
+    }
+
+    public void recordCallbackRejected(String reason) {
+        if (meterRegistry == null) return;
+        Counter.builder("verniq.judge.callback.rejected.total")
+            .description("Total number of judge callbacks rejected")
+            .tag("reason", sanitize(reason))
+            .register(meterRegistry)
+            .increment();
+    }
+
     private String sanitize(String val) {
         return (val == null || val.isBlank()) ? "unknown" : val.toLowerCase();
     }
 }
+

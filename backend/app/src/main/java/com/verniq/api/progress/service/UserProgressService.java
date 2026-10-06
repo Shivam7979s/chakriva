@@ -218,8 +218,8 @@ public class UserProgressService {
         List<TopicProgressDto> topicList = new ArrayList<>();
         for (Object[] row : progressRepository.aggregateTopicProgressForUser(userId)) {
             if (row != null && row.length >= 5) {
-                String slug = (String) row[0];
-                String name = (String) row[1];
+                String slug = Objects.toString(row[0], "");
+                String name = Objects.toString(row[1], "");
                 long total = row[2] != null ? ((Number) row[2]).longValue() : 0;
                 long solved = row[3] != null ? ((Number) row[3]).longValue() : 0;
                 long attempted = row[4] != null ? ((Number) row[4]).longValue() : 0;
@@ -231,8 +231,8 @@ public class UserProgressService {
         List<CompanyProgressDto> companyList = new ArrayList<>();
         for (Object[] row : progressRepository.aggregateCompanyProgressForUser(userId)) {
             if (row != null && row.length >= 5) {
-                String slug = (String) row[0];
-                String name = (String) row[1];
+                String slug = Objects.toString(row[0], "");
+                String name = Objects.toString(row[1], "");
                 long total = row[2] != null ? ((Number) row[2]).longValue() : 0;
                 long solved = row[3] != null ? ((Number) row[3]).longValue() : 0;
                 long attempted = row[4] != null ? ((Number) row[4]).longValue() : 0;

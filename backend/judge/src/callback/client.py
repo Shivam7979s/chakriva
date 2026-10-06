@@ -61,6 +61,10 @@ class JudgeCallbackClient:
         self.callback_retries = 0
         self.callback_auth_failures = 0
         self.callback_validation_failures = 0
+        self.last_latency_ms: Optional[float] = None
+        self.total_latency_ms: float = 0.0
+        self.min_latency_ms: Optional[float] = None
+        self.max_latency_ms: Optional[float] = None
 
     @property
     def is_enabled(self) -> bool:
@@ -118,6 +122,13 @@ class JudgeCallbackClient:
             if delay > 0:
                 self.callback_retries += 1
                 logger.info(
+                    "CALLBACK_RETRY worker_id=%s job_id=%s attempt=%d delay=%.1fs",
+                    result.workerId,
+                    result.jobId,
+                    attempt_num,
+                    delay,
+                )
+                logger.info(
                     "Backoff sleeping %.1fs before callback retry attempt %d/%d for job %s",
                     delay,
                     attempt_num,
@@ -127,6 +138,13 @@ class JudgeCallbackClient:
                 time.sleep(delay)
 
             self.callback_attempts += 1
+            logger.info(
+                "CALLBACK_STARTED worker_id=%s job_id=%s submission_id=%s attempt=%d",
+                result.workerId,
+                result.jobId,
+                result.submissionId,
+                attempt_num,
+            )
             start_time = time.perf_counter()
 
             try:
@@ -143,6 +161,20 @@ class JudgeCallbackClient:
 
                     if 200 <= status_code < 300:
                         self.callback_success += 1
+                        self.last_latency_ms = duration_ms
+                        self.total_latency_ms += duration_ms
+                        self.min_latency_ms = min(self.min_latency_ms, duration_ms) if self.min_latency_ms is not None else duration_ms
+                        self.max_latency_ms = max(self.max_latency_ms, duration_ms) if self.max_latency_ms is not None else duration_ms
+                        logger.info(
+                            "CALLBACK_SUCCEEDED worker_id=%s job_id=%s submission_id=%s endpoint=%s attempt=%d status=%d duration_ms=%.1f",
+                            result.workerId,
+                            result.jobId,
+                            result.submissionId,
+                            self.sanitized_url,
+                            attempt_num,
+                            status_code,
+                            duration_ms,
+                        )
                         logger.info(
                             "judge_callback_success worker_id=%s job_id=%s submission_id=%s "
                             "endpoint=%s attempt=%d status=%d duration_ms=%.1f",
@@ -184,6 +216,12 @@ class JudgeCallbackClient:
                     self.callback_auth_failures += 1
                     self.callback_failures += 1
                     logger.error(
+                        "CALLBACK_REJECTED reason=auth_failed worker_id=%s job_id=%s status=%d",
+                        result.workerId,
+                        result.jobId,
+                        status_code,
+                    )
+                    logger.error(
                         "Judge callback authorization failed (HTTP %d). "
                         "Check VERNIQ_JUDGE_INTERNAL_SECRET configuration. Terminating retries.",
                         status_code,
@@ -194,6 +232,12 @@ class JudgeCallbackClient:
                     self.callback_validation_failures += 1
                     self.callback_failures += 1
                     logger.error(
+                        "CALLBACK_REJECTED reason=payload_rejected worker_id=%s job_id=%s status=%d",
+                        result.workerId,
+                        result.jobId,
+                        status_code,
+                    )
+                    logger.error(
                         "Judge callback payload rejected by server (HTTP %d). Terminating retries.",
                         status_code,
                     )
@@ -201,6 +245,8 @@ class JudgeCallbackClient:
 
                 # Transient server errors (5xx): eligible for retry if attempts remain
                 if 500 <= status_code < 600:
+                    logger.warn("CALLBACK_FAILED reason=server_error worker_id=%s job_id=%s status=%d attempt=%d",
+                        result.workerId, result.jobId, status_code, attempt_num)
                     if attempt_num >= attempts_limit:
                         self.callback_failures += 1
                         logger.error(
@@ -253,7 +299,11 @@ class JudgeCallbackClient:
         return False
 
     def get_telemetry(self) -> Dict[str, Any]:
-        """Returns safe callback telemetry counters."""
+        """Returns safe callback telemetry counters and latencies."""
+        avg_lat = (
+            round(self.total_latency_ms / self.callback_success, 1)
+            if self.callback_success > 0 else 0.0
+        )
         return {
             "callback_configured": self.is_enabled,
             "callback_attempts": self.callback_attempts,
@@ -262,4 +312,8 @@ class JudgeCallbackClient:
             "callback_retries": self.callback_retries,
             "callback_auth_failures": self.callback_auth_failures,
             "callback_validation_failures": self.callback_validation_failures,
+            "last_latency_ms": round(self.last_latency_ms, 1) if self.last_latency_ms is not None else None,
+            "avg_latency_ms": avg_lat,
+            "min_latency_ms": round(self.min_latency_ms, 1) if self.min_latency_ms is not None else None,
+            "max_latency_ms": round(self.max_latency_ms, 1) if self.max_latency_ms is not None else None,
         }

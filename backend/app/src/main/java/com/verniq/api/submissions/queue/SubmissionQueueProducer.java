@@ -103,6 +103,10 @@ public class SubmissionQueueProducer {
         return queueKey;
     }
 
+    public String getQueueKey() {
+        return queueKey;
+    }
+
     /**
      * Queries current queue depth.
      */

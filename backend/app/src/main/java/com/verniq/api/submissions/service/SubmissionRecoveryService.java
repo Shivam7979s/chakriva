@@ -52,6 +52,7 @@ public class SubmissionRecoveryService {
      */
     @Transactional
     public int recoverStaleSubmissions(int staleSecondsThreshold) {
+        long startMs = System.currentTimeMillis();
         Instant cutoff = Instant.now().minus(staleSecondsThreshold, ChronoUnit.SECONDS);
         List<String> uncompletedVerdicts = List.of(
             SubmissionStatus.QUEUED.toDbVerdict(),
@@ -63,21 +64,30 @@ public class SubmissionRecoveryService {
             return 0;
         }
 
+        submissionMetrics.recordRecoveryDetected(staleList.size());
         int recoveredCount = 0;
         for (Submission sub : staleList) {
             String prevStatus = sub.getStatus().name();
-            sub.setStatus(SubmissionStatus.INTERNAL_ERROR);
-            sub.setErrorMessage("Execution timed out in judge pipeline. Automatically recovered by platform.");
-            sub.setCompletedAt(Instant.now());
-            submissionRepository.save(sub);
+            long ageSeconds = sub.getCreatedAt() != null ? ChronoUnit.SECONDS.between(sub.getCreatedAt(), Instant.now()) : -1;
+            try {
+                sub.setStatus(SubmissionStatus.INTERNAL_ERROR);
+                sub.setErrorMessage("Execution timed out in judge pipeline. Automatically recovered by platform.");
+                sub.setCompletedAt(Instant.now());
+                submissionRepository.save(sub);
 
-            submissionMetrics.recordSubmissionFailed("STALE_TIMEOUT");
-            log.warn("Recovered stale submission {} [jobId={}] from {} to INTERNAL_ERROR (created: {})",
-                sub.getId(), sub.getJudgeJobId(), prevStatus, sub.getCreatedAt());
-            recoveredCount++;
+                submissionMetrics.recordSubmissionFailed("STALE_TIMEOUT");
+                log.warn("SUBMISSION_RECOVERED submissionId={} judgeJobId={} previousState={} newState=INTERNAL_ERROR ageSeconds={} (created: {})",
+                    sub.getId(), sub.getJudgeJobId(), prevStatus, ageSeconds, sub.getCreatedAt());
+                recoveredCount++;
+            } catch (Exception e) {
+                submissionMetrics.recordRecoveryFailed(1);
+                log.error("Failed to recover stale submission {} [jobId={}]: {}", sub.getId(), sub.getJudgeJobId(), e.getMessage());
+            }
         }
 
-        log.info("Submission recovery completed: recovered {} stale submission(s)", recoveredCount);
+        submissionMetrics.recordRecoveryCompleted(recoveredCount);
+        long durationMs = System.currentTimeMillis() - startMs;
+        log.info("SUBMISSION_RECOVERY_COMPLETED detected={} recovered={} durationMs={}", staleList.size(), recoveredCount, durationMs);
         return recoveredCount;
     }
 }

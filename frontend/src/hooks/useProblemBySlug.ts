@@ -51,7 +51,7 @@ function mapDetailDtoToProblem(dto: ProblemDetailDto): Problem {
   }
 
   return {
-    id: dto.verniqId,
+    id: dto.id || dto.verniqId,
     verniq_id: dto.verniqId,
     title: dto.title,
     slug: dto.slug,
@@ -90,10 +90,10 @@ export const useProblemBySlug = (slug: string) => {
       const mapped = mapDetailDtoToProblem(detailDto);
       setProblem(mapped);
 
-      // Map examples from Spring Boot to sample TestCase items
+      // Map examples from Spring Boot to sample TestCase items (Anti-leak: zero internal test vectors)
       const sampleCases: TestCase[] = (detailDto.examples || []).map((ex, idx) => ({
         id: `tc-${idx + 1}`,
-        problem_id: detailDto.verniqId,
+        problem_id: detailDto.id || detailDto.verniqId,
         input: ex.input,
         expected_output: ex.output,
         is_sample: true,
@@ -102,20 +102,8 @@ export const useProblemBySlug = (slug: string) => {
 
       setTestCases(sampleCases);
 
-      // Attempt to load canonical count from Supabase
-      if (isSupabaseConfigured()) {
-        try {
-          const { count } = await supabase
-            .from('test_cases')
-            .select('*', { count: 'exact', head: true })
-            .or(`problem_id.eq.${detailDto.verniqId},problem_id.eq.${detailDto.slug}`);
-          setCanonicalTestCount(count || sampleCases.length || 4);
-        } catch {
-          setCanonicalTestCount(sampleCases.length || 4);
-        }
-      } else {
-        setCanonicalTestCount(sampleCases.length || 4);
-      }
+      // Authoritative visible sample test cases from Spring Boot problem catalog
+      setCanonicalTestCount(sampleCases.length || 4);
 
       setLoading(false);
       return;
@@ -215,33 +203,9 @@ export const useProblemBySlug = (slug: string) => {
 
         setProblem(mappedProblem);
 
-        // Fetch Sample Test Cases
-        const { data: tcData, error: tcError } = await supabase
-          .from('test_cases')
-          .select('id, problem_id, input, expected_output, is_sample, order_index')
-          .eq('problem_id', row.id)
-          .eq('is_sample', true)
-          .order('order_index', { ascending: true });
-
-        // Fetch Total Canonical Test Count
-        const { count: totalCount } = await supabase
-          .from('test_cases')
-          .select('*', { count: 'exact', head: true })
-          .eq('problem_id', row.id);
-
-        if (!tcError && tcData && tcData.length > 0) {
-          setTestCases(tcData as TestCase[]);
-          setCanonicalTestCount(totalCount || tcData.length);
-        } else {
-          const isDraft = !row.is_published || row.workflow_status === 'draft';
-          if (isDraft) {
-            setTestCases([]);
-            setCanonicalTestCount(0);
-          } else {
-            setTestCases(fallbackTCs);
-            setCanonicalTestCount(fallbackTCs.length);
-          }
-        }
+        // Safe Fallback Sample Test Cases (Zero direct querying of internal test_cases)
+        setTestCases(fallbackTCs);
+        setCanonicalTestCount(fallbackTCs.length);
       } else {
         setProblem(fallbackProb);
         setTestCases(fallbackTCs);

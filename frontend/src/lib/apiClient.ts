@@ -5,8 +5,20 @@
 
 import { supabase } from './supabaseClient';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const DEFAULT_PROD_API_URL = 'https://7dc5714dd1d687.lhr.life';
+
+const getApiBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    if (import.meta.env.PROD && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+      return DEFAULT_PROD_API_URL;
+    }
+    return envUrl.replace(/\/+$/, '');
+  }
+  return import.meta.env.DEV ? 'http://localhost:8080' : DEFAULT_PROD_API_URL;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // ==============================================================================
 // TYPE DEFINITIONS (Matching Spring Boot DTOs)
@@ -40,6 +52,8 @@ export interface CreateSubmissionRequest {
   problemId: string;
   language: string;
   sourceCode: string;
+  mode?: 'RUN' | 'SUBMIT';
+  customInput?: string;
 }
 
 export interface SubmissionResponseDto {
@@ -79,6 +93,7 @@ export interface ProblemExampleDto {
 }
 
 export interface ProblemDetailDto {
+  id?: string;
   verniqId: string;
   title: string;
   slug: string;
@@ -381,6 +396,8 @@ export const apiClient = {
           problemId: payload.problemId,
           language: payload.language.toUpperCase(),
           sourceCode: payload.sourceCode,
+          mode: payload.mode || 'SUBMIT',
+          customInput: payload.customInput || null,
         }),
       },
       true // Requires valid JWT Bearer

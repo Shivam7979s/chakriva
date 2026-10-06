@@ -31,7 +31,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     Page<Submission> findByUserIdAndProblemIdOrderByCreatedAtDesc(UUID userId, UUID problemId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"problem"})
-    @Query("SELECT s FROM Submission s WHERE s.verdict IN :verdicts AND s.createdAt < :cutoff")
+    @Query("SELECT s FROM Submission s WHERE CAST(s.verdict AS string) IN :verdicts AND s.createdAt < :cutoff")
     List<Submission> findStaleSubmissions(@Param("verdicts") Collection<String> verdicts, @Param("cutoff") Instant cutoff);
 
     @Query("SELECT LOWER(s.verdict) AS verdict, COUNT(s.id) AS cnt FROM Submission s WHERE s.userId = :userId AND s.isCustomRun = false GROUP BY LOWER(s.verdict)")

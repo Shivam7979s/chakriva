@@ -306,7 +306,7 @@ class DockerSandbox:
             "sh", "-c", container_inner_script,
         ]
 
-        logger.debug("Starting container %s with memory=%dm cpus=%.1f", container_name, safe_mem, safe_cpu)
+        logger.info("SANDBOX_STARTED container=%s image=%s cpus=%.1f memory=%dm", container_name, self.image_name, safe_cpu, safe_mem)
         start_time = time.perf_counter()
 
         proc = None
@@ -339,6 +339,7 @@ class DockerSandbox:
             except subprocess.TimeoutExpired:
                 timed_out = True
                 self.containers_timed_out += 1
+                logger.info("SANDBOX_TIMEOUT container=%s timeout_seconds=%.2f", container_name, timeout_seconds)
                 logger.info("Execution container %s timed out after %.2fs", container_name, timeout_seconds)
                 # Terminate running container forcefully
                 try:
@@ -356,6 +357,7 @@ class DockerSandbox:
         except Exception as err:
             self.sandbox_errors += 1
             self.containers_failed += 1
+            logger.error("SANDBOX_FAILED container=%s error=%s", container_name, err)
             logger.error("Container execution error for %s: %s", container_name, err)
             raise RuntimeError(f"Docker sandbox execution failed: {err}")
 
@@ -370,6 +372,7 @@ class DockerSandbox:
                     timeout=6.0,
                 )
                 self.containers_cleaned += 1
+                logger.debug("SANDBOX_CLEANUP container=%s cleaned=true duration_ms=%d", container_name, duration_ms)
             except Exception as clean_err:
                 logger.warning("Error cleaning container %s: %s", container_name, clean_err)
 
@@ -395,6 +398,9 @@ class DockerSandbox:
             self.containers_completed += 1
         elif not timed_out:
             self.containers_failed += 1
+
+        logger.info("SANDBOX_COMPLETED container=%s exit_code=%d duration_ms=%d timed_out=%s oom_killed=%s",
+            container_name, exit_code, duration_ms, timed_out, oom_killed)
 
         return DockerExecutionResult(
             exit_code=exit_code,

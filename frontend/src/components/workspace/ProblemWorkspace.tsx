@@ -304,12 +304,23 @@ export const ProblemWorkspace: React.FC = () => {
       });
     }
 
+    const targetProblemId = problem?.verniq_id || problem?.slug || problem?.id || 'VRQ-000001';
     const res = await runCode(
       code,
       language as ProgrammingLanguage,
-      customInput || sampleTestCases[0]?.input || '',
+      customInput || '',
       visibleCases,
-      subId
+      subId,
+      targetProblemId,
+      (interimSub) => {
+        setActiveSubmissionId(interimSub.id);
+        setVerdict(interimSub.verdict);
+        if (interimSub.verdict === 'pending') {
+          setStdoutLogs('Run submission enqueued in Redis. Waiting for isolated judge worker...');
+        } else if (interimSub.verdict === 'running') {
+          setStdoutLogs('Executing visible sample test cases in isolated sandbox...');
+        }
+      }
     );
 
     if (res.submission) {

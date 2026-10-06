@@ -127,6 +127,7 @@ public class ProblemCatalogService {
         Map<String, String> templatesMap = parseStarterTemplates(problem.getStarterTemplates());
 
         return new ProblemDetailDto(
+            problem.getId(),
             problem.getVerniqId(),
             problem.getTitle(),
             problem.getSlug(),

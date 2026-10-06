@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import java.util.UUID;
+
 /**
  * Public problem detail DTO for solving interface and problem viewer.
  *
@@ -12,6 +14,7 @@ import java.util.Map;
  * Hidden canonical test suites and judge evaluation configs are strictly omitted.</p>
  */
 public record ProblemDetailDto(
+    UUID id,
     String verniqId,
     String title,
     String slug,

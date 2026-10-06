@@ -27,12 +27,15 @@ public class JudgeResultIngestionController {
     public static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
 
     private final SubmissionService submissionService;
+    private final com.verniq.api.submissions.metrics.SubmissionMetrics submissionMetrics;
     private final String internalSecret;
 
     public JudgeResultIngestionController(
             SubmissionService submissionService,
+            com.verniq.api.submissions.metrics.SubmissionMetrics submissionMetrics,
             @Value("${verniq.judge.internal-secret:${app.judge.internal-secret:}}") String internalSecret) {
         this.submissionService = submissionService;
+        this.submissionMetrics = submissionMetrics;
         this.internalSecret = internalSecret != null ? internalSecret.trim() : "";
     }
 
@@ -44,11 +47,17 @@ public class JudgeResultIngestionController {
         // Validate service-to-service authentication using constant-time comparison
         if (secretHeader == null || secretHeader.isBlank() || internalSecret.isBlank() ||
                 !MessageDigest.isEqual(secretHeader.trim().getBytes(StandardCharsets.UTF_8), internalSecret.getBytes(StandardCharsets.UTF_8))) {
-            log.warn("Unauthorized judge callback attempt: invalid or missing X-Internal-Secret");
+            if (submissionMetrics != null) {
+                submissionMetrics.recordCallbackRejected("UNAUTHORIZED_SECRET");
+            }
+            log.warn("SUBMISSION_CALLBACK_REJECTED reason=unauthorized_secret endpoint=/api/v1/internal/judge/results");
             throw new AccessDeniedException("Access denied: Invalid or missing internal judge secret");
         }
 
-        log.info("Received judge result for submission {} (job: {}) with verdict {}",
+        if (submissionMetrics != null) {
+            submissionMetrics.recordCallbackReceived(callback.verdict());
+        }
+        log.info("CALLBACK_RECEIVED submissionId={} judgeJobId={} verdict={}",
             callback.submissionId(), callback.jobId(), callback.verdict());
 
         SubmissionDetailDto updatedSubmission = submissionService.ingestJudgeResult(callback);

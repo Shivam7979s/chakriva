@@ -125,8 +125,8 @@ public class SubmissionService {
             MDC.put("submissionId", submission.getId().toString());
             MDC.put("judgeJobId", judgeJobId);
 
-            log.info("Created submission {} for user {} on problem {} (version: {}, mode: {})",
-                submission.getId(), userId, problem.getVerniqId(), problem.getCurrentVersion(), mode);
+            log.info("SUBMISSION_CREATED submissionId={} judgeJobId={} problemVerniqId={} language={} mode={} version={}",
+                submission.getId(), judgeJobId, problem.getVerniqId(), language.getDbValue(), mode, problem.getCurrentVersion());
 
             // 7. Enqueue to Redis queue for isolated execution worker (J.5.1 contract)
             JudgeJobPayload job = JudgeJobPayload.of(
@@ -144,6 +144,8 @@ public class SubmissionService {
             );
 
             queueProducer.enqueue(job);
+            log.info("SUBMISSION_QUEUED submissionId={} judgeJobId={} problemVerniqId={} queueKey={}",
+                submission.getId(), judgeJobId, problem.getVerniqId(), queueProducer.getQueueName());
             submissionMetrics.recordSubmissionCreated(language.getDbValue());
         } finally {
             MDC.remove("submissionId");
@@ -296,6 +298,8 @@ public class SubmissionService {
         // Validate job identity (prevent stale or mismatched jobs from updating submission)
         if (submission.getJudgeJobId() != null && !submission.getJudgeJobId().isBlank()) {
             if (!submission.getJudgeJobId().equals(callback.jobId())) {
+                log.warn("SUBMISSION_CALLBACK_REJECTED reason=job_id_mismatch submissionId={} expectedJobId={} reportedJobId={}",
+                    submission.getId(), submission.getJudgeJobId(), callback.jobId());
                 throw new ConflictException("Job ID mismatch: submission is linked to job '"
                     + submission.getJudgeJobId() + "' but callback reported job '" + callback.jobId() + "'");
             }
@@ -306,12 +310,12 @@ public class SubmissionService {
         // Idempotency check: if already in terminal state
         if (submission.getStatus().isTerminal()) {
             if (submission.getStatus() == finalStatus) {
-                log.info("Idempotent callback received for already-terminal submission {} with verdict {}",
-                    submission.getId(), finalStatus);
+                log.info("SUBMISSION_CALLBACK_IDEMPOTENT submissionId={} judgeJobId={} verdict={}",
+                    submission.getId(), callback.jobId(), finalStatus);
                 return toDetailDto(submission);
             } else {
-                log.warn("Conflicting callback for submission {}: already {} but callback reported {}",
-                    submission.getId(), submission.getStatus(), finalStatus);
+                log.warn("SUBMISSION_CALLBACK_REJECTED reason=conflict submissionId={} judgeJobId={} currentStatus={} requestedVerdict={}",
+                    submission.getId(), callback.jobId(), submission.getStatus(), finalStatus);
                 throw new ConflictException("Conflicting callback verdict: submission is already in terminal state "
                     + submission.getStatus() + " and cannot be updated to " + finalStatus);
             }
@@ -319,6 +323,8 @@ public class SubmissionService {
 
         // Validate state transition
         if (!submission.getStatus().canTransitionTo(finalStatus)) {
+            log.warn("SUBMISSION_CALLBACK_REJECTED reason=invalid_transition submissionId={} judgeJobId={} currentStatus={} requestedVerdict={}",
+                submission.getId(), callback.jobId(), submission.getStatus(), finalStatus);
             throw new ConflictException("Invalid state transition from " + submission.getStatus() + " to " + finalStatus);
         }
 
@@ -370,6 +376,10 @@ public class SubmissionService {
             if (finalStatus.isTerminal()) {
                 userProgressService.recordSubmissionResult(submission);
             }
+
+            log.info("SUBMISSION_COMPLETED submissionId={} judgeJobId={} problemVerniqId={} verdict={} passed={}/{} runtimeMs={} memoryKb={}",
+                submission.getId(), submission.getJudgeJobId(), submission.getProblem().getVerniqId(), finalStatus,
+                callback.testCasesPassed(), callback.totalTestCases(), callback.runtimeMs(), callback.memoryKb());
         } finally {
             MDC.remove("submissionId");
             MDC.remove("judgeJobId");

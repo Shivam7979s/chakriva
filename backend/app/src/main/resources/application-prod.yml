@@ -11,8 +11,19 @@ spring:
       maximum-pool-size: 20
       minimum-idle: 5
 
+app:
+  supabase:
+    url: ${SUPABASE_URL:https://cisddayhekkktcomnqhz.supabase.co}
+    jwt-issuer: ${SUPABASE_JWT_ISSUER:https://cisddayhekkktcomnqhz.supabase.co/auth/v1}
+    jwt-jwk-set-uri: ${SUPABASE_JWT_JWK_SET_URI:https://cisddayhekkktcomnqhz.supabase.co/auth/v1/.well-known/jwks.json}
+    jwt-audience: ${SUPABASE_JWT_AUDIENCE:authenticated}
+  cors:
+    allowed-origins:
+      - ${CORS_ALLOWED_ORIGINS:https://verniq.vercel.app}
+      - https://verniq.vercel.app
+
 logging:
   level:
     com.verniq.api: INFO
-    org.springframework.web: WARN
-    org.springframework.security: WARN
+    org.springframework.web: INFO
+    org.springframework.security: INFO

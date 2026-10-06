@@ -10,6 +10,7 @@ Strictly adheres to:
 import json
 import logging
 import time
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
 import redis
@@ -81,6 +82,16 @@ class RedisConsumer:
             return bool(self.client.ping())
         except Exception:
             return False
+
+    def get_queue_depth(self) -> int:
+        """Returns current queue depth (LLEN) without modifying queue state."""
+        if not self.client:
+            return 0
+        try:
+            length = self.client.llen(self.queue_name)
+            return int(length) if length is not None else 0
+        except Exception:
+            return 0
 
     def close(self):
         """Closes the Redis connection cleanly."""
@@ -210,6 +221,25 @@ class RedisConsumer:
         # 3. Validate against canonical Pydantic JudgeJob contract
         try:
             job = JudgeJob.model_validate(data)
+            queue_wait_ms = None
+            if hasattr(job, "createdAt") and job.createdAt:
+                try:
+                    now_utc = datetime.now(timezone.utc)
+                    created_dt = job.createdAt if isinstance(job.createdAt, datetime) else datetime.fromisoformat(str(job.createdAt).replace("Z", "+00:00"))
+                    queue_wait_ms = max(0, int((now_utc - created_dt).total_seconds() * 1000))
+                except Exception:
+                    pass
+            setattr(job, "_queue_wait_ms", queue_wait_ms)
+            logger.info(
+                "JOB_RECEIVED worker_id=%s job_id=%s submission_id=%s problem=%s language=%s mode=%s queue_wait_ms=%s",
+                self.worker_id,
+                job.jobId,
+                job.submissionId,
+                job.problemVerniqId or job.problemId,
+                job.language,
+                job.mode.value,
+                str(queue_wait_ms) if queue_wait_ms is not None else "N/A",
+            )
             return job
         except ValidationError as e:
             self.jobs_rejected += 1

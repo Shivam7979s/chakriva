@@ -2,6 +2,8 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import type { ConfidenceLevel } from '@/types';
 import { FALLBACK_PROBLEMS } from '@/lib/curriculumData';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Closed-Loop Telemetry Feedback:
  * When a user achieves an Accepted submission, dynamically:
@@ -18,18 +20,37 @@ export async function syncAcceptedSubmissionToSprintAndDiagnostics(
   try {
     const nowIso = new Date().toISOString();
 
-    // 1. Mark matching tasks in public.sprint_tasks as completed
-    await supabase
-      .from('sprint_tasks')
-      .update({
-        is_completed: true,
-        completed_at: nowIso,
-      })
-      .eq('user_id', userId)
-      .eq('problem_id', problemId);
+    // Resolve authoritative UUID for database column compatibility
+    let resolvedUuid = problemId;
+    if (!UUID_REGEX.test(problemId)) {
+      const { data: pData } = await supabase
+        .from('problems')
+        .select('id')
+        .or(`verniq_id.eq.${problemId},slug.eq.${problemId}`)
+        .maybeSingle();
+      if (pData?.id && UUID_REGEX.test(pData.id)) {
+        resolvedUuid = pData.id;
+      } else {
+        resolvedUuid = '';
+      }
+    }
+
+    // 1. Mark matching tasks in public.sprint_tasks as completed (only when authoritative UUID exists)
+    if (resolvedUuid && UUID_REGEX.test(resolvedUuid)) {
+      await supabase
+        .from('sprint_tasks')
+        .update({
+          is_completed: true,
+          completed_at: nowIso,
+        })
+        .eq('user_id', userId)
+        .eq('problem_id', resolvedUuid);
+    }
 
     // 2. Identify problem category tag
-    const matchedProblem = FALLBACK_PROBLEMS.find((p) => p.id === problemId);
+    const matchedProblem = FALLBACK_PROBLEMS.find(
+      (p) => p.id === resolvedUuid || p.verniq_id === problemId || p.slug === problemId
+    );
     const tags = matchedProblem?.tags || ['Arrays'];
     const primaryTag = tags[0] || 'Arrays';
 

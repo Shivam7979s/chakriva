@@ -224,6 +224,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Ignore
     }
+    if (user?.id) {
+      try {
+        localStorage.removeItem(`verniq_user_progress_cache_${user.id}`);
+        localStorage.removeItem(`verniq_user_revision_cache_${user.id}`);
+      } catch {
+        // ignore
+      }
+    }
+    try {
+      localStorage.removeItem('verniq_user_progress_cache');
+      localStorage.removeItem('verniq_user_revision_cache');
+    } catch {
+      // ignore
+    }
     setUser(null);
     setSession(null);
     setProfile(null);

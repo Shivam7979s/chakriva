@@ -87,15 +87,37 @@ class JudgeWorker:
         self._init_supabase()
 
         # Telemetry & Operational Health metrics
+        self.boot_time = time.time()
         self.jobs_started = 0
         self.jobs_completed = 0
         self.job_failures = 0
+        self.jobs_timed_out = 0
         self.current_job_id: Optional[str] = None
         self.last_job_received_at: Optional[str] = None
         self.last_job_completed_at: Optional[str] = None
         self.latest_result: Optional[JudgeResult] = None
 
+        self.verdict_counters: Dict[str, int] = {
+            "accepted": 0,
+            "wrong_answer": 0,
+            "compilation_error": 0,
+            "time_limit_exceeded": 0,
+            "memory_limit_exceeded": 0,
+            "runtime_error": 0,
+            "internal_error": 0,
+        }
+        self.execution_latencies: List[int] = []
+        self.queue_wait_latencies: List[int] = []
+        self.total_latencies: List[int] = []
+
         self.state = "READY"
+        logger.info(
+            "WORKER_READY worker_id=%s queue=%s concurrency=%d state=%s",
+            self.worker_id,
+            self.consumer.queue_name,
+            config.worker_concurrency,
+            self.state,
+        )
         logger.info(
             "JudgeWorker initialized [worker_id=%s, queue=%s, concurrency=%d, state=%s]",
             self.worker_id,
@@ -103,6 +125,59 @@ class JudgeWorker:
             config.worker_concurrency,
             self.state,
         )
+
+    def _get_host_resource_stats(self) -> dict:
+        """Returns bounded host disk, memory, and swap utilization with threshold warnings."""
+        import os
+        import shutil
+        stats = {
+            "disk_used_percent": 0.0,
+            "disk_free_gb": 0.0,
+            "memory_used_percent": 0.0,
+            "swap_used_percent": 0.0,
+            "warnings": [],
+        }
+        try:
+            du = shutil.disk_usage("/")
+            used_pct = round((du.used / du.total) * 100.0, 1) if du.total > 0 else 0.0
+            free_gb = round(du.free / (1024**3), 2)
+            stats["disk_used_percent"] = used_pct
+            stats["disk_free_gb"] = free_gb
+            if used_pct >= 90.0:
+                stats["warnings"].append("CRITICAL: Disk usage > 90%")
+            elif used_pct >= 80.0:
+                stats["warnings"].append("WARNING: Disk usage > 80%")
+        except Exception:
+            pass
+
+        try:
+            if os.path.exists("/proc/meminfo"):
+                mem = {}
+                with open("/proc/meminfo", "r", encoding="utf-8") as f:
+                    for line in f:
+                        parts = line.split(":")
+                        if len(parts) == 2:
+                            k = parts[0].strip()
+                            v = parts[1].strip().split()[0]
+                            mem[k] = int(v)
+                if "MemTotal" in mem and "MemAvailable" in mem and mem["MemTotal"] > 0:
+                    mem_used = mem["MemTotal"] - mem["MemAvailable"]
+                    mem_pct = round((mem_used / mem["MemTotal"]) * 100.0, 1)
+                    stats["memory_used_percent"] = mem_pct
+                    if mem_pct >= 90.0:
+                        stats["warnings"].append("CRITICAL: Memory usage > 90%")
+                    elif mem_pct >= 80.0:
+                        stats["warnings"].append("WARNING: Memory usage > 80%")
+                if "SwapTotal" in mem and "SwapFree" in mem and mem["SwapTotal"] > 0:
+                    swap_used = mem["SwapTotal"] - mem["SwapFree"]
+                    swap_pct = round((swap_used / mem["SwapTotal"]) * 100.0, 1)
+                    stats["swap_used_percent"] = swap_pct
+                    if swap_pct >= 50.0:
+                        stats["warnings"].append("WARNING: Swap usage > 50%")
+        except Exception:
+            pass
+
+        return stats
 
     def _init_supabase(self):
         """Initializes Supabase client solely for canonical test retrieval."""
@@ -134,13 +209,36 @@ class JudgeWorker:
         if problem_id in self._canonical_cache:
             return self._canonical_cache[problem_id]
 
+        import re
+        uuid_regex = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.I)
+        target_uuid = problem_id
+
+        # If problem_id is a Verniq ID (e.g. VRQ-000001) or slug, resolve to database UUID
+        if not uuid_regex.match(problem_id):
+            if self.supabase:
+                try:
+                    p_res = (
+                        self.supabase.table("problems")
+                        .select("id")
+                        .or_(f"verniq_id.eq.{problem_id},slug.eq.{problem_id}")
+                        .limit(1)
+                        .execute()
+                    )
+                    if p_res.data and len(p_res.data) > 0:
+                        target_uuid = p_res.data[0]["id"]
+                except Exception as e:
+                    logger.warning("Failed to resolve UUID for problem %s via Supabase client: %s", problem_id, e)
+
+        if target_uuid in self._canonical_cache:
+            return self._canonical_cache[target_uuid]
+
         # 1. Try Supabase Python client if available
         if self.supabase:
             try:
                 res = (
                     self.supabase.table("test_cases")
                     .select("input, expected_output, is_sample")
-                    .eq("problem_id", problem_id)
+                    .eq("problem_id", target_uuid)
                     .order("order_index", desc=False)
                     .execute()
                 )
@@ -154,14 +252,16 @@ class JudgeWorker:
                         for tc in res.data
                     ]
                     self._canonical_cache[problem_id] = cases
+                    self._canonical_cache[target_uuid] = cases
                     logger.info(
-                        "Loaded and cached %d canonical test cases for problem %s via Supabase client",
+                        "Loaded and cached %d canonical test cases for problem %s (uuid: %s) via Supabase client",
                         len(cases),
                         problem_id,
+                        target_uuid,
                     )
                     return cases
             except Exception as e:
-                logger.warning("Supabase client query failed for %s: %s", problem_id, e)
+                logger.warning("Supabase client query failed for %s: %s", target_uuid, e)
 
         # 2. Direct PostgREST query using service_role key via urllib
         key = config.supabase_service_role_key or config.supabase_anon_key
@@ -228,13 +328,19 @@ class JudgeWorker:
             # Mode resolution
             if job.mode == JobMode.RUN:
                 is_custom_run = True
-                test_cases = [
-                    TestCaseItem(
-                        input=job.customInput or "",
-                        expected_output=None,
-                        is_sample=True,
-                    )
-                ]
+                if job.customInput and job.customInput.strip():
+                    test_cases = [
+                        TestCaseItem(
+                            input=job.customInput,
+                            expected_output=None,
+                            is_sample=True,
+                        )
+                    ]
+                else:
+                    all_cases = self.fetch_canonical_test_cases(job.problemId)
+                    test_cases = [tc for tc in all_cases if tc.is_sample]
+                    if not test_cases:
+                        test_cases = all_cases[:2] if all_cases else [TestCaseItem(input="", expected_output=None, is_sample=True)]
             else:  # SUBMIT mode
                 is_custom_run = False
                 test_cases = self.fetch_canonical_test_cases(job.problemId)

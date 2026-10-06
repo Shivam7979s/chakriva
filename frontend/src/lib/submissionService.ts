@@ -2,8 +2,6 @@ import { apiClient, SubmissionDetailDto, ApiClientError } from './apiClient';
 import { supabase } from './supabaseClient';
 import { Submission, ProgrammingLanguage, SubmissionVerdict, FailedTestCaseInfo } from '@/types';
 
-const JUDGE_WORKER_URL =
-  import.meta.env.VITE_JUDGE_SERVICE_URL || 'http://127.0.0.1:8085';
 
 // In-memory active submissions store and listeners
 const activeSubmissions = new Map<string, Submission>();
@@ -146,16 +144,6 @@ export async function cancelExecution(submissionId: string): Promise<boolean> {
     activeControllers.delete(submissionId);
   }
 
-  try {
-    await fetch(`${JUDGE_WORKER_URL}/cancel`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ execution_id: submissionId }),
-    });
-  } catch {
-    // Best-effort
-  }
-
   const existing = activeSubmissions.get(submissionId);
   if (existing && (existing.verdict === 'pending' || existing.verdict === 'running')) {
     const cancelledSub: Submission = {
@@ -172,97 +160,69 @@ export async function cancelExecution(submissionId: string): Promise<boolean> {
 
 /**
  * Ephemeral Run Code: Executes code against visible/sample test vectors.
- * Purpose: Fast feedback without creating canonical database records.
+ * Dispatches through the verified application plane:
+ * Frontend -> Spring Boot (mode: 'RUN') -> Redis Queue -> Isolated Judge Worker -> Authenticated Callback -> DB -> Polling
  */
 export async function runCode(
   code: string,
   language: ProgrammingLanguage,
   stdin: string = '',
   testCases?: Array<{ input: string; expected_output?: string; is_sample?: boolean }>,
-  submissionIdOverride?: string
+  submissionIdOverride?: string,
+  problemId?: string,
+  onUpdate?: (sub: Submission) => void
 ): Promise<{ submissionId: string; submission?: Submission }> {
-  const submissionId = submissionIdOverride || crypto.randomUUID();
+  // 1. Check authentication status
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new ApiClientError(
+      401,
+      'Authentication required. Please sign in to run your code.',
+      'UNAUTHORIZED'
+    );
+  }
 
-  const initialSub: Submission = {
-    id: submissionId,
-    user_id: 'ephemeral',
-    problem_id: null,
-    language,
-    source_code: code,
-    stdin_input: stdin,
-    verdict: 'running',
-    runtime_ms: 0,
-    memory_kb: 0,
-    test_cases_passed: 0,
-    total_test_cases: testCases?.length || 1,
-    is_custom_run: true,
-    created_at: new Date().toISOString(),
-  };
+  const resolvedProblemId = problemId || 'VRQ-000001';
 
-  updateSubmissionState(initialSub);
-
-  const controller = new AbortController();
-  activeControllers.set(submissionId, controller);
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-
+  // 2. Dispatch to Spring Boot submission controller with mode='RUN'
+  let submissionId = submissionIdOverride || '';
   try {
-    const response = await fetch(`${JUDGE_WORKER_URL}/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        execution_id: submissionId,
-        language,
-        source_code: code,
-        stdin_input: stdin,
-        is_custom_run: true,
-        test_cases: testCases,
-        mode: 'RUN',
-      }),
-      signal: controller.signal,
+    const createResp = await apiClient.createSubmission({
+      problemId: resolvedProblemId,
+      language: language.toUpperCase(),
+      sourceCode: code,
+      mode: 'RUN',
+      customInput: stdin || undefined,
     });
+    submissionId = createResp.submissionId;
 
-    clearTimeout(timeoutId);
-    activeControllers.delete(submissionId);
-
-    if (!response.ok) {
-      throw new Error(`Judge worker returned status ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    const completedSub: Submission = {
+    const initialSub: Submission = {
       id: submissionId,
-      user_id: 'ephemeral',
+      user_id: session.user.id,
+      problem_id: resolvedProblemId,
       language,
       source_code: code,
       stdin_input: stdin,
-      verdict: normalizeVerdict(result.verdict),
-      runtime_ms: result.runtime_ms || 0,
-      memory_kb: result.memory_kb || 0,
-      stdout_output: result.stdout_output || null,
-      stderr_output: result.stderr_output || null,
-      compile_output: result.compile_output || null,
-      test_cases_passed: result.test_cases_passed ?? (result.verdict === 'accepted' ? 1 : 0),
-      total_test_cases: result.total_test_cases ?? (testCases?.length || 1),
+      verdict: 'pending',
+      runtime_ms: 0,
+      memory_kb: 0,
+      test_cases_passed: 0,
+      total_test_cases: testCases?.length || 1,
       is_custom_run: true,
-      created_at: new Date().toISOString(),
-      completed_at: new Date().toISOString(),
-      telemetry: result.telemetry || null,
-      first_failed_test: result.first_failed_test || result.firstFailedTest || null,
-      firstFailedTest: result.firstFailedTest || result.first_failed_test || null,
-      sample_test_results: result.sample_test_results || null,
+      created_at: createResp.queuedAt || new Date().toISOString(),
     };
 
-    updateSubmissionState(completedSub);
-    return { submissionId, submission: completedSub };
-  } catch (err: unknown) {
-    clearTimeout(timeoutId);
-    activeControllers.delete(submissionId);
-    const isAbort = (err as Error)?.name === 'AbortError';
+    updateSubmissionState(initialSub);
+    if (onUpdate) onUpdate(initialSub);
 
+    // 3. Poll until terminal verdict
+    const finalSub = await pollSubmissionResult(submissionId, code, onUpdate);
+    return { submissionId, submission: finalSub };
+  } catch (err: unknown) {
+    const isAbort = (err as Error)?.name === 'AbortError';
     const failedSub: Submission = {
-      id: submissionId,
-      user_id: 'ephemeral',
+      id: submissionId || crypto.randomUUID(),
+      user_id: session.user.id,
       language,
       source_code: code,
       stdin_input: stdin,
@@ -272,7 +232,7 @@ export async function runCode(
       stdout_output: null,
       stderr_output: isAbort
         ? 'Execution was cancelled.'
-        : 'Judge execution service is offline or unreachable. Please try again.',
+        : (err instanceof Error ? err.message : 'Execution service temporarily unavailable.'),
       compile_output: null,
       test_cases_passed: 0,
       total_test_cases: testCases?.length || 1,
@@ -283,7 +243,8 @@ export async function runCode(
     };
 
     updateSubmissionState(failedSub);
-    return { submissionId, submission: failedSub };
+    if (onUpdate) onUpdate(failedSub);
+    return { submissionId: failedSub.id, submission: failedSub };
   }
 }
 

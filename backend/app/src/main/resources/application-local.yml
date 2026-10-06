@@ -18,4 +18,4 @@ app:
   judge:
     internal-secret: ${VERNIQ_JUDGE_INTERNAL_SECRET:verniq-local-dev-judge-secret-token}
   supabase:
-    jwt-jwk-set-uri: http://127.0.0.1:54321/auth/v1/.well-known/jwks.json
+    jwt-jwk-set-uri: ${SUPABASE_JWT_JWK_SET_URI:http://127.0.0.1:54321/auth/v1/.well-known/jwks.json}

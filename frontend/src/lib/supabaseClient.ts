@@ -2,10 +2,18 @@ import { createClient } from '@supabase/supabase-js';
 
 const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
 
-const supabaseUrl =
-  env.VITE_SUPABASE_URL ||
-  env.NEXT_PUBLIC_SUPABASE_URL ||
-  'https://cisddayhekkktcomnqhz.supabase.co';
+const getSupabaseUrl = (): string => {
+  const envUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
+  if (envUrl) {
+    if (import.meta.env.PROD && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+      return 'https://cisddayhekkktcomnqhz.supabase.co';
+    }
+    return envUrl;
+  }
+  return import.meta.env.DEV ? 'http://127.0.0.1:54321' : 'https://cisddayhekkktcomnqhz.supabase.co';
+};
+
+const supabaseUrl = getSupabaseUrl();
 
 const supabaseAnonKey =
   env.VITE_SUPABASE_ANON_KEY ||
