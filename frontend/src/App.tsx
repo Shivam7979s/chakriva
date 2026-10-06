@@ -236,6 +236,14 @@ export const App: React.FC = () => {
             }
           />
           <Route
+            path="/app/analytics"
+            element={
+              <ProtectedRoute>
+                <DashboardView initialTab="analytics" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/app/profile"
             element={
               <ProtectedRoute>

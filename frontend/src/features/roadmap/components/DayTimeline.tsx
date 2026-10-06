@@ -32,32 +32,32 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
   const renderStatusBadge = () => {
     if (isCompleted) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-[#00B8A3]/10 text-[#00B8A3] border border-[#00B8A3]/30">
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-[#00B8A3]/10 text-[#00B8A3] border border-[#00B8A3]/30">
           <CheckCircle2 className="w-3.5 h-3.5" />
-          Completed
+          COMPLETED
         </span>
       );
     }
     if (isLocked) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-white/[0.04] text-text-muted border border-border">
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-white/[0.04] text-text-muted border border-border">
           <Lock className="w-3.5 h-3.5" />
-          Locked
+          LOCKED
         </span>
       );
     }
     if (isInProgress) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-primary/10 text-primary border border-primary/30">
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-primary/10 text-primary border border-primary/30">
           <CircleDot className="w-3.5 h-3.5" />
-          In Progress
+          IN PROGRESS
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-surface-subtle text-text-secondary border border-border">
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-surface-subtle text-text-muted border border-border">
         <Circle className="w-3.5 h-3.5" />
-        Available
+        AVAILABLE
       </span>
     );
   };
@@ -68,7 +68,9 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
         isCompleted
           ? 'bg-surface/50 border-border/80'
           : isLocked
-          ? 'bg-surface/20 border-border/40 opacity-70'
+          ? 'bg-surface/20 border-border/40 opacity-75'
+          : isInProgress
+          ? 'bg-surface border-primary/40 shadow-elevation-1'
           : 'bg-surface border-border shadow-elevation-1'
       } p-4 sm:p-5 space-y-4`}
     >
@@ -76,8 +78,8 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-              Day {day.dayNumber}
+            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+              DAY {day.dayNumber}
             </span>
             <h3 className="text-base font-semibold text-text-primary tracking-[-0.01em]">
               {day.title}
@@ -88,17 +90,23 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
               {day.description}
             </p>
           )}
+          {isLocked && (
+            <div className="flex items-center gap-1.5 text-xs text-text-muted font-mono pt-0.5">
+              <Lock className="w-3 h-3 text-text-muted shrink-0" />
+              <span>Complete Day {day.dayNumber - 1} to unlock this day.</span>
+            </div>
+          )}
         </div>
 
         {/* Progress & Badge */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-right">
-            <div className="text-xs font-mono font-medium text-text-primary">
-              {completedCount} / {totalCount} items
+            <div className="text-xs font-mono font-medium text-text-secondary">
+              <strong className="text-text-primary font-bold">{completedCount}</strong> / {totalCount} items
             </div>
             <div className="w-24 bg-surface-subtle h-1.5 rounded-full overflow-hidden border border-white/[0.04] mt-1">
               <div
-                className="bg-primary h-full transition-all duration-300"
+                className="bg-[#00B8A3] h-full transition-all duration-300 rounded-full"
                 style={{
                   width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%`,
                 }}

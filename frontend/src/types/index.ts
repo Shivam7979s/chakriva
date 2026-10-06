@@ -20,6 +20,7 @@ export type SubmissionVerdict =
   | 'runtime_error'
   | 'cancelled'
   | 'internal_error'
+  | 'system_error'
   | 'ac'   // Accepted shorthand
   | 'wa'   // Wrong Answer shorthand
   | 'tle'  // Time Limit Exceeded shorthand
@@ -99,6 +100,9 @@ export interface Submission {
   telemetry?: ExecutionTelemetry | null;
   first_failed_test?: FailedTestCaseInfo | null;
   firstFailedTest?: FailedTestCaseInfo | null;
+  failed_test_index?: number | null;
+  error_message?: string | null;
+  request_id?: string | null;
   sample_test_results?: SampleTestResult[] | null;
 }
 
@@ -404,6 +408,8 @@ export interface Problem {
   workflow_status?: ProblemWorkflowStatus;
   domain?: string;
   tags?: string[];
+  topics?: string[];
+  companies?: string[];
   status?: ProblemStatus;
   revision_due?: boolean;
   author_type?: string;

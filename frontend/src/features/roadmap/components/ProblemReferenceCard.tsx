@@ -56,7 +56,7 @@ export const ProblemReferenceCard: React.FC<ProblemReferenceCardProps> = ({ refe
         <div className="shrink-0 flex items-center gap-2">
           {slug ? (
             <Link
-              to={`/problems/${slug}`}
+              to={`/problems/${slug}?fromRoadmap=dsa-mastery`}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono font-medium bg-primary text-text-inverse hover:bg-primary-hover transition-colors"
             >
               <Code2 className="w-3.5 h-3.5" />

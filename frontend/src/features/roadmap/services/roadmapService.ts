@@ -5,15 +5,9 @@
  * Contains deterministic fallback offline data adhering strictly to the contract.
  */
 
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import type {
   Roadmap,
-  RoadmapSprint,
-  RoadmapDay,
-  RoadmapItem,
   RoadmapItemStatus,
-  ProblemSummary,
-  RoadmapProblemReference,
 } from '../types';
 
 export const FALLBACK_STRUCTURED_ROADMAP: Roadmap = {
@@ -431,280 +425,155 @@ export const FALLBACK_STRUCTURED_ROADMAP: Roadmap = {
   ],
 };
 
-const LOCAL_STORAGE_KEY_PREFIX = 'verniq_roadmap_item_progress_';
+import { apiClient, type RoadmapDetailDto } from '@/lib/apiClient';
 
-export const roadmapService = {
-  /**
-   * Fetches the complete roadmap tree, joining problem catalog references dynamically.
-   */
-  async getRoadmapBySlug(slug: string = 'dsa-mastery'): Promise<Roadmap> {
-    if (!isSupabaseConfigured()) {
-      return FALLBACK_STRUCTURED_ROADMAP;
-    }
-
-    try {
-      // 1. Fetch roadmap record
-      const { data: rRow, error: rErr } = await supabase
-        .from('roadmaps')
-        .select('*')
-        .eq('slug', slug)
-        .eq('is_published', true)
-        .maybeSingle();
-
-      if (rErr || !rRow) {
-        return FALLBACK_STRUCTURED_ROADMAP;
-      }
-
-      const roadmapId = rRow.id;
-
-      // 2. Fetch sprints
-      const { data: sprintRows } = await supabase
-        .from('roadmap_sprints')
-        .select('*')
-        .eq('roadmap_id', roadmapId)
-        .eq('is_published', true)
-        .order('position', { ascending: true });
-
-      if (!sprintRows || sprintRows.length === 0) {
-        return FALLBACK_STRUCTURED_ROADMAP;
-      }
-
-      const sprintIds = sprintRows.map((s) => s.id);
-
-      // 3. Fetch days
-      const { data: dayRows } = await supabase
-        .from('roadmap_days')
-        .select('*')
-        .in('sprint_id', sprintIds)
-        .order('position', { ascending: true });
-
-      const dayIds = (dayRows || []).map((d) => d.id);
-
-      // 4. Fetch day topics
-      const { data: topicRows } = await supabase
-        .from('roadmap_day_topics')
-        .select('*')
-        .in('day_id', dayIds)
-        .order('position', { ascending: true });
-
-      // 5. Fetch items
-      const { data: itemRows } = await supabase
-        .from('roadmap_items')
-        .select('*')
-        .in('day_id', dayIds)
-        .order('position', { ascending: true });
-
-      const itemIds = (itemRows || []).map((i) => i.id);
-
-      // 6. Fetch problem references and join problem catalog
-      const { data: refRows } = await supabase
-        .from('roadmap_problem_references')
-        .select('id, roadmap_item_id, verniq_problem_id, position, required, notes')
-        .in('roadmap_item_id', itemIds);
-
-      // Collect verniq IDs to fetch problem summaries from Problem Catalog
-      const verniqIds = (refRows || []).map((r) => r.verniq_problem_id);
-      let problemSummaries: Record<string, ProblemSummary> = {};
-
-      if (verniqIds.length > 0) {
-        const { data: pRows } = await supabase
-          .from('problems')
-          .select('id, verniq_id, title, difficulty, slug')
-          .in('verniq_id', verniqIds);
-
-        if (pRows) {
-          problemSummaries = pRows.reduce((acc, p) => {
-            if (p.verniq_id) {
-              acc[p.verniq_id] = {
-                verniqId: p.verniq_id,
-                title: p.title,
-                difficulty: p.difficulty,
-                slug: p.slug,
-                topics: ['Algorithms'],
-              };
-            }
-            return acc;
-          }, {} as Record<string, ProblemSummary>);
-        }
-      }
-
-      // Map references
-      const refByItem: Record<string, RoadmapProblemReference> = {};
-      (refRows || []).forEach((ref) => {
-        refByItem[ref.roadmap_item_id] = {
-          id: ref.id,
-          roadmapItemId: ref.roadmap_item_id,
-          verniqProblemId: ref.verniq_problem_id,
-          position: ref.position,
-          required: ref.required,
-          notes: ref.notes,
-          problemSummary: problemSummaries[ref.verniq_problem_id] || null,
-        };
-      });
-
-      // Map items by day
-      const itemsByDay: Record<string, RoadmapItem[]> = {};
-      (itemRows || []).forEach((row) => {
-        const item: RoadmapItem = {
-          id: row.id,
-          dayId: row.day_id,
-          topicId: row.topic_id,
-          title: row.title,
-          description: row.description,
-          itemType: row.item_type,
-          position: row.position,
-          required: row.required,
-          estimatedMinutes: row.estimated_minutes ?? 20,
-          contentUrl: row.content_url,
-          contentMarkdown: row.content_markdown,
-          metadata: row.metadata || {},
-          problemReference: refByItem[row.id] || null,
-        };
-        if (!itemsByDay[row.day_id]) itemsByDay[row.day_id] = [];
-        itemsByDay[row.day_id].push(item);
-      });
-
-      // Map topics by day
-      const topicsByDay: Record<string, any[]> = {};
-      (topicRows || []).forEach((t) => {
-        if (!topicsByDay[t.day_id]) topicsByDay[t.day_id] = [];
-        topicsByDay[t.day_id].push({
+function mapDetailToRoadmap(dto: RoadmapDetailDto): Roadmap {
+  return {
+    id: dto.id,
+    title: dto.title,
+    slug: dto.slug,
+    description: dto.description,
+    estimatedDuration: dto.estimatedDuration,
+    totalSprints: dto.totalSprints,
+    iconName: dto.iconName,
+    position: 1,
+    isPublished: true,
+    phases: [],
+    sprints: dto.sprints.map((s) => ({
+      id: s.id,
+      roadmapId: s.roadmapId,
+      title: s.title,
+      slug: s.slug,
+      description: s.description,
+      position: s.position,
+      estimatedHours: s.estimatedHours ?? 10,
+      isPublished: true,
+      status: s.status,
+      days: s.days.map((d) => ({
+        id: d.id,
+        sprintId: d.sprintId,
+        dayNumber: d.dayNumber,
+        title: d.title,
+        description: d.description,
+        learningObjectives: d.learningObjectives || [],
+        position: d.position,
+        status: d.status,
+        topics: (d.topics || []).map((t) => ({
           id: t.id,
-          dayId: t.day_id,
+          dayId: t.dayId,
           title: t.title,
           description: t.description,
           position: t.position,
-          items: (itemsByDay[t.day_id] || []).filter((i) => i.topicId === t.id),
-        });
-      });
+          items: [],
+        })),
+        items: d.items.map((i) => ({
+          id: i.id,
+          dayId: i.dayId,
+          topicId: i.topicId,
+          title: i.title,
+          description: i.description,
+          itemType: i.itemType as any,
+          position: i.position,
+          required: i.required,
+          estimatedMinutes: i.estimatedMinutes ?? 20,
+          contentUrl: i.contentUrl,
+          contentMarkdown: i.contentMarkdown,
+          status: i.status as any,
+          problemReference: i.problemReference
+            ? {
+                id: i.problemReference.id,
+                roadmapItemId: i.id,
+                verniqProblemId: i.problemReference.verniqProblemId,
+                position: i.problemReference.position,
+                required: i.problemReference.required,
+                notes: i.problemReference.notes,
+                problemSummary: i.problemReference.problemSummary
+                  ? {
+                      verniqId: i.problemReference.problemSummary.verniqId,
+                      title: i.problemReference.problemSummary.title,
+                      difficulty: (i.problemReference.problemSummary.difficulty?.toLowerCase() as any) || 'medium',
+                      slug: i.problemReference.problemSummary.slug,
+                      topics: i.problemReference.problemSummary.topics || [],
+                    }
+                  : null,
+              }
+            : null,
+        })),
+      })),
+    })),
+  };
+}
 
-      // Map days by sprint
-      const daysBySprint: Record<string, RoadmapDay[]> = {};
-      (dayRows || []).forEach((d) => {
-        let objectives = d.learning_objectives;
-        if (typeof objectives === 'string') {
-          try {
-            objectives = JSON.parse(objectives);
-          } catch {
-            objectives = [];
-          }
-        }
-        const day: RoadmapDay = {
-          id: d.id,
-          sprintId: d.sprint_id,
-          dayNumber: d.day_number,
-          title: d.title,
-          description: d.description,
-          learningObjectives: Array.isArray(objectives) ? objectives : [],
-          position: d.position,
-          topics: topicsByDay[d.id] || [],
-          items: itemsByDay[d.id] || [],
-        };
-        if (!daysBySprint[d.sprint_id]) daysBySprint[d.sprint_id] = [];
-        daysBySprint[d.sprint_id].push(day);
-      });
-
-      // Map sprints
-      const sprints: RoadmapSprint[] = sprintRows.map((s) => ({
-        id: s.id,
-        roadmapId: s.roadmap_id,
-        phaseId: s.phase_id,
-        title: s.title,
-        slug: s.slug,
-        description: s.description,
-        position: s.position,
-        estimatedHours: Number(s.estimated_hours ?? 10),
-        isPublished: s.is_published,
-        days: daysBySprint[s.id] || [],
-      }));
-
-      return {
-        id: rRow.id,
-        title: rRow.title,
-        slug: rRow.slug,
-        description: rRow.description,
-        estimatedDuration: rRow.estimated_duration ?? '~120 Hours',
-        totalSprints: rRow.total_sprints ?? sprints.length,
-        iconName: rRow.icon_name ?? 'Compass',
-        position: rRow.order_index ?? 1,
-        isPublished: rRow.is_published,
-        phases: [],
-        sprints,
-      };
+export const roadmapService = {
+  /**
+   * Fetches the complete server-authoritative roadmap tree with evaluated node states.
+   */
+  async getRoadmapBySlug(slug: string = 'dsa-mastery'): Promise<Roadmap> {
+    try {
+      const dto = await apiClient.getRoadmap(slug);
+      if (dto && dto.sprints && dto.sprints.length > 0) {
+        return mapDetailToRoadmap(dto);
+      }
     } catch (err) {
-      console.warn('Failed to load roadmap from Supabase, utilizing fallback:', err);
-      return FALLBACK_STRUCTURED_ROADMAP;
+      console.warn('Backend getRoadmap failed, utilizing fallback structure:', err);
     }
+
+    return FALLBACK_STRUCTURED_ROADMAP;
   },
 
   /**
-   * Fetches user progress map { [itemId]: RoadmapItemStatus }
+   * Fetches server-authoritative user progress map { [itemId]: RoadmapItemStatus }
    */
-  async getUserProgress(userId?: string): Promise<Record<string, RoadmapItemStatus>> {
+  async getUserProgress(_userId?: string): Promise<Record<string, RoadmapItemStatus>> {
     const progressMap: Record<string, RoadmapItemStatus> = {};
-
-    // 1. Check local storage cache
     try {
-      const stored = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}${userId || 'anon'}`);
-      if (stored) {
-        Object.assign(progressMap, JSON.parse(stored));
-      }
-    } catch {}
-
-    // 2. Query Supabase if authenticated
-    if (userId && isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('user_roadmap_item_progress')
-          .select('roadmap_item_id, status')
-          .eq('user_id', userId);
-
-        if (!error && data) {
-          data.forEach((row) => {
-            progressMap[row.roadmap_item_id] = row.status as RoadmapItemStatus;
-          });
+      const dto = await apiClient.getRoadmap('dsa-mastery');
+      if (dto && dto.sprints) {
+        for (const s of dto.sprints) {
+          for (const d of s.days) {
+            for (const item of d.items) {
+              if (item.status) {
+                progressMap[item.id] = item.status as RoadmapItemStatus;
+              }
+            }
+          }
         }
-      } catch (err) {
-        console.warn('Failed to fetch user roadmap progress from Supabase:', err);
       }
+    } catch (err) {
+      console.warn('Failed to load server progress map:', err);
     }
-
     return progressMap;
   },
 
   /**
-   * Updates an item's status (COMPLETED, IN_PROGRESS, AVAILABLE, SKIPPED)
+   * Updates an item's status via authoritative backend API.
    */
   async setItemStatus(
     itemId: string,
     status: RoadmapItemStatus,
-    userId?: string
+    _userId?: string
   ): Promise<void> {
-    // 1. Update local storage
-    try {
-      const key = `${LOCAL_STORAGE_KEY_PREFIX}${userId || 'anon'}`;
-      const stored = localStorage.getItem(key);
-      const map = stored ? JSON.parse(stored) : {};
-      map[itemId] = status;
-      localStorage.setItem(key, JSON.stringify(map));
-    } catch {}
-
-    // 2. Persist to Supabase if authenticated
-    if (userId && isSupabaseConfigured()) {
+    if (status === 'COMPLETED') {
       try {
-        const isCompleted = status === 'COMPLETED';
-        await supabase
-          .from('user_roadmap_item_progress')
-          .upsert({
-            user_id: userId,
-            roadmap_item_id: itemId,
-            status,
-            completed_at: isCompleted ? new Date().toISOString() : null,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'user_id, roadmap_item_id' });
+        await apiClient.completeRoadmapItem(itemId);
       } catch (err) {
-        console.error('Failed to update item progress in Supabase:', err);
+        console.error('Failed to complete item via API:', err);
       }
     }
   },
+
+  /**
+   * Fetches deterministic next recommended problem in the roadmap.
+   */
+  async getNextProblem(slug: string = 'dsa-mastery') {
+    return apiClient.getNextRoadmapProblem(slug);
+  },
+
+  /**
+   * Fetches roadmap node counts and completion percentage.
+   */
+  async getProgressSummary(slug: string = 'dsa-mastery') {
+    return apiClient.getRoadmapProgress(slug);
+  },
 };
+

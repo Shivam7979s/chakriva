@@ -67,7 +67,7 @@ export const ProblemsView: React.FC = () => {
     const q = search.toLowerCase().trim();
 
     let result = problems.filter((prob) => {
-      const status = progressMap[prob.id] || 'todo';
+      const status = progressMap[prob.id] || (prob.verniq_id ? progressMap[prob.verniq_id] : undefined) || 'todo';
       const isRevision = Boolean(revisionMap[prob.id]);
 
       const tokens = q.split(/\s+/).filter(Boolean);
@@ -338,7 +338,7 @@ export const ProblemsView: React.FC = () => {
                       <ArrowUpDown className="w-3 h-3" />
                     </button>
                   </th>
-                  <th className="py-2.5 px-3 w-12 text-center">Status</th>
+                  <th className="py-2.5 px-3 w-28 text-center">Status</th>
                   <th className="py-2.5 px-4">
                     <button
                       onClick={() => {
@@ -392,7 +392,7 @@ export const ProblemsView: React.FC = () => {
               <tbody className="divide-y divide-border">
                 {paginatedProblems.length > 0 ? (
                   paginatedProblems.map((prob) => {
-                    const status = progressMap[prob.id] || 'todo';
+                    const status = progressMap[prob.id] || (prob.verniq_id ? progressMap[prob.verniq_id] : undefined) || 'todo';
                     const isMarked = Boolean(revisionMap[prob.id]);
                     const isDraft = !prob.is_published || prob.workflow_status === 'draft';
 
@@ -408,21 +408,38 @@ export const ProblemsView: React.FC = () => {
                           </span>
                         </td>
 
-                        {/* Status Checkmark */}
+                        {/* Status Indicator */}
                         <td className="py-2 px-3 text-center">
                           {status === 'solved' && (
-                            <span title="Solved">
-                              <CheckCircle2 className="w-4 h-4 text-[#00B8A3] inline" />
+                            <span
+                              role="status"
+                              aria-label="Solved"
+                              title="Solved"
+                              className="inline-flex items-center gap-1.5 text-[#00B8A3] text-xs font-mono font-medium"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                              <span>Solved</span>
                             </span>
                           )}
                           {status === 'attempted' && (
-                            <span title="Attempted" className="inline-flex items-center justify-center">
-                              <span className="w-2.5 h-2.5 rounded-full bg-[#FFC01E]" />
+                            <span
+                              role="status"
+                              aria-label="Attempted"
+                              title="Attempted"
+                              className="inline-flex items-center gap-1.5 text-[#FFC01E] text-xs font-mono font-medium"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-[#FFC01E] shrink-0" aria-hidden="true" />
+                              <span>Attempted</span>
                             </span>
                           )}
                           {status === 'todo' && (
-                            <span title="Todo" className="text-text-muted font-bold text-sm inline-block select-none">
-                              -
+                            <span
+                              role="status"
+                              aria-label="Unattempted"
+                              title="Unattempted"
+                              className="text-text-muted text-xs font-mono select-none"
+                            >
+                              —
                             </span>
                           )}
                         </td>

@@ -25,26 +25,32 @@ export const RoadmapHeader: React.FC<RoadmapHeaderProps> = ({
       subtitle={roadmap.description}
       actions={
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-          {/* Progress Card */}
-          <div className="p-3.5 rounded-lg border border-white/[0.08] bg-[#181C28] w-full sm:w-80 space-y-2 shadow-elevation-1">
-            <div className="flex items-center justify-between text-xs font-mono font-medium">
-              <span className="text-text-secondary flex items-center gap-1.5">
+          {/* Track Completion Card */}
+          <div className="p-4 rounded-lg border border-white/[0.08] bg-[#181C28] w-full sm:w-80 space-y-2.5 shadow-elevation-1">
+            <div className="flex items-center justify-between text-xs font-mono font-semibold tracking-wider text-text-muted uppercase">
+              <span className="flex items-center gap-1.5 text-text-secondary">
                 <Award className="w-3.5 h-3.5 text-primary" />
-                Track Completion
-              </span>
-              <span className="text-[#00B8A3] font-bold tabular-nums">
-                {completedItems} / {totalItems} ({percentage}%)
+                TRACK COMPLETION
               </span>
             </div>
 
-            {/* Accessible Progress Bar */}
+            <div className="flex items-baseline justify-between pt-0.5">
+              <span className="text-xs font-mono text-text-secondary">
+                <span className="text-sm font-bold text-text-primary tabular-nums">{completedItems}</span> / {totalItems} items
+              </span>
+              <span className="text-sm font-mono font-bold text-[#00B8A3] tabular-nums">
+                {percentage}%
+              </span>
+            </div>
+
+            {/* Subtle Progress Bar */}
             <div
-              className="w-full bg-[#1C212E] h-2 rounded-full overflow-hidden border border-white/[0.04]"
+              className="w-full bg-[#1C212E] h-1.5 rounded-full overflow-hidden border border-white/[0.04]"
               role="progressbar"
               aria-valuenow={percentage}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label={`Overall roadmap progress: ${percentage}%`}
+              aria-label={`Track completion progress: ${percentage}%`}
             >
               <div
                 className="bg-[#00B8A3] h-full transition-all duration-300 rounded-full"

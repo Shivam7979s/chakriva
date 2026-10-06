@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { SplitPane } from './SplitPane';
 import { TestCaseConsole, type TestCaseItem, type ExecutionVerdict } from './TestCaseConsole';
@@ -10,6 +10,7 @@ import { useUserProgress } from '@/hooks/useUserProgress';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ChevronLeft,
+  ArrowLeft,
   RotateCcw,
   Copy,
   Check,
@@ -26,7 +27,8 @@ import {
 } from 'lucide-react';
 import { MonacoCodeEditor } from '@/components/editor/MonacoCodeEditor';
 
-import { runCode, submitSolution, cancelExecution } from '@/lib/submissionService';
+import { runCode, submitSolution, cancelExecution, mapDtoToSubmission } from '@/lib/submissionService';
+import { apiClient, ApiClientError } from '@/lib/apiClient';
 import { syncAcceptedSubmissionToSprintAndDiagnostics } from '@/lib/telemetryFeedback';
 import { useSubmissionRealtime } from '@/hooks/useSubmissionRealtime';
 import { useAutosave } from '@/hooks/useAutosave';
@@ -45,8 +47,11 @@ export const ProblemWorkspace: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const activeSlug = slug || 'two-sum';
 
+  const [searchParams] = useSearchParams();
+  const fromRoadmap = searchParams.get('fromRoadmap');
+
   const { problem, testCases: sampleTestCases, canonicalTestCount, loading } = useProblemBySlug(activeSlug);
-  const { progressMap, revisionMap, updateProgress, toggleRevision } = useUserProgress();
+  const { progressMap, revisionMap, updateProgress, toggleRevision, refreshProgress } = useUserProgress();
   const { user, preferredLanguage, updatePreferredLanguage } = useAuth();
 
   const [language, setLanguage] = useState<string>(preferredLanguage || 'java');
@@ -65,6 +70,10 @@ export const ProblemWorkspace: React.FC = () => {
   // Execution state
   const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(null);
   const [submissionHistory, setSubmissionHistory] = useState<Submission[]>([]);
+  const [historyLoading, setHistoryLoading] = useState<boolean>(false);
+  const [selectedHistorySub, setSelectedHistorySub] = useState<Submission | null>(null);
+  const [submittingState, setSubmittingState] = useState<'idle' | 'submitting' | 'queued' | 'judging' | 'completed' | 'error'>('idle');
+  const [submissionRequestId, setSubmissionRequestId] = useState<string | null>(null);
   const [verdict, setVerdict] = useState<ExecutionVerdict>('idle');
   const [executionMode, setExecutionMode] = useState<'run' | 'submit' | null>(null);
   const [runtimeMs, setRuntimeMs] = useState<number>(0);
@@ -118,6 +127,30 @@ export const ProblemWorkspace: React.FC = () => {
       }
     }
   }, [liveSubmission, problem, updateProgress]);
+
+  // Load real submission history from Spring Boot API
+  const fetchSubmissionHistory = useCallback(async () => {
+    if (!problem) return;
+    setHistoryLoading(true);
+    try {
+      const targetId = problem.verniq_id || problem.slug || problem.id;
+      const resp = await apiClient.listUserSubmissions({ problemId: targetId });
+      if (resp && resp.content) {
+        const mappedList = resp.content.map((dto) => mapDtoToSubmission(dto));
+        setSubmissionHistory(mappedList);
+      }
+    } catch (err) {
+      console.warn('Could not fetch user submission history from Spring Boot API:', err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [problem]);
+
+  useEffect(() => {
+    if (leftTab === 'submissions') {
+      fetchSubmissionHistory();
+    }
+  }, [leftTab, fetchSubmissionHistory]);
 
   // Stopwatch state
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
@@ -306,9 +339,9 @@ export const ProblemWorkspace: React.FC = () => {
     }
   };
 
-  // Submit code against all hidden test cases (canonical evaluation)
+  // Submit code against all hidden test cases (canonical evaluation via Spring Boot)
   const handleSubmitCode = async () => {
-    if (!problem || verdict === 'running') return;
+    if (!problem || submittingState === 'submitting' || submittingState === 'queued' || submittingState === 'judging') return;
 
     // Quarantined draft catalog check
     if (!problem.is_published || problem.workflow_status === 'draft') {
@@ -322,65 +355,87 @@ export const ProblemWorkspace: React.FC = () => {
       return;
     }
 
-    const subId = crypto.randomUUID();
-    setActiveSubmissionId(subId);
     setExecutionMode('submit');
-    setVerdict('running');
-    setStdoutLogs('Compiling solution...\nExecuting full test matrix across isolated containers...');
+    setSubmittingState('submitting');
+    setVerdict('pending');
+    setSubmissionRequestId(null);
+    setStdoutLogs('Creating official submission record and dispatching to Spring Boot...');
     setStderrLogs('');
     setCompileOutput('');
     setTelemetry(null);
     setFirstFailedTest(null);
 
-    if (import.meta.env.DEV) {
-      console.log('[VERNIQ SUBMIT TRACE]', {
-        stage: 'handleSubmitCode',
-        problemId: problem.id,
-        verniqId: problem.verniq_id,
-        executionMode: 'submit',
+    const targetProblemId = problem.verniq_id || problem.slug || problem.id;
+
+    try {
+      const res = await submitSolution(
+        targetProblemId,
+        code,
+        language as ProgrammingLanguage,
+        user?.id,
+        undefined,
+        undefined,
         canonicalTestCount,
-        sampleTestCount: sampleTestCases?.length ?? 0,
-      });
-    }
-
-    const res = await submitSolution(
-      problem.id,
-      code,
-      language as ProgrammingLanguage,
-      user?.id,
-      undefined, // Dispatches against the complete canonical test suite
-      subId,
-      canonicalTestCount
-    );
-
-    if (import.meta.env.DEV) {
-      console.log('[VERNIQ SUBMIT TRACE]', {
-        stage: 'submitSolution result received',
-        verdict: res.submission?.verdict,
-        testCasesPassed: res.submission?.test_cases_passed,
-        totalTestCases: res.submission?.total_test_cases,
-      });
-    }
-
-    if (res.submission) {
-      setVerdict(res.submission.verdict);
-      setRuntimeMs(res.submission.runtime_ms);
-      setMemoryMb(res.submission.memory_kb / 1024);
-      setStdoutLogs(res.submission.stdout_output || '');
-      setStderrLogs(res.submission.stderr_output || '');
-      setCompileOutput(res.submission.compile_output || '');
-      setTestCasesPassed(res.submission.test_cases_passed);
-      setTotalTestCases(res.submission.total_test_cases);
-      if (res.submission.telemetry) {
-        setTelemetry(res.submission.telemetry);
-      }
-      const failed = res.submission.first_failed_test || res.submission.firstFailedTest || null;
-      setFirstFailedTest(failed);
-      if (res.submission.verdict === 'accepted') {
-        updateProgress(problem.id, 'solved');
-        if (user) {
-          syncAcceptedSubmissionToSprintAndDiagnostics(user.id, problem.id, problem.difficulty);
+        (interimSub) => {
+          setActiveSubmissionId(interimSub.id);
+          setVerdict(interimSub.verdict);
+          if (interimSub.verdict === 'pending') {
+            setSubmittingState('queued');
+            setStdoutLogs('Submission enqueued in Redis. Waiting for isolated judge worker...');
+          } else if (interimSub.verdict === 'running') {
+            setSubmittingState('judging');
+            setStdoutLogs('Judge worker executing canonical test suite inside isolated sandbox...');
+          } else {
+            setSubmittingState('completed');
+          }
         }
+      );
+
+      const finalSub = res.submission;
+      if (finalSub) {
+        setSubmittingState('completed');
+        setActiveSubmissionId(finalSub.id);
+        setVerdict(finalSub.verdict);
+        setRuntimeMs(finalSub.runtime_ms);
+        setMemoryMb(finalSub.memory_kb / 1024);
+        setStdoutLogs(finalSub.stdout_output || '');
+        setStderrLogs(finalSub.stderr_output || '');
+        setCompileOutput(finalSub.compile_output || '');
+        setTestCasesPassed(finalSub.test_cases_passed);
+        setTotalTestCases(finalSub.total_test_cases);
+        setFirstFailedTest(finalSub.first_failed_test || finalSub.firstFailedTest || null);
+
+        // Prepend to submission history
+        setSubmissionHistory((prev) => [finalSub, ...prev.filter((s) => s.id !== finalSub.id)]);
+
+        // Refresh server-authoritative progress from Spring Boot control plane
+        refreshProgress();
+
+        if (finalSub.verdict === 'accepted') {
+          updateProgress(problem.id, 'solved');
+          if (user) {
+            syncAcceptedSubmissionToSprintAndDiagnostics(user.id, problem.id, problem.difficulty);
+          }
+        }
+      }
+    } catch (err: unknown) {
+      setSubmittingState('error');
+      const apiErr = err instanceof ApiClientError ? err : null;
+      const status = apiErr?.status;
+      const reqId = apiErr?.requestId;
+      const msg = apiErr?.message || (err instanceof Error ? err.message : 'Submission failed');
+
+      setVerdict('system_error');
+      setSubmissionRequestId(reqId || null);
+
+      if (status === 401) {
+        setStderrLogs(
+          `[AUTHENTICATION REQUIRED]\n\n${msg}\nYour source code has been preserved intact. Please sign in to submit official solutions.`
+        );
+      } else {
+        setStderrLogs(
+          `[SUBMISSION ERROR]\n\n${msg}${reqId ? `\n\nRequest ID: ${reqId}` : ''}\n\nYour source code is safe and has NOT been modified.`
+        );
       }
     }
   };
@@ -433,7 +488,8 @@ export const ProblemWorkspace: React.FC = () => {
   }
 
   const isRevisionMarked = Boolean(revisionMap[problem.id]);
-  const isSolved = progressMap[problem.id] === 'solved';
+  const isSolved = progressMap[problem.id] === 'solved' || (problem.verniq_id ? progressMap[problem.verniq_id] === 'solved' : false);
+  const isAttempted = !isSolved && (progressMap[problem.id] === 'attempted' || (problem.verniq_id ? progressMap[problem.verniq_id] === 'attempted' : false));
   const isDraft = !problem.is_published || problem.workflow_status === 'draft';
 
   // Map test cases to TestCaseConsole format
@@ -543,6 +599,18 @@ export const ProblemWorkspace: React.FC = () => {
               </div>
             )}
 
+            {fromRoadmap && (
+              <div className="mb-3">
+                <Link
+                  to={`/roadmaps/${encodeURIComponent(fromRoadmap)}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-primary hover:text-primary-hover transition-colors px-2.5 py-1 rounded bg-primary/10 border border-primary/20"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Roadmap ({fromRoadmap === 'dsa-mastery' ? 'DSA Interview Mastery' : fromRoadmap})</span>
+                </Link>
+              </div>
+            )}
+
             <div>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {problem.verniq_id && (
@@ -557,13 +625,22 @@ export const ProblemWorkspace: React.FC = () => {
                 )}
                 <DifficultyBadge difficulty={problem.difficulty} />
                 <Badge variant="neutral">Acceptance: {problem.acceptance_rate}%</Badge>
-                {isSolved && <Badge variant="success">Solved</Badge>}
-                {(problem.tags || []).map((tag) => (
+                {isSolved && <Badge variant="success">✓ Solved</Badge>}
+                {isAttempted && <Badge variant="warning">○ Attempted</Badge>}
+                {(problem.topics || problem.tags || []).map((topic) => (
                   <span
-                    key={tag}
-                    className="bg-[#333333] text-gray-300 text-xs px-2 py-0.5 rounded font-mono"
+                    key={topic}
+                    className="bg-[#1C212E] text-blue-300 text-xs px-2 py-0.5 rounded font-mono border border-blue-900/30"
                   >
-                    {tag}
+                    {topic}
+                  </span>
+                ))}
+                {(problem.companies || []).map((comp) => (
+                  <span
+                    key={comp}
+                    className="bg-[#2A2315] text-amber-300 text-xs px-2 py-0.5 rounded font-mono border border-amber-800/30"
+                  >
+                    🏢 {comp}
                   </span>
                 ))}
               </div>
@@ -670,74 +747,130 @@ export const ProblemWorkspace: React.FC = () => {
         {/* TAB 4: SUBMISSIONS */}
         {leftTab === 'submissions' && (
           <div className="space-y-3">
-            <h3 className="text-xs font-sans font-semibold uppercase tracking-wider text-text-secondary">
-              Session Submission History
-            </h3>
-            <div className="border border-border rounded-lg overflow-hidden">
-              <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-surface-elevated border-b border-border text-text-secondary">
-                  <tr>
-                    <th className="p-2.5">Status</th>
-                    <th className="p-2.5">Type</th>
-                    <th className="p-2.5">Language</th>
-                    <th className="p-2.5">Runtime</th>
-                    <th className="p-2.5">Passed</th>
-                    <th className="p-2.5">Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {submissionHistory.length > 0 ? (
-                    submissionHistory.map((sub) => (
-                      <tr key={sub.id} className="hover:bg-white/[0.02]">
-                        <td className="p-2.5">
-                          <span
-                            className={cn(
-                              'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
-                              sub.verdict === 'accepted'
-                                ? 'bg-[#00B8A3]/10 text-[#00B8A3] border border-[#00B8A3]/30'
-                                : 'bg-[#FF375F]/10 text-[#FF375F] border border-[#FF375F]/30'
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-sans font-semibold uppercase tracking-wider text-text-secondary">
+                Official Submission History
+              </h3>
+              <button
+                onClick={fetchSubmissionHistory}
+                disabled={historyLoading}
+                className="flex items-center gap-1 text-[11px] font-mono text-text-secondary hover:text-text-primary px-2 py-0.5 rounded border border-border bg-surface-elevated transition-colors"
+                title="Refresh submission history"
+              >
+                <RefreshCw className={cn("w-3 h-3", historyLoading && "animate-spin text-primary")} />
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            {historyLoading && submissionHistory.length === 0 ? (
+              <div className="p-8 text-center text-text-secondary font-mono text-xs flex items-center justify-center gap-2 border border-border rounded-lg bg-surface-elevated">
+                <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                <span>Loading submissions...</span>
+              </div>
+            ) : !user ? (
+              <div className="p-6 text-center text-text-secondary font-mono text-xs border border-border rounded-lg bg-surface-elevated space-y-2">
+                <p>Sign in to record and inspect your canonical submissions.</p>
+                <Link to="/login" className="inline-block px-3 py-1 bg-primary text-black font-semibold rounded text-xs">
+                  Sign In
+                </Link>
+              </div>
+            ) : (
+              <div className="border border-border rounded-lg overflow-hidden">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-surface-elevated border-b border-border text-text-secondary">
+                    <tr>
+                      <th className="p-2.5">Status</th>
+                      <th className="p-2.5">Type</th>
+                      <th className="p-2.5">Language</th>
+                      <th className="p-2.5">Runtime</th>
+                      <th className="p-2.5">Passed</th>
+                      <th className="p-2.5">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {submissionHistory.length > 0 ? (
+                      submissionHistory.map((sub) => {
+                        const isSelected = selectedHistorySub?.id === sub.id;
+                        return (
+                          <React.Fragment key={sub.id}>
+                            <tr
+                              onClick={() => setSelectedHistorySub(isSelected ? null : sub)}
+                              className={cn(
+                                "cursor-pointer transition-colors",
+                                isSelected ? "bg-white/[0.04]" : "hover:bg-white/[0.02]"
+                              )}
+                            >
+                              <td className="p-2.5">
+                                <span
+                                  className={cn(
+                                    'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
+                                    sub.verdict === 'accepted'
+                                      ? 'bg-[#00B8A3]/10 text-[#00B8A3] border border-[#00B8A3]/30'
+                                      : sub.verdict === 'pending' || sub.verdict === 'running'
+                                      ? 'bg-primary/10 text-primary border border-primary/30'
+                                      : 'bg-[#FF375F]/10 text-[#FF375F] border border-[#FF375F]/30'
+                                  )}
+                                >
+                                  {sub.verdict.replace('_', ' ')}
+                                </span>
+                              </td>
+                              <td className="p-2.5 text-text-secondary">
+                                {sub.is_custom_run ? 'Run' : 'Submit'}
+                              </td>
+                              <td className="p-2.5 font-mono text-text-primary uppercase">
+                                {sub.language}
+                              </td>
+                              <td className="p-2.5 text-text-primary">
+                                {sub.runtime_ms > 0 ? `${sub.runtime_ms} ms` : '—'}
+                              </td>
+                              <td className="p-2.5 text-text-secondary font-mono text-[11px]">
+                                {sub.test_cases_passed}/{sub.total_test_cases}
+                              </td>
+                              <td className="p-2.5 text-text-secondary">
+                                {new Date(sub.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </td>
+                            </tr>
+                            {isSelected && (
+                              <tr>
+                                <td colSpan={6} className="p-3 bg-black/40 border-b border-border">
+                                  <div className="space-y-2 text-xs font-mono">
+                                    <div className="flex items-center justify-between text-[11px] text-text-secondary">
+                                      <span>Submission ID: <strong className="text-text-primary">{sub.id}</strong></span>
+                                      <span>Memory: <strong className="text-text-primary">{sub.memory_kb ? `${(sub.memory_kb / 1024).toFixed(1)} MB` : '—'}</strong></span>
+                                    </div>
+                                    {sub.first_failed_test && (
+                                      <div className="p-2 rounded bg-rose-950/20 border border-rose-800/30 text-rose-300 text-[11px]">
+                                        Failed Test Case #{sub.first_failed_test.test_number} (Canonical test data protected)
+                                      </div>
+                                    )}
+                                    {sub.compile_output && (
+                                      <pre className="p-2 rounded bg-black/60 border border-orange-800/40 text-orange-300 text-[11px] whitespace-pre-wrap max-h-32 overflow-y-auto">
+                                        {sub.compile_output}
+                                      </pre>
+                                    )}
+                                    {sub.stderr_output && (
+                                      <pre className="p-2 rounded bg-black/60 border border-rose-800/40 text-rose-300 text-[11px] whitespace-pre-wrap max-h-32 overflow-y-auto">
+                                        {sub.stderr_output}
+                                      </pre>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
                             )}
-                          >
-                            {sub.verdict.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="p-2.5 text-text-secondary">
-                          {sub.is_custom_run ? 'Run' : 'Submit'}
-                        </td>
-                        <td className="p-2.5 font-mono text-text-primary uppercase">
-                          {sub.language}
-                        </td>
-                        <td className="p-2.5 text-text-primary">{sub.runtime_ms} ms</td>
-                        <td className="p-2.5 text-text-secondary font-mono text-[11px]">
-                          {sub.test_cases_passed}/{sub.total_test_cases}
-                          <span className="text-[10px] text-text-tertiary ml-1 font-sans">
-                            {sub.is_custom_run ? '(sample)' : '(canonical)'}
-                          </span>
-                        </td>
-                        <td className="p-2.5 text-text-secondary">
-                          {new Date(sub.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          </React.Fragment>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="p-4 text-center text-text-secondary">
+                          No submissions recorded yet for this problem.
                         </td>
                       </tr>
-                    ))
-                  ) : isSolved ? (
-                    <tr>
-                      <td className="p-2.5 text-[#00B8A3] font-bold">Accepted</td>
-                      <td className="p-2.5 text-text-secondary">Submit</td>
-                      <td className="p-2.5 font-mono">{language.toUpperCase()}</td>
-                      <td className="p-2.5">24 ms</td>
-                      <td className="p-2.5">24/24</td>
-                      <td className="p-2.5 text-text-secondary">Prior Session</td>
-                    </tr>
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="p-4 text-center text-text-secondary">
-                        No submissions recorded yet for this session.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -840,9 +973,11 @@ export const ProblemWorkspace: React.FC = () => {
         onRunCode={handleRunCode}
         onSubmit={handleSubmitCode}
         onCancel={handleCancelExecution}
-        isExecuting={isPending || isRunning || verdict === 'running'}
+        isExecuting={isPending || isRunning || verdict === 'running' || submittingState === 'submitting' || submittingState === 'queued' || submittingState === 'judging'}
         verdict={verdict}
         executionMode={executionMode}
+        submittingState={submittingState}
+        requestId={submissionRequestId}
         canonicalTestCount={canonicalTestCount}
         sampleTestCount={sampleTestCases?.length || 0}
         runtimeMs={runtimeMs}

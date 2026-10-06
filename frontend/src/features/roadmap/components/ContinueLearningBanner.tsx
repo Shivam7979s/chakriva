@@ -36,10 +36,10 @@ export const ContinueLearningBanner: React.FC<ContinueLearningBannerProps> = ({
           </div>
           <div>
             <h3 className="text-base font-semibold text-text-primary">
-              Roadmap Completed!
+              Roadmap Complete
             </h3>
             <p className="text-sm text-text-secondary mt-0.5">
-              You have completed all required learning items in this track. Time to practice mock interviews or explore advanced tracks.
+              You've completed every required item in this track. Time to practice mock interviews or explore advanced tracks.
             </p>
           </div>
         </div>
@@ -48,7 +48,23 @@ export const ContinueLearningBanner: React.FC<ContinueLearningBannerProps> = ({
   }
 
   if (!target) {
-    return null;
+    return (
+      <div className="rounded-lg border border-border bg-surface-elevated p-5 shadow-elevation-1">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-text-primary">
+              Ready to begin
+            </h3>
+            <p className="text-sm text-text-secondary mt-0.5">
+              Start with Sprint 1 · Day 1.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const getItemIcon = (type: string) => {
@@ -67,7 +83,9 @@ export const ContinueLearningBanner: React.FC<ContinueLearningBannerProps> = ({
     }
   };
 
-  const isProblem = target.itemType === 'PROBLEM' && target.problemSlug;
+  const isProblem = target.itemType === 'PROBLEM' && Boolean(target.problemSlug);
+  // Extract sprint position if available
+  const sprintLabel = target.sprintTitle.match(/Sprint\s+\d+/i)?.[0] || 'Sprint 1';
 
   return (
     <div className="rounded-lg border border-primary/30 bg-surface-elevated p-5 relative overflow-hidden shadow-elevation-2">
@@ -76,28 +94,29 @@ export const ContinueLearningBanner: React.FC<ContinueLearningBannerProps> = ({
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
         {/* Left Side: Context & Next Action */}
-        <div className="space-y-2">
-          {/* Track Badges */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-primary/10 text-primary border border-primary/20">
-              <Sparkles className="w-3 h-3" />
-              CONTINUE LEARNING
-            </span>
-            <span className="text-xs font-mono text-text-muted">
-              {target.sprintTitle}
-            </span>
-            <span className="text-text-muted">·</span>
-            <span className="text-xs font-mono font-medium text-text-secondary">
-              Day {target.dayNumber}: {target.dayTitle}
-            </span>
+        <div className="space-y-3">
+          {/* Track Context: Sprint and Day */}
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-primary/10 text-primary border border-primary/20 tracking-wider uppercase">
+                <Sparkles className="w-3 h-3" />
+                CONTINUE LEARNING
+              </span>
+              <span className="text-xs font-mono font-semibold text-text-primary">
+                {sprintLabel} · Day {target.dayNumber}
+              </span>
+            </div>
+            <div className="text-xs font-medium text-text-secondary pl-0.5">
+              {target.dayTitle}
+            </div>
           </div>
 
-          {/* Next Item Title */}
+          {/* Next Up Item Title */}
           <div>
-            <div className="text-xs font-mono text-text-muted uppercase tracking-wider">
-              Next Up
+            <div className="text-[11px] font-mono font-semibold text-text-muted uppercase tracking-wider">
+              NEXT UP
             </div>
-            <div className="flex items-center gap-2.5 mt-0.5">
+            <div className="flex items-center gap-2.5 mt-1">
               <span className="p-1 rounded bg-white/[0.04] border border-white/[0.06]">
                 {getItemIcon(target.itemType)}
               </span>
@@ -116,7 +135,7 @@ export const ContinueLearningBanner: React.FC<ContinueLearningBannerProps> = ({
 
             {target.verniqProblemId && (
               <>
-                <span className="text-border">|</span>
+                <span className="text-border">·</span>
                 <span className="font-mono text-primary font-semibold">
                   {target.verniqProblemId}
                 </span>
@@ -129,37 +148,39 @@ export const ContinueLearningBanner: React.FC<ContinueLearningBannerProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Actions */}
-        <div className="shrink-0 flex items-center gap-3">
-          {onMarkComplete && (
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => onMarkComplete(target.itemId)}
-              className="text-xs font-mono"
-            >
-              <Check className="w-3.5 h-3.5 mr-1" />
-              Mark Done
-            </Button>
-          )}
-
+        {/* Right Side: CTA Actions */}
+        <div className="shrink-0 flex items-center gap-3 self-start md:self-center">
           {isProblem ? (
-            <Link to={`/problems/${target.problemSlug}`}>
+            <Link to={`/problems/${target.problemSlug}?fromRoadmap=dsa-mastery`}>
               <Button variant="primary" size="md" className="font-mono text-xs shadow-md">
                 <span>Solve Problem</span>
                 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
               </Button>
             </Link>
           ) : (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => onMarkComplete?.(target.itemId)}
-              className="font-mono text-xs shadow-md"
-            >
-              <span>Continue Learning</span>
-              <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-            </Button>
+            <>
+              {onMarkComplete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onMarkComplete(target.itemId)}
+                  className="text-xs font-mono border-border hover:bg-surface text-text-secondary hover:text-text-primary"
+                >
+                  <Check className="w-3.5 h-3.5 mr-1 text-[#00B8A3]" />
+                  Mark Done
+                </Button>
+              )}
+
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => onMarkComplete?.(target.itemId)}
+                className="font-mono text-xs shadow-md"
+              >
+                <span>Continue Learning</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </Button>
+            </>
           )}
         </div>
       </div>

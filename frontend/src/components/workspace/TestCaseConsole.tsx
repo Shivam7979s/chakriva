@@ -44,6 +44,8 @@ interface TestCaseConsoleProps {
   isExecuting?: boolean;
   verdict?: ExecutionVerdict;
   executionMode?: 'run' | 'submit' | null;
+  submittingState?: 'idle' | 'submitting' | 'queued' | 'judging' | 'completed' | 'error';
+  requestId?: string | null;
   canonicalTestCount?: number;
   sampleTestCount?: number;
   runtimeMs?: number;
@@ -68,6 +70,8 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
   isExecuting = false,
   verdict = 'idle',
   executionMode = null,
+  submittingState = 'idle',
+  requestId = null,
   canonicalTestCount = 0,
   sampleTestCount = 0,
   runtimeMs = 0,
@@ -187,16 +191,50 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
           isPositive: false,
         };
       case 'running':
-      case 'pending':
+      case 'pending': {
+        const isSubmitting = submittingState === 'submitting';
+        const isQueued = submittingState === 'queued';
+        const isJudging = submittingState === 'judging';
+
+        let pill = isRunMode ? 'RUN' : 'SUBMIT';
+        let title = isRunMode ? 'Evaluating Sample Tests...' : 'Evaluating Canonical Test Suite...';
+        let desc = isRunMode
+          ? 'Compiling source and verifying visible sample test vectors for fast feedback.'
+          : 'Compiling source and executing full test matrix across isolated containers.';
+
+        if (isSubmitting) {
+          pill = 'DISPATCH';
+          title = 'Submitting Solution...';
+          desc = 'Contacting Verniq submission control plane...';
+        } else if (isQueued) {
+          pill = 'QUEUED';
+          title = 'Queued for Evaluation';
+          desc = 'Submission is enqueued in Redis. Waiting for isolated judge worker...';
+        } else if (isJudging) {
+          pill = 'JUDGING';
+          title = 'Judging Solution...';
+          desc = 'Isolated judge sandbox is executing canonical test vectors...';
+        }
+
         return {
-          pill: isRunMode ? 'RUN' : 'SUBMIT',
-          title: isRunMode ? 'Evaluating Sample Tests...' : 'Evaluating Canonical Test Suite...',
-          desc: isRunMode
-            ? 'Compiling source and verifying visible sample test vectors for fast feedback.'
-            : 'Compiling source and executing full test matrix across isolated containers.',
+          pill,
+          title,
+          desc,
           color: 'text-primary bg-primary/10 border-primary/30',
           badgeColor: 'bg-primary text-white font-bold',
           icon: <Clock className="w-5 h-5 animate-spin text-primary" />,
+          isPositive: false,
+        };
+      }
+      case 'system_error':
+      case 'internal_error':
+        return {
+          pill: 'SYS_ERR',
+          title: 'System Error',
+          desc: 'An error occurred during submission evaluation. Your source code has been preserved.',
+          color: 'text-rose-400 bg-rose-950/30 border-rose-800/40',
+          badgeColor: 'bg-rose-600 text-white font-bold',
+          icon: <AlertTriangle className="w-5 h-5 text-rose-400" />,
           isPositive: false,
         };
       default:
@@ -314,24 +352,30 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
             size="sm"
             variant="secondary"
             onClick={onRunCode}
-            disabled={isExecuting}
+            disabled={isExecuting || submittingState === 'submitting' || submittingState === 'queued' || submittingState === 'judging'}
             leftIcon={<Play className="w-3.5 h-3.5 fill-current text-primary" />}
             className="h-7 text-xs font-mono"
             title="Compile & run against sample test cases (Ctrl + ')"
           >
-            Run Code
+            {executionMode === 'run' && isExecuting ? 'Running...' : 'Run Code'}
           </Button>
 
           <Button
             size="sm"
             variant="primary"
             onClick={onSubmit}
-            disabled={isExecuting}
+            disabled={isExecuting || submittingState === 'submitting' || submittingState === 'queued' || submittingState === 'judging'}
             leftIcon={<Send className="w-3.5 h-3.5" />}
             className="h-7 text-xs font-mono bg-blue-600 hover:bg-blue-500 text-white"
             title="Submit solution to remote judge sandbox (Ctrl + Enter)"
           >
-            Submit
+            {submittingState === 'submitting'
+              ? 'Submitting...'
+              : submittingState === 'queued'
+              ? 'Queued...'
+              : submittingState === 'judging'
+              ? 'Judging...'
+              : 'Submit'}
           </Button>
         </div>
       </div>
@@ -568,7 +612,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                       {!isFailedTestCollapsed && (
                         <div className="p-3 space-y-3 text-xs font-mono">
                           {/* Input */}
-                          {firstFailedTest.input !== undefined && firstFailedTest.input !== null && (
+                          {firstFailedTest.input ? (
                             <div>
                               <label className="text-[11px] font-sans font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
                                 Input
@@ -577,10 +621,14 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                                 {firstFailedTest.input}
                               </pre>
                             </div>
-                          )}
+                          ) : isSubmitMode ? (
+                            <div className="p-2.5 rounded bg-[#0E1117] border border-white/[0.08] text-neutral-400 text-xs leading-relaxed">
+                              <span className="text-neutral-300 font-semibold">Test #{firstFailedTest.test_number || 1} failed.</span> Canonical test input and expected output remain protected to maintain evaluation integrity.
+                            </div>
+                          ) : null}
 
                           {/* Your Output */}
-                          {firstFailedTest.actual_output !== undefined && firstFailedTest.actual_output !== null && (
+                          {firstFailedTest.actual_output && (
                             <div>
                               <div className="flex items-center justify-between mb-1">
                                 <label className="text-[11px] font-sans font-semibold text-[#FF375F] uppercase tracking-wider">
@@ -593,7 +641,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                                 )}
                               </div>
                               <pre className="p-2.5 rounded bg-[#0E1117] border border-[#FF375F]/30 text-[#FF375F] overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-36 font-semibold">
-                                {firstFailedTest.actual_output || '(no output / empty string)'}
+                                {firstFailedTest.actual_output}
                               </pre>
                             </div>
                           )}
@@ -633,6 +681,18 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                           )}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Request ID for support / debugging */}
+                  {requestId && (
+                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#12151E] border border-white/[0.08] text-xs font-mono text-neutral-400 select-all">
+                      <div className="flex items-center gap-2">
+                        <Info className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                        <span className="text-neutral-500 font-sans">Request ID:</span>
+                        <span className="text-blue-400 font-mono font-semibold">{requestId}</span>
+                      </div>
+                      <span className="text-[10px] text-neutral-500">System trace</span>
                     </div>
                   )}
 

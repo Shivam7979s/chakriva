@@ -28,7 +28,59 @@ export const RoadmapItemRow: React.FC<RoadmapItemRowProps> = ({
   const isLocked = status === 'LOCKED';
   const isCompleted = status === 'COMPLETED';
 
+  const isProblemItem = Boolean(item.problemReference || item.itemType === 'PROBLEM');
+
   const renderStatusIcon = () => {
+    if (isProblemItem) {
+      switch (status) {
+        case 'COMPLETED':
+          return (
+            <span
+              title="Problem Solved (Verified by Judge)"
+              className="text-[#00B8A3] inline-flex items-center justify-center"
+              aria-label={`Problem '${item.title}' is solved`}
+            >
+              <CheckCircle2 className="w-5 h-5 fill-[#00B8A3]/20" />
+              <span className="sr-only">[Solved]</span>
+            </span>
+          );
+        case 'IN_PROGRESS':
+          return (
+            <span
+              title="Problem Attempted — Solve in workspace to complete"
+              className="text-amber-400 inline-flex items-center justify-center"
+              aria-label={`Problem '${item.title}' has been attempted`}
+            >
+              <CircleDot className="w-5 h-5" />
+              <span className="sr-only">[Attempted]</span>
+            </span>
+          );
+        case 'LOCKED':
+          return (
+            <span
+              title="Locked — Complete previous items to unlock"
+              className="text-text-muted/60 inline-flex items-center justify-center"
+              aria-disabled="true"
+            >
+              <Lock className="w-4 h-4" />
+              <span className="sr-only">[Locked — Prerequisite Required]</span>
+            </span>
+          );
+        case 'AVAILABLE':
+        default:
+          return (
+            <span
+              title="Problem Available — Solve in workspace to complete"
+              className="text-text-muted hover:text-text-primary transition-colors inline-flex items-center justify-center"
+              aria-label={`Problem '${item.title}' is available`}
+            >
+              <Circle className="w-5 h-5" />
+              <span className="sr-only">[Available]</span>
+            </span>
+          );
+      }
+    }
+
     switch (status) {
       case 'COMPLETED':
         return (
@@ -170,11 +222,13 @@ export const RoadmapItemRow: React.FC<RoadmapItemRowProps> = ({
             {/* Accessible Status Text */}
             <span className="ml-auto text-[11px] font-mono font-medium">
               {isCompleted ? (
-                <span className="text-[#00B8A3]">Completed</span>
+                <span className="text-[#00B8A3]">{isProblemItem ? 'Solved' : 'Completed'}</span>
+              ) : status === 'IN_PROGRESS' ? (
+                <span className="text-amber-400">{isProblemItem ? 'Attempted' : 'In Progress'}</span>
               ) : isLocked ? (
                 <span className="text-text-muted">Prerequisite Required</span>
               ) : (
-                <span className="text-text-secondary">Ready</span>
+                <span className="text-text-secondary">Available</span>
               )}
             </span>
           </div>

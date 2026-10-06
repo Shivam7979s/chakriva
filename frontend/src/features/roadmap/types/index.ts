@@ -139,6 +139,10 @@ export interface ProgressSummary {
   completedDays: number;
   totalDays: number;
   status: RoadmapItemStatus;
+  completedNodes?: number;
+  totalNodes?: number;
+  currentSprintTitle?: string;
+  currentDayNumber?: number;
 }
 
 export interface ContinueLearningTarget {

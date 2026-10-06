@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
 import { ActiveSprintBanner } from '@/components/dashboard/ActiveSprintBanner';
 import { ProblemOfTheDayCard } from '@/components/dashboard/ProblemOfTheDayCard';
@@ -19,18 +19,65 @@ import {
   ShieldCheck,
   CalendarCheck,
   ExternalLink,
+  CheckCircle2,
+  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiClient, type ProgressSummary } from '@/lib/apiClient';
+import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 
-export const DashboardView: React.FC = () => {
+function formatTimeAgo(timestampStr: string): string {
+  if (!timestampStr) return '';
+  const now = new Date().getTime();
+  const past = new Date(timestampStr).getTime();
+  const diffSec = Math.floor((now - past) / 1000);
+  if (diffSec < 60) return 'Just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return new Date(timestampStr).toLocaleDateString();
+}
+
+export interface DashboardViewProps {
+  initialTab?: 'overview' | 'analytics';
+}
+
+export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'overview' }) => {
   const { profile, user } = useAuth();
   const telemetry = useUserTelemetry();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') as 'overview' | 'analytics' | null;
+  const [activeTab, setActiveTab] = useState<'overview' | 'analytics'>(tabFromUrl || initialTab);
+
+  useEffect(() => {
+    if (tabFromUrl && (tabFromUrl === 'overview' || tabFromUrl === 'analytics')) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
+
+  const handleTabChange = (tab: 'overview' | 'analytics') => {
+    setActiveTab(tab);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tab === 'overview') {
+        next.delete('tab');
+      } else {
+        next.set('tab', tab);
+      }
+      return next;
+    });
+  };
 
   // Active Sprint & Tasks
   const [activeSprint, setActiveSprint] = useState<StudySprint | null>(null);
   const [sprintTasks, setSprintTasks] = useState<SprintTask[]>([]);
   const [todaySprintTasks, setTodaySprintTasks] = useState<SprintTask[]>([]);
   const [revisionDueItems, setRevisionDueItems] = useState<RevisionCard[]>([]);
+  const [progressSummary, setProgressSummary] = useState<ProgressSummary | null>(null);
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -160,6 +207,16 @@ export const DashboardView: React.FC = () => {
         });
         setRevisionDueItems(revMapped);
       }
+
+      // 3. Fetch server-authoritative progress summary from Spring Boot API
+      try {
+        const sum = await apiClient.getProgressSummary();
+        if (sum) {
+          setProgressSummary(sum);
+        }
+      } catch (sumErr) {
+        console.warn('[DashboardView] Could not fetch server progress summary:', sumErr);
+      }
     } catch (err) {
       console.error('[DashboardView] Error fetching telemetry:', err);
     }
@@ -206,22 +263,36 @@ export const DashboardView: React.FC = () => {
     }
   };
 
-  // Solve Counts by Difficulty
-  const solvedCount = telemetry.solvedCount;
-  const totalProblems = FALLBACK_PROBLEMS.length;
+  // Solve Counts by Difficulty (Server-Authoritative from Spring Boot)
+  const solvedCount = progressSummary ? progressSummary.totalProblemsSolved : telemetry.solvedCount;
+  const attemptedCount = progressSummary ? progressSummary.totalProblemsAttempted : 0;
+  const totalSubmissions = progressSummary ? progressSummary.totalSubmissions : telemetry.totalSubmissions;
+  const acceptedSubmissions = progressSummary ? progressSummary.acceptedSubmissions : telemetry.recentAccepted.length;
+  const acceptanceRate = progressSummary ? progressSummary.submissionAcceptanceRate : 0.0;
 
-  const easyTotal = FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'easy').length;
-  const medTotal = FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'medium').length;
-  const hardTotal = FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'hard').length;
+  const easyTotal = progressSummary ? progressSummary.difficulty.easy.total : FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'easy').length;
+  const medTotal = progressSummary ? progressSummary.difficulty.medium.total : FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'medium').length;
+  const hardTotal = progressSummary ? progressSummary.difficulty.hard.total : FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'hard').length;
+  const totalProblems = (easyTotal + medTotal + hardTotal) || FALLBACK_PROBLEMS.length;
 
   const solvedSet = useMemo(() => new Set(telemetry.solvedProblemIds), [telemetry.solvedProblemIds]);
 
-  const easySolved = FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'easy' && solvedSet.has(p.id)).length;
-  const medSolved = FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'medium' && solvedSet.has(p.id)).length;
-  const hardSolved = FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'hard' && solvedSet.has(p.id)).length;
+  const easySolved = progressSummary ? progressSummary.difficulty.easy.solved : FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'easy' && solvedSet.has(p.id)).length;
+  const medSolved = progressSummary ? progressSummary.difficulty.medium.solved : FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'medium' && solvedSet.has(p.id)).length;
+  const hardSolved = progressSummary ? progressSummary.difficulty.hard.solved : FALLBACK_PROBLEMS.filter((p) => p.difficulty === 'hard' && solvedSet.has(p.id)).length;
 
-  // Topic Mastery Breakdown
+  // Topic Mastery Breakdown (Server-Authoritative)
   const topicMastery = useMemo(() => {
+    if (progressSummary && progressSummary.topics && progressSummary.topics.length > 0) {
+      const palette = ['#00B8A3', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899', '#10B981', '#6366F1'];
+      return progressSummary.topics.map((t, idx) => ({
+        id: t.topicSlug,
+        name: t.topicName,
+        total: Number(t.total) || 0,
+        solved: Number(t.solved) || 0,
+        color: palette[idx % palette.length],
+      }));
+    }
     return [
       {
         id: 'arrays',
@@ -258,7 +329,9 @@ export const DashboardView: React.FC = () => {
         color: '#F59E0B',
       },
     ];
-  }, [solvedSet]);
+  }, [progressSummary, solvedSet]);
+
+  const recentActivities = progressSummary?.recentActivity || [];
 
   // 30-Day Activity Grid
   const activityPulseCells = useMemo(() => {
@@ -315,6 +388,21 @@ export const DashboardView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Solved / Attempted Metrics Chip */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+              <CheckCircle2 className="w-4 h-4 text-[#00B8A3]" />
+              <span>
+                <strong>{solvedCount}</strong> Solved ({attemptedCount} Attempted)
+              </span>
+            </div>
+
+            {/* Submission Acceptance Rate Chip */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono">
+              <span>
+                <strong>{acceptanceRate}%</strong> Acceptance ({acceptedSubmissions}/{totalSubmissions} Subs)
+              </span>
+            </div>
+
             {/* Active Streak Chip */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-mono">
               <Flame className="w-4 h-4 fill-orange-500/20" />
@@ -336,7 +424,43 @@ export const DashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* HIGH-DENSITY SPLIT STAGE: 65% Execution Horizon / 35% Telemetry Horizon */}
+        {/* WORKSPACE VIEW TABS */}
+        <div className="flex items-center gap-2 border-b border-white/[0.08] pb-1">
+          <button
+            type="button"
+            onClick={() => handleTabChange('overview')}
+            className={cn(
+              'px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center gap-2',
+              activeTab === 'overview'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-sm'
+                : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+            )}
+          >
+            <CalendarCheck className="w-3.5 h-3.5" />
+            Mission Execution
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange('analytics')}
+            className={cn(
+              'px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center gap-2',
+              activeTab === 'analytics'
+                ? 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 shadow-sm'
+                : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
+            )}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            Intelligence & Analytics
+          </button>
+        </div>
+
+        {/* TAB 1: INTELLIGENCE & ANALYTICS */}
+        {activeTab === 'analytics' && (
+          <AnalyticsDashboard onRefreshParent={fetchDashboardData} />
+        )}
+
+        {/* TAB 2: EXECUTION HORIZON & TELEMETRY */}
+        {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* ========================================================================= */}
           {/* CENTER STAGE: EXECUTION HORIZON (65% / 8 cols) */}
@@ -574,8 +698,64 @@ export const DashboardView: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Recent Coding Activity (Server-Authoritative) */}
+            <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#12151D] shadow-elevation-1 space-y-3 text-left">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400">
+                    Live Telemetry
+                  </span>
+                  <h4 className="text-sm font-bold text-white">Recent Coding Activity</h4>
+                </div>
+                <span className="text-xs font-mono text-neutral-400">Authoritative</span>
+              </div>
+
+              <div className="space-y-2">
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((act, i) => (
+                    <div
+                      key={act.problemId || i}
+                      className="p-3 rounded-xl border border-white/[0.06] bg-[#181C26] flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] text-neutral-400 border border-white/[0.06]">
+                            {act.verniqId}
+                          </span>
+                          <span
+                            className={cn(
+                              'text-[10px] font-mono px-1.5 py-0.2 rounded border font-semibold',
+                              act.status === 'SOLVED'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                            )}
+                          >
+                            {act.status === 'SOLVED' ? '✓ Solved' : '○ Attempted'}
+                          </span>
+                        </div>
+                        <p className="text-xs font-semibold text-neutral-200 truncate">
+                          {act.problemTitle}
+                        </p>
+                      </div>
+
+                      <span className="text-[10px] font-mono text-neutral-500 shrink-0">
+                        {formatTimeAgo(act.timestamp)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-6 text-center space-y-2 rounded-xl border border-dashed border-white/[0.06] bg-[#181C26]/40">
+                    <p className="text-xs font-mono text-neutral-400">
+                      No recent submissions recorded yet.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+        )}
       </div>
     </DashboardLayout>
   );

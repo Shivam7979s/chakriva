@@ -20,6 +20,7 @@ import {
   Moon,
   Bookmark,
   FileEdit,
+  BarChart3,
 } from 'lucide-react';
 import { IconButton } from '../actions/IconButton';
 import { useAuth } from '@/hooks/useAuth';
@@ -161,6 +162,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               to="/app/diagnostic"
               icon={<Brain className="w-4 h-4 text-purple-400" />}
               label="Diagnostic Test"
+              collapsed={collapsed}
+            />
+            <NavItem
+              to="/app/analytics"
+              icon={<BarChart3 className="w-4 h-4 text-cyan-400" />}
+              label="Intelligence & Analytics"
               collapsed={collapsed}
             />
           </div>

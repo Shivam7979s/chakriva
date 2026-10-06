@@ -1,15 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { apiClient } from '@/lib/apiClient';
 import { useAuth } from './useAuth';
 import type { ProblemStatus } from '@/types';
 
 const LOCAL_STORAGE_PROGRESS_KEY = 'verniq_user_progress_cache';
 const LOCAL_STORAGE_REVISION_KEY = 'verniq_user_revision_cache';
 
+function normalizeStatus(serverStatus: string): ProblemStatus {
+  const s = (serverStatus || '').toUpperCase().trim();
+  if (s === 'SOLVED') return 'solved';
+  if (s === 'ATTEMPTED') return 'attempted';
+  return 'todo';
+}
+
 export const useUserProgress = () => {
   const { user } = useAuth();
 
-  // Progress cache: problemId -> status ('todo' | 'attempted' | 'solved')
+  // Progress cache: problemId or verniqId -> status ('todo' | 'attempted' | 'solved')
   const [progressMap, setProgressMap] = useState<Record<string, ProblemStatus>>(() => {
     try {
       const cached = localStorage.getItem(LOCAL_STORAGE_PROGRESS_KEY);
@@ -17,11 +25,7 @@ export const useUserProgress = () => {
     } catch {
       // ignore
     }
-    return {
-      '00000000-0000-0000-0000-000000000301': 'solved',
-      '00000000-0000-0000-0000-000000000302': 'solved',
-      '00000000-0000-0000-0000-000000000303': 'attempted',
-    };
+    return {};
   });
 
   // Revision queue cache: problemId -> boolean
@@ -32,111 +36,110 @@ export const useUserProgress = () => {
     } catch {
       // ignore
     }
-    return {
-      '00000000-0000-0000-0000-000000000301': true,
-      '00000000-0000-0000-0000-000000000306': true,
-    };
+    return {};
   });
 
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Sync with Supabase on mount or when user changes
-  useEffect(() => {
-    const fetchRemoteProgress = async () => {
-      if (!isSupabaseConfigured() || !user) return;
+  // Authoritative fetch from Spring Boot Control Plane API
+  const refreshProgress = useCallback(async () => {
+    if (!user) {
+      setProgressMap({});
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // 1. Fetch server-authoritative problem status map from Spring Boot API
       try {
-        setLoading(true);
-        // Fetch progress
-        const { data: progData, error: progError } = await supabase
-          .from('user_problem_progress')
-          .select('problem_id, status')
-          .eq('user_id', user.id);
+        const rawMap = await apiClient.getUserProblemStatusMap();
+        if (rawMap) {
+          const normalized: Record<string, ProblemStatus> = {};
+          Object.entries(rawMap).forEach(([key, val]) => {
+            normalized[key] = normalizeStatus(val);
+          });
 
-        if (!progError && progData) {
-          const map: Record<string, ProblemStatus> = {};
-          progData.forEach((row: { problem_id: string; status: ProblemStatus }) => {
-            map[row.problem_id] = row.status;
-          });
-          setProgressMap((prev) => {
-            const merged = { ...prev, ...map };
-            localStorage.setItem(LOCAL_STORAGE_PROGRESS_KEY, JSON.stringify(merged));
-            return merged;
-          });
-        }
-
-        // Fetch revision queue
-        const { data: revData, error: revError } = await supabase
-          .from('user_revision_queue')
-          .select('problem_id, is_reviewed')
-          .eq('user_id', user.id)
-          .eq('is_reviewed', false);
-
-        if (!revError && revData) {
-          const rMap: Record<string, boolean> = {};
-          revData.forEach((row: { problem_id: string }) => {
-            rMap[row.problem_id] = true;
-          });
-          setRevisionMap((prev) => {
-            const merged = { ...prev, ...rMap };
-            localStorage.setItem(LOCAL_STORAGE_REVISION_KEY, JSON.stringify(merged));
-            return merged;
-          });
+          setProgressMap(normalized);
+          try {
+            localStorage.setItem(LOCAL_STORAGE_PROGRESS_KEY, JSON.stringify(normalized));
+          } catch {
+            // ignore
+          }
         }
       } catch (err) {
-        console.warn('Failed to load remote progress, using local cache:', err);
-      } finally {
-        setLoading(false);
+        console.warn('[useUserProgress] Failed to fetch server progress map:', err);
       }
-    };
 
-    fetchRemoteProgress();
-  }, [user]);
-
-  // Mutation: Update problem progress
-  const updateProgress = useCallback(
-    async (problemId: string, status: ProblemStatus, notes?: string) => {
-      // 1. Optimistic Local State Update
-      setProgressMap((prev) => {
-        const next = { ...prev, [problemId]: status };
-        localStorage.setItem(LOCAL_STORAGE_PROGRESS_KEY, JSON.stringify(next));
-        return next;
-      });
-
-      // 2. Remote Supabase Update if session active
-      if (isSupabaseConfigured() && user) {
+      // 2. Fetch revision queue from Supabase if configured
+      if (isSupabaseConfigured()) {
         try {
-          await supabase.from('user_problem_progress').upsert({
-            user_id: user.id,
-            problem_id: problemId,
-            status,
-            solved_at: status === 'solved' ? new Date().toISOString() : null,
-            notes: notes || null,
-          });
-        } catch (err) {
-          console.error('Error syncing progress to Supabase:', err);
+          const { data: revData, error: revError } = await supabase
+            .from('user_revision_queue')
+            .select('problem_id, is_reviewed')
+            .eq('user_id', user.id)
+            .eq('is_reviewed', false);
+
+          if (!revError && revData) {
+            const rMap: Record<string, boolean> = {};
+            revData.forEach((row: { problem_id: string }) => {
+              rMap[row.problem_id] = true;
+            });
+            setRevisionMap(rMap);
+            try {
+              localStorage.setItem(LOCAL_STORAGE_REVISION_KEY, JSON.stringify(rMap));
+            } catch {
+              // ignore
+            }
+          }
+        } catch (revErr) {
+          console.warn('[useUserProgress] Failed to fetch revision queue:', revErr);
         }
       }
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Sync on mount or when user changes
+  useEffect(() => {
+    refreshProgress();
+  }, [refreshProgress]);
+
+  // Client-side local update (server updates happen automatically upon submission completion)
+  const updateProgress = useCallback(
+    async (problemId: string, status: ProblemStatus) => {
+      setProgressMap((prev) => {
+        const next = { ...prev, [problemId]: status };
+        try {
+          localStorage.setItem(LOCAL_STORAGE_PROGRESS_KEY, JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
     },
-    [user]
+    []
   );
 
-  // Mutation: Toggle Revision Queue
+  // Mutation: Toggle problem revision status
   const toggleRevision = useCallback(
     async (problemId: string) => {
-      const current = Boolean(revisionMap[problemId]);
-      const nextVal = !current;
+      const willBeInRevision = !revisionMap[problemId];
 
-      // 1. Optimistic update
       setRevisionMap((prev) => {
-        const next = { ...prev, [problemId]: nextVal };
-        localStorage.setItem(LOCAL_STORAGE_REVISION_KEY, JSON.stringify(next));
+        const next = { ...prev, [problemId]: willBeInRevision };
+        try {
+          localStorage.setItem(LOCAL_STORAGE_REVISION_KEY, JSON.stringify(next));
+        } catch {
+          // ignore
+        }
         return next;
       });
 
-      // 2. Remote Supabase Update
       if (isSupabaseConfigured() && user) {
         try {
-          if (nextVal) {
+          if (willBeInRevision) {
             await supabase.from('user_revision_queue').upsert({
               user_id: user.id,
               problem_id: problemId,
@@ -152,18 +155,19 @@ export const useUserProgress = () => {
               .eq('problem_id', problemId);
           }
         } catch (err) {
-          console.error('Error updating revision queue in Supabase:', err);
+          console.error('[useUserProgress] Failed to toggle revision queue:', err);
         }
       }
     },
-    [revisionMap, user]
+    [user, revisionMap]
   );
 
   return {
     progressMap,
     revisionMap,
+    loading,
+    refreshProgress,
     updateProgress,
     toggleRevision,
-    loading,
   };
 };

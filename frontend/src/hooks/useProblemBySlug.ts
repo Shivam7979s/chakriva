@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { apiClient, ProblemDetailDto } from '@/lib/apiClient';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { FALLBACK_PROBLEMS, FALLBACK_SAMPLE_TEST_CASES } from '@/lib/curriculumData';
 import type { Problem, TestCase } from '@/types';
@@ -40,6 +41,37 @@ interface SupabaseProblemRow {
   problem_tags?: ProblemTagRow[];
 }
 
+function mapDetailDtoToProblem(dto: ProblemDetailDto): Problem {
+  // Normalize template keys to lowercase
+  const normalizedTemplates: Record<string, string> = {};
+  if (dto.starterTemplates) {
+    Object.entries(dto.starterTemplates).forEach(([key, val]) => {
+      normalizedTemplates[key.toLowerCase()] = val;
+    });
+  }
+
+  return {
+    id: dto.verniqId,
+    verniq_id: dto.verniqId,
+    title: dto.title,
+    slug: dto.slug,
+    difficulty: dto.difficulty.toLowerCase() as 'easy' | 'medium' | 'hard',
+    acceptance_rate: dto.acceptanceRate ?? 0,
+    description_markdown: dto.statement || '',
+    constraints_markdown: dto.constraints || '',
+    starter_templates: normalizedTemplates,
+    is_premium: false,
+    is_published: true,
+    workflow_status: 'published',
+    domain: 'DSA',
+    tags: dto.topics && dto.topics.length > 0 ? dto.topics : ['General'],
+    topics: dto.topics || [],
+    companies: dto.companies || [],
+    created_at: dto.publishedAt || new Date().toISOString(),
+    updated_at: dto.publishedAt || new Date().toISOString(),
+  };
+}
+
 export const useProblemBySlug = (slug: string) => {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
@@ -52,9 +84,49 @@ export const useProblemBySlug = (slug: string) => {
     setLoading(true);
     setError(null);
 
+    // 1. Try Spring Boot Problem Catalog API first
+    try {
+      const detailDto = await apiClient.getProblem(slug);
+      const mapped = mapDetailDtoToProblem(detailDto);
+      setProblem(mapped);
+
+      // Map examples from Spring Boot to sample TestCase items
+      const sampleCases: TestCase[] = (detailDto.examples || []).map((ex, idx) => ({
+        id: `tc-${idx + 1}`,
+        problem_id: detailDto.verniqId,
+        input: ex.input,
+        expected_output: ex.output,
+        is_sample: true,
+        order_index: idx + 1,
+      }));
+
+      setTestCases(sampleCases);
+
+      // Attempt to load canonical count from Supabase
+      if (isSupabaseConfigured()) {
+        try {
+          const { count } = await supabase
+            .from('test_cases')
+            .select('*', { count: 'exact', head: true })
+            .or(`problem_id.eq.${detailDto.verniqId},problem_id.eq.${detailDto.slug}`);
+          setCanonicalTestCount(count || sampleCases.length || 4);
+        } catch {
+          setCanonicalTestCount(sampleCases.length || 4);
+        }
+      } else {
+        setCanonicalTestCount(sampleCases.length || 4);
+      }
+
+      setLoading(false);
+      return;
+    } catch (springBootErr: unknown) {
+      // If Spring Boot returned 404 or connection failed, fallback to Supabase / local
+      console.warn('[useProblemBySlug] Spring Boot API failed, attempting fallback:', springBootErr);
+    }
+
     // Fallback locator
     const fallbackProb =
-      FALLBACK_PROBLEMS.find((p) => p.slug === slug) || FALLBACK_PROBLEMS[0];
+      FALLBACK_PROBLEMS.find((p) => p.slug === slug || p.verniq_id === slug) || FALLBACK_PROBLEMS[0];
     const fallbackTCs =
       FALLBACK_SAMPLE_TEST_CASES[slug] ||
       FALLBACK_SAMPLE_TEST_CASES[fallbackProb.slug] ||
@@ -63,12 +135,13 @@ export const useProblemBySlug = (slug: string) => {
     if (!isSupabaseConfigured()) {
       setProblem(fallbackProb);
       setTestCases(fallbackTCs);
+      setCanonicalTestCount(fallbackTCs.length);
       setLoading(false);
       return;
     }
 
     try {
-      // 1. Fetch Problem (both published and draft catalog index records)
+      // 2. Fetch Problem from Supabase
       const { data, error: sbError } = await supabase
         .from('problems')
         .select(`
@@ -103,7 +176,7 @@ export const useProblemBySlug = (slug: string) => {
             )
           )
         `)
-        .eq('slug', slug)
+        .or(`slug.eq.${slug},verniq_id.eq.${slug}`)
         .maybeSingle();
 
       if (sbError) throw sbError;
@@ -142,7 +215,7 @@ export const useProblemBySlug = (slug: string) => {
 
         setProblem(mappedProblem);
 
-        // 2. Fetch Sample Test Cases
+        // Fetch Sample Test Cases
         const { data: tcData, error: tcError } = await supabase
           .from('test_cases')
           .select('id, problem_id, input, expected_output, is_sample, order_index')
@@ -150,7 +223,7 @@ export const useProblemBySlug = (slug: string) => {
           .eq('is_sample', true)
           .order('order_index', { ascending: true });
 
-        // 3. Fetch Total Canonical Test Count
+        // Fetch Total Canonical Test Count
         const { count: totalCount } = await supabase
           .from('test_cases')
           .select('*', { count: 'exact', head: true })
@@ -160,7 +233,6 @@ export const useProblemBySlug = (slug: string) => {
           setTestCases(tcData as TestCase[]);
           setCanonicalTestCount(totalCount || tcData.length);
         } else {
-          // Do NOT fabricate test cases for draft catalog problems
           const isDraft = !row.is_published || row.workflow_status === 'draft';
           if (isDraft) {
             setTestCases([]);

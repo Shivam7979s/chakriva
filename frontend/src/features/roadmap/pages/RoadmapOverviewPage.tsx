@@ -34,17 +34,33 @@ export const RoadmapOverviewPage: React.FC<RoadmapOverviewPageProps> = ({
     progressSummary.totalItems > 0 &&
     progressSummary.completedItems === progressSummary.totalItems;
 
+  // Derive active sprint matching server-authoritative progress
+  const activeSprint = useMemo(() => {
+    if (!roadmap || !roadmap.sprints) return null;
+    const inProgress = roadmap.sprints.find((s) => s.status === 'IN_PROGRESS');
+    if (inProgress) return inProgress;
+    if (progressSummary.currentSprintTitle) {
+      const byTitle = roadmap.sprints.find((s) => s.title === progressSummary.currentSprintTitle);
+      if (byTitle) return byTitle;
+    }
+    if (continueTarget?.sprintId) {
+      const byTarget = roadmap.sprints.find((s) => s.id === continueTarget.sprintId);
+      if (byTarget) return byTarget;
+    }
+    return roadmap.sprints.find((s) => s.status !== 'COMPLETED' && s.status !== 'LOCKED') || null;
+  }, [roadmap, progressSummary.currentSprintTitle, continueTarget?.sprintId]);
+
   // Filtered sprints
   const filteredSprints = useMemo(() => {
     if (!roadmap) return [];
     if (filter === 'active') {
-      return roadmap.sprints.filter((s) => s.status === 'IN_PROGRESS' || s.status === 'AVAILABLE');
+      return activeSprint ? [activeSprint] : [];
     }
     if (filter === 'completed') {
       return roadmap.sprints.filter((s) => s.status === 'COMPLETED');
     }
     return roadmap.sprints;
-  }, [roadmap, filter]);
+  }, [roadmap, filter, activeSprint]);
 
   if (loading && !roadmap) {
     return (
@@ -108,20 +124,28 @@ export const RoadmapOverviewPage: React.FC<RoadmapOverviewPageProps> = ({
 
           {/* Sprints and Days Progression Hierarchy */}
           <div className="space-y-5" key={`sprints-${expandAllSignal}-${collapseAllSignal}`}>
-            {filteredSprints.map((sprint, idx) => (
-              <SprintAccordion
-                key={sprint.id}
-                sprint={sprint}
-                isDefaultExpanded={
-                  collapseAllSignal > expandAllSignal
-                    ? false
-                    : expandAllSignal > 0
-                    ? true
-                    : idx === 0 || sprint.status === 'IN_PROGRESS'
-                }
-                onToggleComplete={toggleItemCompleted}
-              />
-            ))}
+            {filteredSprints.map((sprint, idx) => {
+              const sprintIndex = roadmap.sprints.findIndex((s) => s.id === sprint.id);
+              const prerequisiteTitle =
+                sprintIndex > 0 ? roadmap.sprints[sprintIndex - 1]?.title : undefined;
+
+              return (
+                <SprintAccordion
+                  key={sprint.id}
+                  sprint={sprint}
+                  isActiveSprint={sprint.id === activeSprint?.id}
+                  prerequisiteSprintTitle={prerequisiteTitle}
+                  isDefaultExpanded={
+                    collapseAllSignal > expandAllSignal
+                      ? false
+                      : expandAllSignal > 0
+                      ? true
+                      : sprint.id === activeSprint?.id || sprint.status === 'IN_PROGRESS' || idx === 0
+                  }
+                  onToggleComplete={toggleItemCompleted}
+                />
+              );
+            })}
 
             {filteredSprints.length === 0 && (
               <div className="py-12 text-center rounded-lg border border-dashed border-border bg-surface/30">
