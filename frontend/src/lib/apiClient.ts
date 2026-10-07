@@ -87,6 +87,8 @@ export interface SubmissionDetailDto {
   totalTestCases: number | null;
   failedTestIndex: number | null;
   compileOutput: string | null;
+  stderrOutput?: string | null;
+  stdoutOutput?: string | null;
   errorMessage: string | null;
   problemVersion: number;
   createdAt: string;

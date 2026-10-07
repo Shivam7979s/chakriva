@@ -24,10 +24,61 @@ public record SubmissionDetailDto(
     Integer totalTestCases,
     Integer failedTestIndex,
     String compileOutput,
+    String stderrOutput,
+    String stdoutOutput,
     String errorMessage,
     int problemVersion,
     Instant createdAt,
     Instant queuedAt,
     Instant startedAt,
     Instant completedAt
-) {}
+) {
+    /**
+     * Backwards-compatible constructor for callers using the legacy field list without stderrOutput and stdoutOutput.
+     */
+    public SubmissionDetailDto(
+        UUID id,
+        String problemVerniqId,
+        String problemTitle,
+        String language,
+        SubmissionStatus status,
+        String verdict,
+        Double score,
+        Integer runtimeMs,
+        Integer memoryKb,
+        Integer testCasesPassed,
+        Integer totalTestCases,
+        Integer failedTestIndex,
+        String compileOutput,
+        String errorMessage,
+        int problemVersion,
+        Instant createdAt,
+        Instant queuedAt,
+        Instant startedAt,
+        Instant completedAt
+    ) {
+        this(
+            id,
+            problemVerniqId,
+            problemTitle,
+            language,
+            status,
+            verdict,
+            score,
+            runtimeMs,
+            memoryKb,
+            testCasesPassed,
+            totalTestCases,
+            failedTestIndex,
+            compileOutput,
+            null,
+            null,
+            errorMessage,
+            problemVersion,
+            createdAt,
+            queuedAt,
+            startedAt,
+            completedAt
+        );
+    }
+}

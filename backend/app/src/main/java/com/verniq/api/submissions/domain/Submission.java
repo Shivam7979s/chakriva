@@ -111,6 +111,13 @@ public class Submission implements Serializable {
     public void markComplete(SubmissionStatus finalVerdict, Integer runtimeMs, Integer memoryKb,
                              Integer passedTests, Integer totalTests, Integer failedIndex,
                              String compileOut, String stderrOut, String errorMsg) {
+        markComplete(finalVerdict, runtimeMs, memoryKb, passedTests, totalTests, failedIndex,
+                     compileOut, stderrOut, this.stdoutOutput, errorMsg);
+    }
+
+    public void markComplete(SubmissionStatus finalVerdict, Integer runtimeMs, Integer memoryKb,
+                             Integer passedTests, Integer totalTests, Integer failedIndex,
+                             String compileOut, String stderrOut, String stdoutOut, String errorMsg) {
         SubmissionStatus current = getStatus();
         if (!current.canTransitionTo(finalVerdict)) {
             throw new IllegalStateException("Cannot transition from " + current + " to " + finalVerdict);
@@ -123,6 +130,7 @@ public class Submission implements Serializable {
         this.failedTestIndex = failedIndex;
         this.compileOutput = compileOut;
         this.stderrOutput = stderrOut;
+        this.stdoutOutput = stdoutOut;
         this.errorMessage = errorMsg;
         this.completedAt = Instant.now();
 

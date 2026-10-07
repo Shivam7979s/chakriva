@@ -67,4 +67,35 @@ class SubmissionStateTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Unsupported programming language");
     }
+
+    @Test
+    @DisplayName("markComplete: Persists stdout, stderr, compile output, and computes score correctly")
+    void testMarkCompleteWithStdoutAndStderr() {
+        Submission sub = new Submission();
+        sub.setStatus(SubmissionStatus.QUEUED);
+
+        sub.markComplete(
+            SubmissionStatus.ACCEPTED,
+            120,
+            4096,
+            10,
+            10,
+            null,
+            "Compilation successful",
+            "stderr logs",
+            "stdout output line 1\nline 2",
+            null
+        );
+
+        assertThat(sub.getStatus()).isEqualTo(SubmissionStatus.ACCEPTED);
+        assertThat(sub.getRuntimeMs()).isEqualTo(120);
+        assertThat(sub.getMemoryKb()).isEqualTo(4096);
+        assertThat(sub.getTestCasesPassed()).isEqualTo(10);
+        assertThat(sub.getTotalTestCases()).isEqualTo(10);
+        assertThat(sub.getCompileOutput()).isEqualTo("Compilation successful");
+        assertThat(sub.getStderrOutput()).isEqualTo("stderr logs");
+        assertThat(sub.getStdoutOutput()).isEqualTo("stdout output line 1\nline 2");
+        assertThat(sub.getScore()).isEqualTo(100.0);
+        assertThat(sub.getCompletedAt()).isNotNull();
+    }
 }

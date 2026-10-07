@@ -356,6 +356,7 @@ public class SubmissionService {
                 failedIndex,
                 callback.compileOutput(),
                 callback.stderrOutput(),
+                callback.stdoutOutput(),
                 errorMsg
             );
 
@@ -440,6 +441,8 @@ public class SubmissionService {
             sub.getTotalTestCases(),
             sub.getFailedTestIndex(),
             sub.getCompileOutput(),
+            sub.getStderrOutput(),
+            sub.getStdoutOutput(),
             sub.getErrorMessage(),
             sub.getProblemVersion(),
             sub.getCreatedAt(),

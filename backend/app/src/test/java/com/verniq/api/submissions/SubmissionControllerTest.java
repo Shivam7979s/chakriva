@@ -245,6 +245,54 @@ class SubmissionControllerTest {
     }
 
     @Test
+    @DisplayName("Judge callback with stdout and stderr propagates and returns in submission detail API")
+    void testJudgeCallbackOutputPropagationEndToEnd() throws Exception {
+        Submission sub = new Submission();
+        sub.setUserId(USER_A_ID);
+        sub.setProblem(publishedProblem);
+        sub.setLanguage("java");
+        sub.setSourceCode("public class Main { public static void main(String[] args) { System.out.println(\"Hello Verniq!\"); } }");
+        sub.setStatus(SubmissionStatus.QUEUED);
+        sub = submissionRepository.save(sub);
+
+        String sampleStdout = "Hello Verniq!\nResult: 42";
+        String sampleStderr = "Execution debug trace line 1";
+        String sampleCompile = "Picked up JAVA_TOOL_OPTIONS";
+
+        JudgeResultCallbackRequest callback = new JudgeResultCallbackRequest(
+            1, "job_output_prop_test", sub.getId(), "accepted",
+            85, 4096, 1, 1, null,
+            sampleCompile, sampleStderr, sampleStdout, null
+        );
+
+        // 1. Judge callback ingestion persists stdout, stderr, compileOutput
+        mockMvc.perform(post("/api/v1/internal/judge/results")
+                .header("X-Internal-Secret", testInternalSecret)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(callback)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.status").value("ACCEPTED"))
+            .andExpect(jsonPath("$.data.stdoutOutput").value(sampleStdout))
+            .andExpect(jsonPath("$.data.stderrOutput").value(sampleStderr))
+            .andExpect(jsonPath("$.data.compileOutput").value(sampleCompile));
+
+        // 2. GET /api/v1/submissions/{id} exposes stdout, stderr, compileOutput to the owner
+        mockMvc.perform(get("/api/v1/submissions/" + sub.getId())
+                .with(authentication(createMockAuth(USER_A_ID, "USER"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.stdoutOutput").value(sampleStdout))
+            .andExpect(jsonPath("$.data.stderrOutput").value(sampleStderr))
+            .andExpect(jsonPath("$.data.compileOutput").value(sampleCompile));
+
+        // 3. User isolation: Non-owner gets 404 NOT_FOUND
+        mockMvc.perform(get("/api/v1/submissions/" + sub.getId())
+                .with(authentication(createMockAuth(USER_B_ID, "USER"))))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
     @DisplayName("POST /api/v1/internal/judge/results rejects callback with missing secret header")
     void testJudgeCallbackUnauthorizedMissingSecret() throws Exception {
         JudgeResultCallbackRequest callback = new JudgeResultCallbackRequest(
