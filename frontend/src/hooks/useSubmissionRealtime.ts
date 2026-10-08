@@ -23,11 +23,15 @@ export function useSubmissionRealtime(submissionId: string | null): UseSubmissio
     let isMounted = true;
 
     // Fetch initial submission state
-    getSubmission(submissionId).then((initial) => {
-      if (isMounted && initial) {
-        setSubmission(initial);
-      }
-    });
+    getSubmission(submissionId)
+      .then((initial) => {
+        if (isMounted && initial) {
+          setSubmission(initial);
+        }
+      })
+      .catch(() => {
+        // Safe fallback: Realtime subscription or subsequent polling will update state
+      });
 
     // Always listen to mock/in-memory events
     const unsubMock = subscribeToMockSubmission(submissionId, (updated) => {

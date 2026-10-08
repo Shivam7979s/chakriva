@@ -279,8 +279,6 @@ export const ProblemWorkspace: React.FC = () => {
       return;
     }
 
-    const subId = crypto.randomUUID();
-    setActiveSubmissionId(subId);
     setExecutionMode('run');
     setVerdict('running');
     setStdoutLogs('Compiling solution in isolated sandbox...\nVerifying visible test vectors...');
@@ -310,7 +308,7 @@ export const ProblemWorkspace: React.FC = () => {
       language as ProgrammingLanguage,
       customInput || '',
       visibleCases,
-      subId,
+      undefined,
       targetProblemId,
       (interimSub) => {
         setActiveSubmissionId(interimSub.id);
@@ -322,6 +320,10 @@ export const ProblemWorkspace: React.FC = () => {
         }
       }
     );
+
+    if (res.submissionId) {
+      setActiveSubmissionId(res.submissionId);
+    }
 
     if (res.submission) {
       setVerdict(res.submission.verdict);
