@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AppShell } from '@/components/ui/layout/AppShell';
 import { PublicLayout } from '@/components/ui/layout/PublicLayout';
 import { AppLayout } from '@/components/ui/layout/AppLayout';
@@ -34,6 +35,7 @@ export const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AppShell>
+        <Analytics />
         <Routes>
           {/* Public Landing View */}
           <Route path="/" element={<LandingView />} />
