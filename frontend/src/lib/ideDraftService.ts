@@ -21,11 +21,17 @@ export interface IdeStateRecord {
   revision?: number;
 }
 
-export const IDE_STORAGE_PREFIX = 'verniq_ide_state';
+export const IDE_STORAGE_PREFIX = 'chakriva_ide_state';
+export const LEGACY_STORAGE_PREFIX = 'verniq_ide_state';
 
 export function getIdeStorageKey(userId?: string): string {
   const normalizedUser = userId || 'anonymous';
   return `${IDE_STORAGE_PREFIX}_${normalizedUser}`;
+}
+
+export function getLegacyIdeStorageKey(userId?: string): string {
+  const normalizedUser = userId || 'anonymous';
+  return `${LEGACY_STORAGE_PREFIX}_${normalizedUser}`;
 }
 
 /**
@@ -42,6 +48,22 @@ export function getLocalIdeState(
   try {
     const key = getIdeStorageKey(userId);
     let raw = localStorage.getItem(key);
+
+    // Legacy migration: Check legacy verniq_ide_state key
+    if (!raw) {
+      const legacyKey = getLegacyIdeStorageKey(userId);
+      raw = localStorage.getItem(legacyKey);
+      if (!raw && userId) {
+        raw = localStorage.getItem(getLegacyIdeStorageKey(undefined));
+      }
+      if (raw) {
+        try {
+          localStorage.setItem(key, raw);
+        } catch {
+          // ignore
+        }
+      }
+    }
 
     // Fallback: If user is authenticated but has no draft yet under their user ID,
     // check if an anonymous draft exists and migrate it.
@@ -77,10 +99,14 @@ export function getLocalIdeState(
       );
 
       if (validTabs.length > 0) {
-        const activeExists = validTabs.some((t) => t.id === parsed.activeTabId);
+        const sanitizedTabs = validTabs.map((t) => ({
+          ...t,
+          code: t.code.replace(/VERNIQ Online IDE/g, 'Chakriva Online IDE').replace(/VERNIQ/g, 'CHAKRIVA'),
+        }));
+        const activeExists = sanitizedTabs.some((t) => t.id === parsed.activeTabId);
         return {
-          tabs: validTabs,
-          activeTabId: activeExists ? parsed.activeTabId : validTabs[0].id,
+          tabs: sanitizedTabs,
+          activeTabId: activeExists ? parsed.activeTabId : sanitizedTabs[0].id,
         };
       }
     }

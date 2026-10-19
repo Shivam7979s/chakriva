@@ -1,5 +1,4 @@
-import type React from 'react';
-import { Terminal, Shield, GitBranch, Cpu } from 'lucide-react';
+import { Shield, GitBranch, Cpu } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -9,17 +8,17 @@ export const Footer: React.FC = () => {
           {/* Brand Col */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 font-mono font-bold text-text-primary text-base mb-3">
-              <div className="w-6 h-6 rounded bg-primary text-text-inverse flex items-center justify-center text-xs">
-                <Terminal className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 rounded-lg bg-primary/10 border border-primary/30 text-primary flex items-center justify-center text-xs">
+                <span>&gt;_</span>
               </div>
-              <span>VERNIQ</span>
+              <span>CHAKRIVA</span>
             </div>
             <p className="text-[12px] text-text-muted leading-relaxed mb-4">
-              Production-grade engineering learning and career acceleration platform. Built on first principles of systems architecture, isolated execution, and rigorous algorithmic mastery.
+              Intelligent coding-learning and interview-preparation platform. Built on first principles of systems architecture, isolated execution, and rigorous algorithmic mastery.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-mono text-text-muted">
               <span className="w-2 h-2 rounded-full bg-success inline-block"></span>
-              <span>Architecture v0.1.0 • Phase 0 Baseline</span>
+              <span>CHAKRIVA • Systematic Architecture</span>
             </div>
           </div>
 
@@ -72,8 +71,8 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between text-[12px] text-text-muted gap-2">
-          <span>&copy; {new Date().getFullYear()} VERNIQ Platform. Engineering Education Foundation.</span>
-          <span>Zero Vibe Coding • Systematic Design Tokens</span>
+          <span>&copy; {new Date().getFullYear()} CHAKRIVA. Intelligent Coding Learning & Career Platform.</span>
+          <span>Structured Invariants • Systematic Design Tokens</span>
         </div>
       </div>
     </footer>

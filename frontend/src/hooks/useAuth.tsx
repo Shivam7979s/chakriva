@@ -19,6 +19,7 @@ export interface AuthContextType {
     collegeName?: string
   ) => Promise<{ error: Error | null }>;
   signInWithGitHub: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -207,6 +208,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithGoogle = async (): Promise<{ error: Error | null }> => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/app/dashboard',
+        },
+      });
+      return { error };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
   const resetPasswordForEmail = async (email: string): Promise<{ error: Error | null }> => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -340,6 +355,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithEmail,
         signUpWithEmail,
         signInWithGitHub,
+        signInWithGoogle,
         resetPasswordForEmail,
         signOut,
         refreshProfile,

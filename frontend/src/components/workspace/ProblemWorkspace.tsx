@@ -273,7 +273,7 @@ export const ProblemWorkspace: React.FC = () => {
       setStdoutLogs(
         `[CATALOG INDEX RECORD — DRAFT / CONTENT REVIEW]\n\n` +
         `Execution Sandbox Quarantined:\n` +
-        `This record (${problem?.verniq_id || 'VRQ-INDEX'}) is indexed in the Verniq catalog but has not yet passed formal content review.\n` +
+        `This record (${problem?.verniq_id ? problem.verniq_id.replace(/^VRQ-/, 'CKR-') : 'CKR-INDEX'}) is indexed in the Chakriva catalog but has not yet passed formal content review.\n` +
         `Verified test cases, constraints, and sandbox execution are enabled only for published problems.`
       );
       return;
@@ -362,7 +362,7 @@ export const ProblemWorkspace: React.FC = () => {
       setStdoutLogs(
         `[CATALOG INDEX RECORD — DRAFT / CONTENT REVIEW]\n\n` +
         `Execution Sandbox Quarantined:\n` +
-        `This record (${problem.verniq_id || 'VRQ-INDEX'}) is indexed in the Verniq catalog but has not yet passed formal content review.\n` +
+        `This record (${problem.verniq_id ? problem.verniq_id.replace(/^VRQ-/, 'CKR-') : 'CKR-INDEX'}) is indexed in the Chakriva catalog but has not yet passed formal content review.\n` +
         `Verified test cases, constraints, and sandbox execution are enabled only for published problems.`
       );
       return;
@@ -587,7 +587,7 @@ export const ProblemWorkspace: React.FC = () => {
                     Catalog Index Record — Draft / Content Review
                   </span>
                   <span className="bg-amber-900/40 text-amber-300 px-2 py-0.5 rounded border border-amber-700/50 text-[11px]">
-                    {problem.verniq_id || 'VRQ-INDEX'}
+                    {problem.verniq_id ? problem.verniq_id.replace(/^VRQ-/, 'CKR-') : 'CKR-INDEX'}
                   </span>
                 </div>
                 <p className="text-text-secondary leading-relaxed font-sans text-xs">

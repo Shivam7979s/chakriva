@@ -33,7 +33,7 @@ export const DeveloperIdentityCard: React.FC<DeveloperIdentityCardProps> = ({
     profile?.bio ||
     (isGuest
       ? 'Sign in to link academic affiliation, track algorithmic telemetry, and compete in campus leagues.'
-      : 'Engineering developer @ VERNIQ.');
+      : 'Engineering developer @ Chakriva.');
 
   const githubUser = profile?.github_username || null;
   const linkedinUrl = profile?.linkedin_url || null;

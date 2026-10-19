@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/ui/layout/AppShell';
 import { PublicLayout } from '@/components/ui/layout/PublicLayout';
+import { AuthLayout } from '@/components/ui/layout/AuthLayout';
 import { AppLayout } from '@/components/ui/layout/AppLayout';
 import { FoundationView } from '@/routes/FoundationView';
 import { LandingView } from '@/routes/LandingView';
@@ -24,19 +25,29 @@ import { DiagnosticView } from '@/routes/DiagnosticView';
 import { SprintPlanView } from '@/routes/SprintPlanView';
 import { StudyPlanView } from '@/routes/StudyPlanView';
 import { RevisionView } from '@/routes/RevisionView';
+import { SheetsView } from '@/routes/SheetsView';
+import { ChakrivaAiView } from '@/routes/ChakrivaAiView';
+import { ContestsView } from '@/routes/ContestsView';
+import { ProgressView } from '@/routes/ProgressView';
+import { LearnView } from '@/routes/LearnView';
 import { WorkspaceSubView } from '@/routes/WorkspaceSubView';
 import { NotFoundView } from '@/routes/NotFoundView';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminRoute } from '@/components/auth/AdminRoute';
 import { ProblemAuthoringView } from '@/routes/ProblemAuthoringView';
+import { AuraLandingView } from '@/routes/AuraLandingView';
+import { ChakrivaLandingView } from '@/routes/ChakrivaLandingView';
 
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AppShell>
         <Routes>
-          {/* Public Landing View */}
-          <Route path="/" element={<LandingView />} />
+          {/* Chakriva Platform Landing View */}
+          <Route path="/" element={<ChakrivaLandingView />} />
+          <Route path="/chakriva" element={<ChakrivaLandingView />} />
+          <Route path="/aura" element={<AuraLandingView />} />
+          <Route path="/verniq" element={<LandingView />} />
           <Route
             path="/foundation"
             element={
@@ -117,47 +128,47 @@ export const App: React.FC = () => {
               </PublicLayout>
             }
           />
-          <Route
-            path="/app/authoring"
-            element={
-              <ProtectedRoute>
-                <ProblemAuthoringView />
-              </ProtectedRoute>
-            }
-          />
 
           {/* Authentication Routes */}
           <Route
             path="/login"
             element={
-              <PublicLayout>
+              <AuthLayout>
                 <LoginView />
-              </PublicLayout>
+              </AuthLayout>
             }
           />
           <Route
             path="/register"
             element={
-              <PublicLayout>
+              <AuthLayout>
                 <RegisterView />
-              </PublicLayout>
+              </AuthLayout>
             }
           />
           <Route
             path="/forgot-password"
             element={
-              <PublicLayout>
+              <AuthLayout>
                 <ForgotPasswordView />
-              </PublicLayout>
+              </AuthLayout>
             }
           />
 
-          {/* Direct Protected Shortcuts with returnTo support */}
+          {/* Direct Route Shortcuts & Backward-Compatible Redirects */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Navigate to="/app/dashboard" replace />
+                <Navigate to="/app/home" replace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/app/home" replace />
               </ProtectedRoute>
             }
           />
@@ -165,7 +176,7 @@ export const App: React.FC = () => {
             path="/profile"
             element={
               <ProtectedRoute>
-                <ProfileView />
+                <Navigate to="/app/profile" replace />
               </ProtectedRoute>
             }
           />
@@ -210,6 +221,14 @@ export const App: React.FC = () => {
             }
           />
           <Route
+            path="/app/ide"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/ide" replace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/codespace"
             element={
               <ProtectedRoute>
@@ -225,8 +244,52 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/contests"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/app/contests" replace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chakriva-ai"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/app/chakriva" replace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ai"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/app/chakriva" replace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sheets"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/app/sheets" replace />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Authenticated Student Workspace Routes */}
+          {/* =======================================================
+              PRIMARY 9 AUTHENTICATED CHAKRIVA HUBS
+             ======================================================= */}
+
+          {/* 1. HOME: "What should I do right now?" */}
+          <Route
+            path="/app/home"
+            element={
+              <ProtectedRoute>
+                <DashboardView />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/app/dashboard"
             element={
@@ -235,6 +298,118 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+
+          {/* 2. ROADMAP: "What should I do next and why?" */}
+          <Route
+            path="/app/roadmap"
+            element={
+              <ProtectedRoute>
+                <RoadmapsView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/roadmap/:slug"
+            element={
+              <ProtectedRoute>
+                <RoadmapsView />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 3. LEARN: "Teach me." */}
+          <Route
+            path="/app/learn"
+            element={
+              <ProtectedRoute>
+                <LearnView />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 4. PRACTICE: "Let me solve." */}
+          <Route
+            path="/app/practice"
+            element={
+              <ProtectedRoute>
+                <ProblemsView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/practice/:slug"
+            element={
+              <ProtectedRoute>
+                <PublicLayout>
+                  <ProblemWorkspace />
+                </PublicLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 5. SHEETS: "Give me curated preparation." */}
+          <Route
+            path="/app/sheets"
+            element={
+              <ProtectedRoute>
+                <SheetsView />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 6. CHAKRIVA: "Understand me." */}
+          <Route
+            path="/app/chakriva"
+            element={
+              <ProtectedRoute>
+                <ChakrivaAiView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/ai-mentor"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/app/chakriva" replace />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 7. CODESPACE: "Let me build." */}
+          <Route
+            path="/app/codespace"
+            element={
+              <ProtectedRoute>
+                <AppLayout breadcrumbs={[{ label: 'CHAKRIVA', href: '/app/home' }, { label: 'CodeSpace' }]}>
+                  <CodeSpaceView />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 8. CONTESTS: "Challenge me." */}
+          <Route
+            path="/app/contests"
+            element={
+              <ProtectedRoute>
+                <ContestsView />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 9. PROGRESS: "Show me how I'm improving." */}
+          <Route
+            path="/app/progress"
+            element={
+              <ProtectedRoute>
+                <ProgressView />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* =======================================================
+              SECONDARY AUTHENTICATED PAGES (Preserved & Reachable)
+             ======================================================= */}
           <Route
             path="/app/analytics"
             element={
@@ -244,40 +419,10 @@ export const App: React.FC = () => {
             }
           />
           <Route
-            path="/app/profile"
+            path="/app/diagnostic"
             element={
               <ProtectedRoute>
-                <ProfileView />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/app/learn"
-            element={
-              <ProtectedRoute>
-                <WorkspaceSubView
-                  title="Learn & Roadmaps"
-                  moduleName="Curriculum"
-                  phaseTarget="Phase 2"
-                  description="Personalized learning path and interactive syllabus graph."
-                  emptyTitle="Curriculum Sync In Progress"
-                  emptyDescription="Curriculum graph will load active modules when Phase 2 schema is deployed."
-                />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/app/practice"
-            element={
-              <ProtectedRoute>
-                <WorkspaceSubView
-                  title="Practice Environment"
-                  moduleName="Judge Sandbox"
-                  phaseTarget="Phase 3"
-                  description="Isolated WebWorker Monaco editor with remote container judge execution."
-                  emptyTitle="Code Judge Standby"
-                  emptyDescription="Isolated execution sandbox container will be linked during Phase 3."
-                />
+                <DiagnosticView />
               </ProtectedRoute>
             }
           />
@@ -290,30 +435,12 @@ export const App: React.FC = () => {
             }
           />
           <Route
-            path="/app/codespace"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <CodeSpaceView />
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/app/notespace"
             element={
               <ProtectedRoute>
-                <AppLayout>
+                <AppLayout breadcrumbs={[{ label: 'CHAKRIVA', href: '/app/home' }, { label: 'CodeSpace', href: '/app/codespace' }, { label: 'NoteSpace' }]}>
                   <NoteSpaceView />
                 </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/app/diagnostic"
-            element={
-              <ProtectedRoute>
-                <DiagnosticView />
               </ProtectedRoute>
             }
           />
@@ -342,17 +469,26 @@ export const App: React.FC = () => {
             }
           />
           <Route
-            path="/app/contests"
+            path="/app/profile"
             element={
               <ProtectedRoute>
-                <WorkspaceSubView
-                  title="Engineering Contests"
-                  moduleName="Real-Time Contests"
-                  phaseTarget="Phase 4"
-                  description="Live competitive programming rounds with anti-cheat telemetry."
-                  emptyTitle="No Live Contests"
-                  emptyDescription="Next scheduled algorithmic round will be announced in Phase 4."
-                />
+                <ProfileView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/settings"
+            element={
+              <ProtectedRoute>
+                <ProfileSettingsView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/authoring"
+            element={
+              <ProtectedRoute>
+                <ProblemAuthoringView />
               </ProtectedRoute>
             }
           />
@@ -371,31 +507,8 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/app/ai-mentor"
-            element={
-              <ProtectedRoute>
-                <WorkspaceSubView
-                  title="Socratic AI Mentor"
-                  moduleName="AI Service"
-                  phaseTarget="Phase 5"
-                  description="FastAPI + pgvector RAG mentor delivering targeted conceptual hints without giving code away."
-                  emptyTitle="AI Service Standby"
-                  emptyDescription="FastAPI microservice endpoints will be connected during Phase 5."
-                />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/app/settings"
-            element={
-              <ProtectedRoute>
-                <ProfileSettingsView />
-              </ProtectedRoute>
-            }
-          />
 
-          {/* Admin Clearance Route */}
+          {/* Admin Route */}
           <Route
             path="/app/admin"
             element={
@@ -426,3 +539,5 @@ export const App: React.FC = () => {
     </BrowserRouter>
   );
 };
+
+export default App;

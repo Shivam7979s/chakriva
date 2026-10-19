@@ -34,7 +34,7 @@ export const BadgeShowcase: React.FC<BadgeShowcaseProps> = ({
     {
       id: 'badge-first-ac',
       title: 'First AC',
-      description: 'Solved first algorithmic challenge on VERNIQ.',
+      description: 'Solved first algorithmic challenge on Chakriva.',
       criteria: 'Requires solving >= 1 problem',
       unlocked: solvedCount >= 1,
       earnedDate: solvedCount >= 1 ? 'Unlocked' : undefined,

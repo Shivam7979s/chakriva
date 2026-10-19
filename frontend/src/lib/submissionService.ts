@@ -256,17 +256,19 @@ export async function pollSubmissionResult(
   submissionId: string,
   sourceCode: string,
   onUpdate?: (sub: Submission) => void,
-  maxWaitMs: number = 45000,
+  maxWaitMs: number = 90000,
   intervalMs: number = 1000
 ): Promise<Submission> {
   const startTime = Date.now();
   let consecutiveErrors = 0;
+  let lastFetchedSub: Submission | null = null;
 
   while (Date.now() - startTime < maxWaitMs) {
     try {
       const detail = await apiClient.getSubmission(submissionId);
       consecutiveErrors = 0;
       const sub = mapDtoToSubmission(detail, sourceCode);
+      lastFetchedSub = sub;
       updateSubmissionState(sub);
       if (onUpdate) onUpdate(sub);
 
@@ -294,26 +296,31 @@ export async function pollSubmissionResult(
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
 
-  // Timeout reached
-  const timedOutSub: Submission = {
+  // Polling window elapsed while submission is still actively processing.
+  // DO NOT fabricate 'time_limit_exceeded': real TLE is exclusively judge-generated.
+  if (lastFetchedSub) {
+    return lastFetchedSub;
+  }
+
+  const processingSub: Submission = {
     id: submissionId,
     user_id: 'authenticated-user',
     language: 'java',
     source_code: sourceCode,
-    verdict: 'time_limit_exceeded',
+    verdict: 'running',
     runtime_ms: 0,
     memory_kb: 0,
     test_cases_passed: 0,
     total_test_cases: 1,
     is_custom_run: false,
     created_at: new Date().toISOString(),
-    completed_at: new Date().toISOString(),
-    stderr_output: 'Evaluation timed out while waiting for judge results. Please check your submission history.',
-    error_message: 'Judge processing timed out.',
+    completed_at: null,
+    stderr_output: 'Evaluation is in progress on judge worker. Results will refresh automatically.',
+    error_message: null,
   };
-  updateSubmissionState(timedOutSub);
-  if (onUpdate) onUpdate(timedOutSub);
-  return timedOutSub;
+  updateSubmissionState(processingSub);
+  if (onUpdate) onUpdate(processingSub);
+  return processingSub;
 }
 
 /**

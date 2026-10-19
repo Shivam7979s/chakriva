@@ -11,6 +11,7 @@ export interface NavItemProps {
   end?: boolean;
   className?: string;
   collapsed?: boolean;
+  onClick?: () => void;
 }
 
 export const NavItem: React.FC<NavItemProps> = ({
@@ -22,11 +23,13 @@ export const NavItem: React.FC<NavItemProps> = ({
   end = false,
   className,
   collapsed = false,
+  onClick,
 }) => {
   return (
     <NavLink
       to={to}
       end={end}
+      onClick={onClick}
       className={({ isActive }) =>
         cn(
           'flex items-center gap-3 px-3 py-2 rounded text-[13px] font-medium transition-colors select-none group',

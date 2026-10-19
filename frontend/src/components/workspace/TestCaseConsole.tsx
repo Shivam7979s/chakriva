@@ -717,7 +717,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                         {/* Percentile distribution bar */}
                         <div className="w-full bg-[#181C28] h-2 rounded-full overflow-hidden border border-white/[0.05]">
                           <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-[#00B8A3] rounded-full transition-all duration-500"
+                            className="h-full bg-[#00B8A3] rounded-full transition-all duration-500"
                             style={{ width: `${runtimePercentile}%` }}
                           />
                         </div>
@@ -727,10 +727,10 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                       <div className="p-3 rounded-lg bg-[#12151E] border border-white/[0.08] flex flex-col justify-between">
                         <div className="flex items-center justify-between pb-2">
                           <span className="text-neutral-400 font-sans text-xs flex items-center gap-1.5">
-                            <Database className="w-3.5 h-3.5 text-[#8B5CF6]" />
+                            <Database className="w-3.5 h-3.5 text-indigo-400" />
                             Memory Peak
                           </span>
-                          <span className="text-[11px] text-[#8B5CF6] font-semibold flex items-center gap-1">
+                          <span className="text-[11px] text-indigo-400 font-semibold flex items-center gap-1">
                             <BarChart3 className="w-3 h-3" />
                             Beats {memoryPercentile}%
                           </span>
@@ -741,7 +741,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                         {/* Percentile distribution bar */}
                         <div className="w-full bg-[#181C28] h-2 rounded-full overflow-hidden border border-white/[0.05]">
                           <div
-                            className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-500"
+                            className="h-full bg-indigo-500 rounded-full transition-all duration-500"
                             style={{ width: `${memoryPercentile}%` }}
                           />
                         </div>

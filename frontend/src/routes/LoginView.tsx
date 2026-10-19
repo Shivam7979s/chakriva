@@ -1,43 +1,47 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/data/Card';
 import { Button } from '@/components/ui/actions/Button';
-import { Input } from '@/components/ui/forms/Input';
-import { FormField } from '@/components/ui/forms/FormField';
-import { Alert } from '@/components/ui/feedback/Alert';
-import { Badge } from '@/components/ui/data/Badge';
 import { GithubIcon } from '@/components/ui/icons/GithubIcon';
-import { Terminal, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { GoogleIcon } from '@/components/ui/icons/GoogleIcon';
+import {
+  Mail,
+  Lock,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  AlertCircle,
+} from 'lucide-react';
 
 export const LoginView: React.FC = () => {
-  const { signInWithEmail, signInWithGitHub, isConfigured } = useAuth();
+  const { signInWithEmail, signInWithGitHub, signInWithGoogle, isConfigured } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<'github' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const returnTo = (location.state as { returnTo?: string })?.returnTo || '/app/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError('Please provide both your registered email and password.');
+    if (!email.trim() || !password) {
+      setError('Please provide both your registered email address and password.');
       return;
     }
 
     setError(null);
     setLoading(true);
 
-    const { error: err } = await signInWithEmail(email, password);
+    const { error: err } = await signInWithEmail(email.trim(), password);
     setLoading(false);
 
     if (err) {
-      setError(err.message || 'Authentication failed. Please verify credentials.');
+      setError(err.message || 'Authentication failed. Please verify your email and password.');
     } else {
       navigate(returnTo, { replace: true });
     }
@@ -45,174 +49,164 @@ export const LoginView: React.FC = () => {
 
   const handleGitHubLogin = async () => {
     setError(null);
-    setOauthLoading(true);
+    setOauthLoading('github');
     const { error: err } = await signInWithGitHub();
-    setOauthLoading(false);
+    setOauthLoading(null);
     if (err) {
-      setError(err.message || 'GitHub OAuth failed.');
+      setError(err.message || 'GitHub sign-in failed. Please try again.');
     } else if (!isConfigured) {
       navigate(returnTo, { replace: true });
     }
   };
 
-  const handleAutoFillDemo = (role: 'student' | 'admin') => {
-    if (role === 'admin') {
-      setEmail('admin@verniq.io');
-      setPassword('admin_secure_pass');
-    } else {
-      setEmail('student@verniq.io');
-      setPassword('student_secure_pass');
-    }
+  const handleGoogleLogin = async () => {
     setError(null);
+    setOauthLoading('google');
+    const { error: err } = await signInWithGoogle();
+    setOauthLoading(null);
+    if (err) {
+      setError(err.message || 'Google sign-in failed. Please try again.');
+    } else if (!isConfigured) {
+      navigate(returnTo, { replace: true });
+    }
   };
 
   return (
-    <div className="min-h-[calc(100vh-140px)] flex items-center justify-center py-12 px-4 sm:px-6">
-      <div className="w-full max-w-md space-y-6">
-        {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded bg-primary text-text-inverse font-mono font-bold text-base shadow-sm">
-            <Terminal className="w-5 h-5" />
-          </div>
-          <h1 className="text-2xl font-bold font-mono tracking-tight text-text-primary">
-            Sign In to VERNIQ
+    <div className="w-full max-w-[440px] mx-auto">
+      {/* Login Card */}
+      <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-[#090d16]/85 backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.7)] p-6 sm:p-8 transition-all">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-white font-sans">
+            Welcome back
           </h1>
-          <p className="text-xs text-text-secondary max-w-sm mx-auto">
-            Access your engineering workspace, algorithmic progress, and code judge environment.
+          <p className="text-xs sm:text-sm text-white/50 mt-1.5 leading-relaxed">
+            Continue your learning journey where you left off.
           </p>
         </div>
 
-        {/* Auth Card */}
-        <Card className="shadow-elevation-2 border-border">
-          <CardHeader className="pb-4">
+        {/* Inline Error Alert */}
+        {error && (
+          <div className="mb-5 flex items-start gap-2.5 p-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-200 text-xs">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Social Authentication */}
+        <div className="space-y-2.5">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading || oauthLoading !== null}
+            className="flex items-center justify-center gap-3 w-full py-2.5 px-4 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 text-white text-xs sm:text-sm font-medium transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
+          >
+            <GoogleIcon className="w-4 h-4" />
+            <span>{oauthLoading === 'google' ? 'Connecting to Google...' : 'Continue with Google'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGitHubLogin}
+            disabled={loading || oauthLoading !== null}
+            className="flex items-center justify-center gap-3 w-full py-2.5 px-4 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 text-white text-xs sm:text-sm font-medium transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
+          >
+            <GithubIcon className="w-4 h-4 text-white" />
+            <span>{oauthLoading === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}</span>
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="relative flex py-5 items-center">
+          <div className="flex-grow border-t border-white/10"></div>
+          <span className="flex-shrink mx-3 text-[10px] font-mono uppercase tracking-widest text-white/40">
+            or continue with email
+          </span>
+          <div className="flex-grow border-t border-white/10"></div>
+        </div>
+
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email Address */}
+          <div className="space-y-1.5 text-left">
+            <label htmlFor="login-email" className="text-xs font-medium text-white/80">
+              Email address <span className="text-[#00d2ff]">*</span>
+            </label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="login-email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="name@domain.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-[#00d2ff] focus:ring-1 focus:ring-[#00d2ff]/30 text-sm text-white placeholder-white/30 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5 text-left">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold">Identity Verification</CardTitle>
-              <Badge variant={isConfigured ? 'primary' : 'neutral'} className="text-[10px]">
-                {isConfigured ? 'Supabase Live' : 'Dev Simulation'}
-              </Badge>
-            </div>
-            <CardDescription className="text-xs">
-              Enter your credentials or authenticate via GitHub.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="error" title="Authentication Error">
-                {error}
-              </Alert>
-            )}
-
-            {/* GitHub OAuth Button */}
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full justify-center"
-              leftIcon={<GithubIcon className="w-4 h-4" />}
-              isLoading={oauthLoading}
-              onClick={handleGitHubLogin}
-            >
-              Continue with GitHub
-            </Button>
-
-            <div className="relative flex py-1 items-center">
-              <div className="flex-grow border-t border-border"></div>
-              <span className="flex-shrink mx-3 text-[11px] font-mono uppercase text-text-muted">
-                or email
-              </span>
-              <div className="flex-grow border-t border-border"></div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <FormField id="login-email" label="Email Address" required>
-                {({ id, 'aria-describedby': ariaDescribedBy, 'aria-invalid': ariaInvalid }) => (
-                  <Input
-                    id={id}
-                    type="email"
-                    placeholder="engineer@verniq.io"
-                    leftIcon={<Mail className="w-4 h-4" />}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    aria-describedby={ariaDescribedBy}
-                    aria-invalid={ariaInvalid}
-                    autoComplete="email"
-                  />
-                )}
-              </FormField>
-
-              <FormField id="login-password" label="Password" required>
-                {({ id, 'aria-describedby': ariaDescribedBy, 'aria-invalid': ariaInvalid }) => (
-                  <Input
-                    id={id}
-                    type="password"
-                    placeholder="••••••••••••"
-                    leftIcon={<Lock className="w-4 h-4" />}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    aria-describedby={ariaDescribedBy}
-                    aria-invalid={ariaInvalid}
-                    autoComplete="current-password"
-                  />
-                )}
-              </FormField>
-
-              <div className="flex items-center justify-between text-xs">
-                <Link
-                  to="/forgot-password"
-                  className="text-text-secondary hover:text-primary transition-colors font-medium"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full justify-center"
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-                isLoading={loading}
+              <label htmlFor="login-password" className="text-xs font-medium text-white/80">
+                Password <span className="text-[#00d2ff]">*</span>
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-[11px] text-white/50 hover:text-[#00d2ff] transition-colors"
               >
-                Sign In
-              </Button>
-            </form>
-
-            {/* Dev Helper if Supabase is offline */}
-            {!isConfigured && (
-              <div className="pt-3 border-t border-border/60 text-left space-y-2">
-                <div className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted">
-                  <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                  <span>Dev Presets:</span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleAutoFillDemo('student')}
-                    className="px-2 py-1 rounded text-[11px] font-mono border border-border bg-surface-subtle hover:text-primary transition-colors"
-                  >
-                    Student Demo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAutoFillDemo('admin')}
-                    className="px-2 py-1 rounded text-[11px] font-mono border border-border bg-surface-subtle hover:text-primary transition-colors"
-                  >
-                    Admin Demo
-                  </button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-
-          <CardFooter className="pt-2 border-t border-border/50 justify-center">
-            <p className="text-xs text-text-secondary">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-primary font-semibold hover:underline">
-                Create an account
+                Forgot password?
               </Link>
-            </p>
-          </CardFooter>
-        </Card>
+            </div>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-11 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-[#00d2ff] focus:ring-1 focus:ring-[#00d2ff]/30 text-sm text-white placeholder-white/30 outline-none transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Primary Submit Button */}
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full py-3 justify-center text-sm font-semibold text-black bg-gradient-to-r from-white via-[#e0f2fe] to-[#00d2ff] hover:opacity-95 hover:shadow-[0_0_25px_rgba(0,210,255,0.3)] transition-all rounded-xl mt-3 active:scale-[0.99]"
+            rightIcon={<ArrowRight className="w-4 h-4 text-black" />}
+            isLoading={loading}
+          >
+            Sign In
+          </Button>
+        </form>
+
+        {/* Footer Navigation */}
+        <div className="pt-5 mt-5 border-t border-white/10 text-center">
+          <p className="text-xs text-white/50">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-[#00d2ff] font-medium hover:underline ml-1">
+              Create an account →
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 };
+
+export default LoginView;

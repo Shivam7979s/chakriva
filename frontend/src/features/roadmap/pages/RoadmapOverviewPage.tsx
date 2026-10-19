@@ -66,7 +66,7 @@ export const RoadmapOverviewPage: React.FC<RoadmapOverviewPageProps> = ({
     return (
       <div className="py-16 flex flex-col items-center justify-center space-y-3 min-h-[60vh] text-text-secondary">
         <RefreshCw className="w-6 h-6 animate-spin text-primary" />
-        <span className="font-mono text-xs">Loading VERNIQ Engineering Roadmap...</span>
+        <span className="font-mono text-xs">Loading Chakriva Engineering Roadmap...</span>
       </div>
     );
   }

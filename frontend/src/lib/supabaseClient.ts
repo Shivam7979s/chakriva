@@ -5,12 +5,12 @@ const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || 
 const getSupabaseUrl = (): string => {
   const envUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
   if (envUrl) {
-    if (import.meta.env.PROD && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+    if (env.PROD && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
       return 'https://cisddayhekkktcomnqhz.supabase.co';
     }
     return envUrl;
   }
-  return import.meta.env.DEV ? 'http://127.0.0.1:54321' : 'https://cisddayhekkktcomnqhz.supabase.co';
+  return 'https://cisddayhekkktcomnqhz.supabase.co';
 };
 
 const supabaseUrl = getSupabaseUrl();

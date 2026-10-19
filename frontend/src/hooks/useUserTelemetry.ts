@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { useAuth } from './useAuth';
 import type { Submission } from '@/types';
 import { FALLBACK_PROBLEMS } from '@/lib/curriculumData';
+import { groupSubmissionsByLocalDate } from '@/lib/heatmapUtils';
 
 export const isAccepted = (verdict: string): boolean => {
   const v = (verdict || '').toLowerCase().trim();
@@ -15,11 +16,13 @@ export interface UserTelemetryData {
   maxStreak: number;
   currentStreak: number;
   activityMap: Record<string, number>;
+  acceptedActivityMap: Record<string, number>;
   recentSubmissions: (Submission & { problemTitle?: string; problemSlug?: string })[];
   allSubmissions: (Submission & { problemTitle?: string; problemSlug?: string })[];
   recentAccepted: (Submission & { problemTitle?: string; problemSlug?: string })[];
   solvedCount: number;
   solvedProblemIds: string[];
+  difficultyBreakdown: { easy: number; medium: number; hard: number };
   loading: boolean;
   refresh: () => Promise<void>;
 }
@@ -31,11 +34,13 @@ export const useUserTelemetry = (): UserTelemetryData => {
   const [maxStreak, setMaxStreak] = useState<number>(0);
   const [currentStreak, setCurrentStreak] = useState<number>(0);
   const [activityMap, setActivityMap] = useState<Record<string, number>>({});
+  const [acceptedActivityMap, setAcceptedActivityMap] = useState<Record<string, number>>({});
   const [recentSubmissions, setRecentSubmissions] = useState<(Submission & { problemTitle?: string; problemSlug?: string })[]>([]);
   const [allSubmissions, setAllSubmissions] = useState<(Submission & { problemTitle?: string; problemSlug?: string })[]>([]);
   const [recentAccepted, setRecentAccepted] = useState<(Submission & { problemTitle?: string; problemSlug?: string })[]>([]);
   const [solvedCount, setSolvedCount] = useState<number>(0);
   const [solvedProblemIds, setSolvedProblemIds] = useState<string[]>([]);
+  const [difficultyBreakdown, setDifficultyBreakdown] = useState<{ easy: number; medium: number; hard: number }>({ easy: 0, medium: 0, hard: 0 });
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchTelemetry = useCallback(async () => {
@@ -50,6 +55,7 @@ export const useUserTelemetry = (): UserTelemetryData => {
       setRecentAccepted([]);
       setSolvedCount(0);
       setSolvedProblemIds([]);
+      setDifficultyBreakdown({ easy: 0, medium: 0, hard: 0 });
       setLoading(false);
       return;
     }
@@ -57,14 +63,12 @@ export const useUserTelemetry = (): UserTelemetryData => {
     try {
       setLoading(true);
 
-      // 1. Query all submissions by user with problem title and slug
+      // 1. Query all submissions by user with problem title, slug, and difficulty
       const { data: subsData, error: subsError } = await supabase
         .from('submissions')
-        .select('id, problem_id, language, verdict, runtime_ms, memory_kb, created_at, problems(title, slug)')
+        .select('id, problem_id, language, verdict, runtime_ms, memory_kb, created_at, problems(title, slug, difficulty)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
-      console.log('RAW SUBMISSIONS:', subsData);
 
       if (subsError) {
         console.warn('[Telemetry] Submissions query:', subsError.message);
@@ -75,6 +79,7 @@ export const useUserTelemetry = (): UserTelemetryData => {
         const p = Array.isArray(row.problems) ? row.problems[0] : row.problems;
         let title = p?.title;
         let slug = p?.slug;
+        let difficulty = p?.difficulty;
 
         // Graceful resolution from curriculumData
         if (!title || !slug) {
@@ -82,6 +87,7 @@ export const useUserTelemetry = (): UserTelemetryData => {
           if (match) {
             title = match.title;
             slug = match.slug;
+            difficulty = match.difficulty;
           }
         }
 
@@ -89,15 +95,16 @@ export const useUserTelemetry = (): UserTelemetryData => {
           ...row,
           problemTitle: title,
           problemSlug: slug,
+          difficulty,
         };
       });
 
       // 2. Fetch solved problems from public.user_problem_progress
-      const solvedProgressMap = new Map<string, { solvedAt?: string; title?: string; slug?: string }>();
+      const solvedProgressMap = new Map<string, { solvedAt?: string; title?: string; slug?: string; difficulty?: string }>();
       try {
         const { data: progRows, error: progError } = await supabase
           .from('user_problem_progress')
-          .select('problem_id, solved_at, problems(title, slug)')
+          .select('problem_id, solved_at, problems(title, slug, difficulty)')
           .eq('user_id', user.id)
           .eq('status', 'solved');
 
@@ -107,17 +114,20 @@ export const useUserTelemetry = (): UserTelemetryData => {
               const p = Array.isArray(r.problems) ? r.problems[0] : r.problems;
               let title = p?.title;
               let slug = p?.slug;
+              let difficulty = p?.difficulty;
               if (!title || !slug) {
                 const match = FALLBACK_PROBLEMS.find((fb) => fb.id === r.problem_id || fb.slug === r.problem_id);
                 if (match) {
                   title = match.title;
                   slug = match.slug;
+                  difficulty = match.difficulty;
                 }
               }
               solvedProgressMap.set(r.problem_id, {
                 solvedAt: r.solved_at,
                 title: title || 'Algorithmic Challenge',
                 slug: slug || 'two-sum',
+                difficulty,
               });
             }
           });
@@ -201,15 +211,29 @@ export const useUserTelemetry = (): UserTelemetryData => {
       setSolvedProblemIds(solvedArr);
       setSolvedCount(solvedArr.length);
 
-      // 3. Build activity map (YYYY-MM-DD -> count)
-      const map: Record<string, number> = {};
-      allSubmissionsMerged.forEach((s) => {
-        if (s.created_at) {
-          const dateStr = s.created_at.split('T')[0];
-          map[dateStr] = (map[dateStr] || 0) + 1;
+      // Compute real difficulty breakdown for unique solved problems
+      let eCount = 0;
+      let mCount = 0;
+      let hCount = 0;
+
+      solvedArr.forEach((probId) => {
+        const meta = solvedProgressMap.get(probId);
+        let diff = (meta?.difficulty || '').toLowerCase().trim();
+        if (!diff) {
+          const match = FALLBACK_PROBLEMS.find((fb) => fb.id === probId || fb.slug === probId);
+          diff = (match?.difficulty || '').toLowerCase().trim();
         }
+        if (diff === 'easy') eCount++;
+        else if (diff === 'medium' || diff === 'med') mCount++;
+        else if (diff === 'hard') hCount++;
       });
+
+      setDifficultyBreakdown({ easy: eCount, medium: mCount, hard: hCount });
+
+      // 3. Build activity maps grouped by user local date (YYYY-MM-DD)
+      const { activityMap: map, acceptedMap: acMap } = groupSubmissionsByLocalDate(allSubmissionsMerged);
       setActivityMap(map);
+      setAcceptedActivityMap(acMap);
 
       const uniqueDays = Object.keys(map).sort();
       setActiveDays(uniqueDays.length);
@@ -264,11 +288,13 @@ export const useUserTelemetry = (): UserTelemetryData => {
     maxStreak,
     currentStreak,
     activityMap,
+    acceptedActivityMap,
     recentSubmissions,
     allSubmissions,
     recentAccepted,
     solvedCount,
     solvedProblemIds,
+    difficultyBreakdown,
     loading,
     refresh: fetchTelemetry,
   };

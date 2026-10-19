@@ -21,7 +21,7 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("VERNIQ Scratchpad - Java 21");
+        System.out.println("CHAKRIVA Scratchpad - Java 21");
     }
 }`,
   cpp: `#include <iostream>
@@ -32,16 +32,16 @@ using namespace std;
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
-    cout << "VERNIQ Scratchpad - C++ 14\\n";
+    cout << "CHAKRIVA Scratchpad - C++ 14\\n";
     return 0;
 }`,
   python: `def solve():
-    print("VERNIQ Scratchpad - Python 3.12")
+    print("CHAKRIVA Scratchpad - Python 3.12")
 
 if __name__ == "__main__":
     solve()`,
   typescript: `function main(): void {
-    console.log("VERNIQ Scratchpad - TypeScript 5.7");
+    console.log("CHAKRIVA Scratchpad - TypeScript 5.7");
 }
 
 main();`,
@@ -50,7 +50,7 @@ main();`,
 import "fmt"
 
 func main() {
-    fmt.Println("VERNIQ Scratchpad - Go 1.23")
+    fmt.Println("CHAKRIVA Scratchpad - Go 1.23")
 }`,
 };
 

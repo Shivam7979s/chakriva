@@ -800,11 +800,11 @@ export const RevisionView: React.FC = () => {
         <div className="p-6 rounded-xl border border-white/[0.06] bg-surface-subtle/50 text-xs text-text-muted space-y-2">
           <div className="flex items-center gap-2 text-text-primary font-semibold font-mono text-xs">
             <Brain className="w-4 h-4 text-primary" />
-            How VERNIQ Spaced Repetition Works
+            How Chakriva Spaced Repetition Works
           </div>
           <p className="leading-relaxed">
             Hermann Ebbinghaus demonstrated that human memory decays exponentially without active reinforcement.
-            Whenever you solve a problem on VERNIQ, it automatically schedules active recall checkpoints at <strong>1 Day</strong>, <strong>3 Days</strong>, <strong>7 Days</strong>, and <strong>21 Days</strong>.
+            Whenever you solve a problem on Chakriva, it automatically schedules active recall checkpoints at <strong>1 Day</strong>, <strong>3 Days</strong>, <strong>7 Days</strong>, and <strong>21 Days</strong>.
             Reviewing invariant hints and practicing in the IDE ensures permanent, panic-free recall in high-stakes technical interviews.
           </p>
         </div>

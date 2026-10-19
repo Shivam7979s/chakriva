@@ -1,29 +1,31 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/data/Card';
 import { Button } from '@/components/ui/actions/Button';
-import { Input } from '@/components/ui/forms/Input';
-import { FormField } from '@/components/ui/forms/FormField';
-import { Alert } from '@/components/ui/feedback/Alert';
-import { Badge } from '@/components/ui/data/Badge';
 import { GithubIcon } from '@/components/ui/icons/GithubIcon';
-import { Combobox } from '@/components/ui/forms/Combobox';
-import { SEEDED_COLLEGES } from '@/lib/colleges';
-import { Terminal, Mail, Lock, User, AtSign, ArrowRight, Building2 } from 'lucide-react';
+import { GoogleIcon } from '@/components/ui/icons/GoogleIcon';
+import {
+  Mail,
+  Lock,
+  AtSign,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle2,
+} from 'lucide-react';
 
 export const RegisterView: React.FC = () => {
-  const { signUpWithEmail, signInWithGitHub, isConfigured } = useAuth();
+  const { signUpWithEmail, signInWithGitHub, signInWithGoogle, isConfigured } = useAuth();
   const navigate = useNavigate();
 
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [collegeId, setCollegeId] = useState('187ea122-3e85-443a-8f01-b774389852a0');
-  const [collegeName, setCollegeName] = useState('Indian Institute of Technology Bombay');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<'github' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
 
@@ -32,13 +34,16 @@ export const RegisterView: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!fullName.trim() || !username.trim() || !email.trim() || !password) {
-      setError('All fields are required.');
+    if (!email.trim() || !username.trim() || !password) {
+      setError('Please fill in your email, username, and password.');
       return;
     }
 
-    // Auto-sanitize username in case browser autofilled email or special characters
+    // Sanitize username
     let cleanUsername = username.trim().toLowerCase();
+    if (cleanUsername.startsWith('@')) {
+      cleanUsername = cleanUsername.slice(1);
+    }
     if (cleanUsername.includes('@')) {
       cleanUsername = cleanUsername.split('@')[0];
     }
@@ -48,7 +53,7 @@ export const RegisterView: React.FC = () => {
     }
 
     if (!USERNAME_REGEX.test(cleanUsername)) {
-      setError('Username must be 3-20 characters consisting of letters, digits, and underscores (e.g. shivam79).');
+      setError('Username must be 3–20 characters using letters, numbers, and underscores.');
       return;
     }
 
@@ -64,208 +69,206 @@ export const RegisterView: React.FC = () => {
       email.trim(),
       password,
       cleanUsername,
-      fullName.trim(),
-      collegeId,
-      collegeName
+      cleanUsername // display name defaults to username
     );
     setLoading(false);
 
     if (err) {
-      setError(err.message || 'Registration failed. Please review your details.');
+      setError(err.message || 'Registration failed. Please check your credentials.');
     } else {
       setSuccessNotice('Account created successfully! Redirecting...');
-      navigate('/app/dashboard', { replace: true });
+      setTimeout(() => {
+        navigate('/roadmaps', { replace: true });
+      }, 600);
     }
   };
 
   const handleGitHubLogin = async () => {
     setError(null);
-    setOauthLoading(true);
+    setOauthLoading('github');
     const { error: err } = await signInWithGitHub();
-    setOauthLoading(false);
+    setOauthLoading(null);
     if (err) {
-      setError(err.message || 'GitHub OAuth failed.');
+      setError(err.message || 'GitHub sign-in failed. Please try again.');
     } else if (!isConfigured) {
-      navigate('/app/dashboard', { replace: true });
+      navigate('/roadmaps', { replace: true });
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setOauthLoading('google');
+    const { error: err } = await signInWithGoogle();
+    setOauthLoading(null);
+    if (err) {
+      setError(err.message || 'Google sign-in failed. Please try again.');
+    } else if (!isConfigured) {
+      navigate('/roadmaps', { replace: true });
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-140px)] flex items-center justify-center py-12 px-4 sm:px-6">
-      <div className="w-full max-w-md space-y-6">
-        {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded bg-primary text-text-inverse font-mono font-bold text-base shadow-sm">
-            <Terminal className="w-5 h-5" />
-          </div>
-          <h1 className="text-2xl font-bold font-mono tracking-tight text-text-primary">
-            Create Engineer Account
+    <div className="w-full max-w-[440px] mx-auto">
+      {/* Registration Card */}
+      <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-[#090d16]/85 backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.7)] p-6 sm:p-8 transition-all">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-white font-sans">
+            Create your account
           </h1>
-          <p className="text-xs text-text-secondary max-w-sm mx-auto">
-            Establish your identity, track streak consistency, and unlock isolated code judge submissions.
+          <p className="text-xs sm:text-sm text-white/50 mt-1.5 leading-relaxed">
+            Start your personalized engineering journey with Chakriva.
           </p>
         </div>
 
-        {/* Register Card */}
-        <Card className="shadow-elevation-2 border-border">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold">Engineer Enrollment</CardTitle>
-              <Badge variant={isConfigured ? 'primary' : 'neutral'} className="text-[10px]">
-                {isConfigured ? 'PostgreSQL RLS' : 'Local Sandbox'}
-              </Badge>
-            </div>
-            <CardDescription className="text-xs">
-              Direct email registration or instant GitHub authentication.
-            </CardDescription>
-          </CardHeader>
+        {/* Inline Feedback Alerts */}
+        {error && (
+          <div className="mb-5 flex items-start gap-2.5 p-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-200 text-xs">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
 
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="error" title="Registration Error">
-                {error}
-              </Alert>
-            )}
+        {successNotice && (
+          <div className="mb-5 flex items-start gap-2.5 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 text-xs">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <span>{successNotice}</span>
+          </div>
+        )}
 
-            {successNotice && (
-              <Alert variant="success" title="Verification Dispatched">
-                {successNotice}
-              </Alert>
-            )}
+        {/* Social Authentication */}
+        <div className="space-y-2.5">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading || oauthLoading !== null}
+            className="flex items-center justify-center gap-3 w-full py-2.5 px-4 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 text-white text-xs sm:text-sm font-medium transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
+          >
+            <GoogleIcon className="w-4 h-4" />
+            <span>{oauthLoading === 'google' ? 'Connecting to Google...' : 'Continue with Google'}</span>
+          </button>
 
-            {/* GitHub OAuth Button */}
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full justify-center"
-              leftIcon={<GithubIcon className="w-4 h-4" />}
-              isLoading={oauthLoading}
-              onClick={handleGitHubLogin}
-            >
-              Sign Up with GitHub
-            </Button>
+          <button
+            type="button"
+            onClick={handleGitHubLogin}
+            disabled={loading || oauthLoading !== null}
+            className="flex items-center justify-center gap-3 w-full py-2.5 px-4 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 text-white text-xs sm:text-sm font-medium transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
+          >
+            <GithubIcon className="w-4 h-4 text-white" />
+            <span>{oauthLoading === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}</span>
+          </button>
+        </div>
 
-            <div className="relative flex py-1 items-center">
-              <div className="flex-grow border-t border-border"></div>
-              <span className="flex-shrink mx-3 text-[11px] font-mono uppercase text-text-muted">
-                or manual credentials
-              </span>
-              <div className="flex-grow border-t border-border"></div>
-            </div>
+        {/* Divider */}
+        <div className="relative flex py-5 items-center">
+          <div className="flex-grow border-t border-white/10"></div>
+          <span className="flex-shrink mx-3 text-[10px] font-mono uppercase tracking-widest text-white/40">
+            or continue with email
+          </span>
+          <div className="flex-grow border-t border-white/10"></div>
+        </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <FormField id="register-fullname" label="Full Name" required>
-                {({ id, 'aria-describedby': ariaDescribedBy, 'aria-invalid': ariaInvalid }) => (
-                  <Input
-                    id={id}
-                    placeholder="Grace Hopper"
-                    leftIcon={<User className="w-4 h-4" />}
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    aria-describedby={ariaDescribedBy}
-                    aria-invalid={ariaInvalid}
-                    autoComplete="name"
-                  />
-                )}
-              </FormField>
-
-              <div className="space-y-1.5 text-left">
-                <label className="text-[12px] font-medium text-text-primary tracking-wide flex items-center justify-between">
-                  <span>
-                    College / University Institution <span className="text-error ml-1">*</span>
-                  </span>
-                  <span className="text-[10px] text-text-muted font-mono">Campus League</span>
-                </label>
-                <Combobox
-                  options={SEEDED_COLLEGES.map((c) => ({
-                    value: c.id,
-                    label: c.name,
-                    subtitle: `${c.state || ''}, ${c.country} • ${c.student_count} Students`,
-                  }))}
-                  value={collegeId}
-                  onChange={(val, opt) => {
-                    setCollegeId(val);
-                    if (opt) setCollegeName(opt.label);
-                  }}
-                  placeholder="Select or enter your engineering college..."
-                  leftIcon={<Building2 className="w-4 h-4" />}
-                />
-              </div>
-
-              <FormField
-                id="register-username"
-                label="Username"
+        {/* Credentials Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email Address */}
+          <div className="space-y-1.5 text-left">
+            <label htmlFor="reg-email" className="text-xs font-medium text-white/80">
+              Email address <span className="text-[#00d2ff]">*</span>
+            </label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="reg-email"
+                type="email"
                 required
-                helperText="3-20 characters: letters, numbers, and underscores"
+                autoComplete="email"
+                placeholder="name@domain.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-[#00d2ff] focus:ring-1 focus:ring-[#00d2ff]/30 text-sm text-white placeholder-white/30 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Username */}
+          <div className="space-y-1.5 text-left">
+            <div className="flex items-center justify-between">
+              <label htmlFor="reg-username" className="text-xs font-medium text-white/80">
+                Username <span className="text-[#00d2ff]">*</span>
+              </label>
+              <span className="text-[10px] text-white/40 font-mono">3–20 characters</span>
+            </div>
+            <div className="relative">
+              <AtSign className="w-4 h-4 text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="reg-username"
+                type="text"
+                required
+                autoComplete="nickname"
+                placeholder="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-[#00d2ff] focus:ring-1 focus:ring-[#00d2ff]/30 text-sm text-white placeholder-white/30 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5 text-left">
+            <div className="flex items-center justify-between">
+              <label htmlFor="reg-password" className="text-xs font-medium text-white/80">
+                Password <span className="text-[#00d2ff]">*</span>
+              </label>
+              <span className="text-[10px] text-white/40 font-mono">At least 8 characters</span>
+            </div>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="reg-password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="new-password"
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-11 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-[#00d2ff] focus:ring-1 focus:ring-[#00d2ff]/30 text-sm text-white placeholder-white/30 outline-none transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
               >
-                {({ id, 'aria-describedby': ariaDescribedBy, 'aria-invalid': ariaInvalid }) => (
-                  <Input
-                    id={id}
-                    placeholder="shivam79"
-                    leftIcon={<AtSign className="w-4 h-4" />}
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                    aria-describedby={ariaDescribedBy}
-                    aria-invalid={ariaInvalid}
-                    autoComplete="nickname"
-                  />
-                )}
-              </FormField>
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
 
-              <FormField id="register-email" label="Email Address" required>
-                {({ id, 'aria-describedby': ariaDescribedBy, 'aria-invalid': ariaInvalid }) => (
-                  <Input
-                    id={id}
-                    type="email"
-                    placeholder="grace@verniq.io"
-                    leftIcon={<Mail className="w-4 h-4" />}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    aria-describedby={ariaDescribedBy}
-                    aria-invalid={ariaInvalid}
-                    autoComplete="email"
-                  />
-                )}
-              </FormField>
 
-              <FormField id="register-password" label="Password" required helperText="Minimum 8 characters">
-                {({ id, 'aria-describedby': ariaDescribedBy, 'aria-invalid': ariaInvalid }) => (
-                  <Input
-                    id={id}
-                    type="password"
-                    placeholder="••••••••••••"
-                    leftIcon={<Lock className="w-4 h-4" />}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    aria-describedby={ariaDescribedBy}
-                    aria-invalid={ariaInvalid}
-                    autoComplete="new-password"
-                  />
-                )}
-              </FormField>
+          {/* Primary Submit Button */}
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full py-3 justify-center text-sm font-semibold text-black bg-gradient-to-r from-white via-[#e0f2fe] to-[#00d2ff] hover:opacity-95 hover:shadow-[0_0_25px_rgba(0,210,255,0.3)] transition-all rounded-xl mt-3 active:scale-[0.99]"
+            rightIcon={<ArrowRight className="w-4 h-4 text-black" />}
+            isLoading={loading}
+          >
+            Create account
+          </Button>
+        </form>
 
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full justify-center"
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-                isLoading={loading}
-              >
-                Complete Registration
-              </Button>
-            </form>
-          </CardContent>
-
-          <CardFooter className="pt-2 border-t border-border/50 justify-center">
-            <p className="text-xs text-text-secondary">
-              Already have an account?{' '}
-              <Link to="/login" className="text-primary font-semibold hover:underline">
-                Sign in
-              </Link>
-            </p>
-          </CardFooter>
-        </Card>
+        {/* Footer Navigation */}
+        <div className="pt-5 mt-5 border-t border-white/10 text-center">
+          <p className="text-xs text-white/50">
+            Already have an account?{' '}
+            <Link to="/login" className="text-[#00d2ff] font-medium hover:underline ml-1">
+              Sign in →
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 };
+
+export default RegisterView;

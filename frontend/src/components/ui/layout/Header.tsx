@@ -3,9 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
-import { Sun, Moon, Search, Terminal, Menu, X } from 'lucide-react';
+import { Sun, Moon, Search, Menu, X } from 'lucide-react';
 import { Button } from '../actions/Button';
 import { IconButton } from '../actions/IconButton';
+import { useLiquidGlass } from '@/hooks/useLiquidGlass';
 
 export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -13,26 +14,47 @@ export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const location = useLocation();
 
+  // Initialize liquid glass refraction effect on sticky platform header
+  useLiquidGlass({
+    target: '#chakriva-global-header',
+    snapshot: 'body',
+    engine: 'auto',
+    resolution: 2.0,
+    refraction: 0.012,
+    aberration: 0.008,
+    bevelDepth: 0.05,
+    bevelWidth: 0.12,
+    frost: 0.8,
+    shadow: false,
+    specular: true,
+    reveal: 'fade',
+    tint: theme === 'dark' ? 'rgba(8, 11, 17, 0.55)' : 'rgba(255, 255, 255, 0.65)',
+  });
+
   const navLinks = [
-    { label: 'Foundation & Tokens', href: '/' },
     { label: 'Roadmaps', href: '/roadmaps' },
     { label: 'Problems', href: '/problems' },
     { label: 'Online IDE', href: '/ide' },
     { label: 'Leaderboard', href: '/leaderboard' },
     { label: 'Courses', href: '/courses' },
     { label: 'Architecture', href: '/architecture' },
+    { label: 'Tokens', href: '/foundation' },
   ];
 
   return (
-    <header className="sticky top-0 z-dock w-full border-b border-border bg-surface/90 backdrop-blur-sm transition-colors">
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+    <header
+      id="chakriva-global-header"
+      data-liquid-lens="true"
+      className="sticky top-0 z-dock w-full border-b border-border bg-surface/90 backdrop-blur-sm transition-colors"
+    >
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between relative z-10 pointer-events-auto">
         {/* Brand */}
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2.5 font-bold tracking-tight text-text-primary">
-            <div className="w-7 h-7 rounded bg-primary text-text-inverse flex items-center justify-center font-mono font-bold text-sm shadow-sm">
-              <Terminal className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/30 text-primary flex items-center justify-center font-mono font-bold text-xs shadow-sm">
+              <span>&gt;_</span>
             </div>
-            <span className="text-base tracking-wider font-mono">VERNIQ</span>
+            <span className="text-base tracking-wider font-mono font-bold">CHAKRIVA</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -87,9 +109,9 @@ export const Header: React.FC = () => {
 
           {/* App / Auth Link */}
           {user ? (
-            <Link to="/app/dashboard">
+            <Link to="/app/home">
               <Button size="sm" variant="primary" className="text-xs font-mono">
-                {profile?.full_name || profile?.username || 'Dashboard'}
+                {profile?.full_name || profile?.username || 'Launch App'}
               </Button>
             </Link>
           ) : (
@@ -125,7 +147,10 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-border bg-surface px-4 py-3 flex flex-col gap-1 animate-in slide-in-from-top-2">
+        <div
+          data-liquid-ignore="true"
+          className="md:hidden border-b border-border bg-surface px-4 py-3 flex flex-col gap-1 animate-in slide-in-from-top-2 relative z-20 pointer-events-auto"
+        >
           {navLinks.map((link) => (
             <Link
               key={link.href}

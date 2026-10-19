@@ -8,6 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        brand: '#3D81E3',
         background: 'var(--color-background)',
         surface: {
           DEFAULT: 'var(--color-surface)',

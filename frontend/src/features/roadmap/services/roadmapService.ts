@@ -98,7 +98,7 @@ export const FALLBACK_STRUCTURED_ROADMAP: Roadmap = {
               topicId: '00000000-0000-0000-0000-000000000841',
               title: 'Practice: Solve Two Sum',
               description:
-                'Implement the canonical single-pass hash map solution and submit to the VERNIQ execution judge.',
+                'Implement the canonical single-pass hash map solution and submit to the CHAKRIVA execution judge.',
               itemType: 'PROBLEM',
               position: 3,
               required: true,

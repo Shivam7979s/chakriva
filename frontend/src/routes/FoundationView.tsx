@@ -63,7 +63,7 @@ export const FoundationView: React.FC = () => {
         {/* Standardized Sleek Page Header */}
         <PageHeader
           badge="Engineering Foundation"
-          title="VERNIQ Engineering Foundation"
+          title="CHAKRIVA Engineering Foundation"
           subtitle="Production-grade architecture, systematic design tokens, WCAG 2.2 AA accessibility, and zero vibe-coded aesthetics. All foundational primitives consume centralized semantic CSS variables."
           actions={
             <div className="flex items-center gap-3 shrink-0">
@@ -663,7 +663,7 @@ class LRUCache {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="VERNIQ Modal Primitive"
+        title="CHAKRIVA Modal Primitive"
         description="Trapped focus, Esc-to-close, and backdrop dismissal"
         footer={
           <>

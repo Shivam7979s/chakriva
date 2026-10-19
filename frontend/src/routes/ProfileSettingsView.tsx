@@ -143,7 +143,7 @@ export const ProfileSettingsView: React.FC = () => {
         toast({
           type: 'success',
           title: 'Settings Synchronized',
-          message: 'Your developer identity and IDE preferences are updated across VERNIQ.',
+          message: 'Your developer identity and IDE preferences are updated across Chakriva.',
         });
       }
     } catch (err) {

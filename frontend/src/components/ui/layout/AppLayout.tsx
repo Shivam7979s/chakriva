@@ -1,22 +1,25 @@
 import React, { useState, createContext, useContext } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
+import { AppNavbar } from '../navigation/AppNavbar';
+import { MobileBottomNav } from '../navigation/MobileBottomNav';
+import { MobileMoreDrawer } from '../navigation/MobileMoreDrawer';
 import { CommandPalette } from '../actions/CommandPalette';
-import { Breadcrumbs, type BreadcrumbItem } from '../navigation/Breadcrumbs';
-import { useTheme } from '@/hooks/useTheme';
-import { Sun, Moon, Bell } from 'lucide-react';
-import { IconButton } from '../actions/IconButton';
+import { type BreadcrumbItem } from '../navigation/Breadcrumbs';
 
 export interface AppLayoutContextType {
   insideAppLayout: boolean;
   collapsed: boolean;
   setCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  mobileOpen: boolean;
+  setMobileOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const AppLayoutContext = createContext<AppLayoutContextType>({
   insideAppLayout: false,
   collapsed: false,
   setCollapsed: () => {},
+  mobileOpen: false,
+  setMobileOpen: () => {},
 });
 
 export const useAppLayout = () => useContext(AppLayoutContext);
@@ -26,50 +29,45 @@ export interface AppLayoutProps {
   children?: React.ReactNode;
 }
 
-export const AppLayout: React.FC<AppLayoutProps> = ({
-  breadcrumbs,
-  children,
-}) => {
+export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   return (
-    <AppLayoutContext.Provider value={{ insideAppLayout: true, collapsed, setCollapsed }}>
-      <div className="min-h-screen flex bg-[#08090C] text-text-primary">
-        {/* Left Utility Rail */}
-        <Sidebar collapsed={collapsed} onToggleCollapse={() => setCollapsed((p) => !p)} />
+    <AppLayoutContext.Provider
+      value={{
+        insideAppLayout: true,
+        collapsed,
+        setCollapsed,
+        mobileOpen: isMoreOpen,
+        setMobileOpen: setIsMoreOpen,
+      }}
+    >
+      <div className="min-h-screen flex flex-col bg-[#08090C] text-text-primary relative selection:bg-[#00d2ff]/30">
+        {/* Top Desktop Global Navbar */}
+        <AppNavbar />
 
-        {/* Center / Content Stage */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#08090C]">
-          {/* Top Bar (Optional if breadcrumbs provided) */}
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <header className="h-14 border-b border-white/[0.08] bg-[#0D0F15] px-6 flex items-center justify-between sticky top-0 z-20 backdrop-blur-xl">
-              <Breadcrumbs items={breadcrumbs} />
+        {/* Main Application Canvas */}
+        <main
+          id="main-content"
+          className="flex-1 flex flex-col w-full min-w-0 pb-20 md:pb-6 overflow-y-auto"
+        >
+          {children ? children : <Outlet />}
+        </main>
 
-              <div className="flex items-center gap-2">
-                <IconButton
-                  size="sm"
-                  variant="ghost"
-                  aria-label="View notifications"
-                  icon={<Bell className="w-4 h-4 text-neutral-400" />}
-                />
-                <IconButton
-                  size="sm"
-                  variant="ghost"
-                  aria-label="Toggle theme"
-                  icon={theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-500" />}
-                  onClick={toggleTheme}
-                />
-              </div>
-            </header>
-          )}
+        {/* Mobile Fixed Safe-Area Bottom Navigation */}
+        <MobileBottomNav
+          isMoreOpen={isMoreOpen}
+          onOpenMore={() => setIsMoreOpen(true)}
+        />
 
-          {/* Content Viewport */}
-          <main id="main-content" className="flex-1 overflow-y-auto">
-            {children ? children : <Outlet />}
-          </main>
-        </div>
+        {/* Mobile 'More' Drawer Menu */}
+        <MobileMoreDrawer
+          isOpen={isMoreOpen}
+          onClose={() => setIsMoreOpen(false)}
+        />
 
+        {/* Global Command Palette */}
         <CommandPalette />
       </div>
     </AppLayoutContext.Provider>

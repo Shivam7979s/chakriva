@@ -33,7 +33,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantStyles: Record<ButtonVariant, string> = {
       primary:
-        'bg-primary text-text-inverse hover:bg-primary-hover focus-visible:outline-primary active:brightness-95 shadow-sm',
+        'bg-primary text-white hover:bg-primary-hover focus-visible:outline-primary active:brightness-95 shadow-sm',
       secondary:
         'bg-surface-elevated text-text-primary border border-border hover:bg-surface-subtle active:brightness-95',
       outline:

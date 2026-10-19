@@ -11,8 +11,8 @@ export const NotFoundView: React.FC = () => {
       <Container size="md">
         <EmptyState
           title="404 — Route Not Found"
-          description="The requested route does not exist in the VERNIQ route matrix."
-          actionLabel="Return to Foundation Overview"
+          description="The requested route does not exist in the Chakriva route matrix."
+          actionLabel="Return to Home"
           onAction={() => navigate('/')}
         />
       </Container>

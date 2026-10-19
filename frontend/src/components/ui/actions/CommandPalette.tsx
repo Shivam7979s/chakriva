@@ -19,7 +19,7 @@ export const CommandPalette: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
-  // Listen for Cmd+K / Ctrl+K
+  // Listen for Cmd+K / Ctrl+K and custom event
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -30,38 +30,106 @@ export const CommandPalette: React.FC = () => {
       }
     };
 
+    const handleToggle = () => {
+      setIsOpen((prev) => !prev);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('toggle-command-palette', handleToggle);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('toggle-command-palette', handleToggle);
+    };
   }, [isOpen]);
 
   const items: CommandItem[] = [
     {
-      id: 'nav-dashboard',
-      title: 'Go to Dashboard',
+      id: 'nav-home',
+      title: 'Go to Home (Daily Cockpit)',
       category: 'Navigation',
-      icon: <Compass className="w-4 h-4 text-primary" />,
+      icon: <Compass className="w-4 h-4 text-blue-400" />,
       onSelect: () => {
-        navigate('/app/dashboard');
+        navigate('/app/home');
+        setIsOpen(false);
+      },
+    },
+    {
+      id: 'nav-roadmap',
+      title: 'Go to Roadmap (Adaptive Curriculum)',
+      category: 'Navigation',
+      icon: <Compass className="w-4 h-4 text-emerald-400" />,
+      onSelect: () => {
+        navigate('/app/roadmap');
+        setIsOpen(false);
+      },
+    },
+    {
+      id: 'nav-learn',
+      title: 'Go to Learn (Masterclasses & Invariants)',
+      category: 'Navigation',
+      icon: <BookOpen className="w-4 h-4 text-amber-400" />,
+      onSelect: () => {
+        navigate('/app/learn');
         setIsOpen(false);
       },
     },
     {
       id: 'nav-practice',
-      title: 'Browse Algorithm Problems',
+      title: 'Browse Practice Problems',
       category: 'Practice',
-      icon: <Code2 className="w-4 h-4 text-emerald-500" />,
+      icon: <Code2 className="w-4 h-4 text-cyan-400" />,
       onSelect: () => {
-        navigate('/problems');
+        navigate('/app/practice');
         setIsOpen(false);
       },
     },
     {
-      id: 'nav-roadmaps',
-      title: 'View Engineering Roadmaps',
-      category: 'Navigation',
-      icon: <BookOpen className="w-4 h-4 text-amber-500" />,
+      id: 'nav-sheets',
+      title: 'Go to Curated Sheets',
+      category: 'Practice',
+      icon: <BookOpen className="w-4 h-4 text-indigo-400" />,
       onSelect: () => {
-        navigate('/roadmaps');
+        navigate('/app/sheets');
+        setIsOpen(false);
+      },
+    },
+    {
+      id: 'nav-chakriva',
+      title: 'Open Chakriva AI Cockpit',
+      category: 'Navigation',
+      icon: <Compass className="w-4 h-4 text-purple-400" />,
+      onSelect: () => {
+        navigate('/app/chakriva');
+        setIsOpen(false);
+      },
+    },
+    {
+      id: 'nav-codespace',
+      title: 'Open CodeSpace Scratchpads',
+      category: 'Practice',
+      icon: <Code2 className="w-4 h-4 text-emerald-400" />,
+      onSelect: () => {
+        navigate('/app/codespace');
+        setIsOpen(false);
+      },
+    },
+    {
+      id: 'nav-contests',
+      title: 'View Engineering Contests',
+      category: 'Navigation',
+      icon: <Compass className="w-4 h-4 text-yellow-400" />,
+      onSelect: () => {
+        navigate('/app/contests');
+        setIsOpen(false);
+      },
+    },
+    {
+      id: 'nav-progress',
+      title: 'View Learner Progress & Telemetry',
+      category: 'Navigation',
+      icon: <Compass className="w-4 h-4 text-rose-400" />,
+      onSelect: () => {
+        navigate('/app/progress');
         setIsOpen(false);
       },
     },
@@ -178,7 +246,7 @@ export const CommandPalette: React.FC = () => {
               Select
             </span>
           </div>
-          <span>VERNIQ Command Hub</span>
+          <span>Chakriva Command Hub</span>
         </div>
       </div>
     </div>

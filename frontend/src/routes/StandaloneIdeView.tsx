@@ -51,7 +51,7 @@ const DEFAULT_TEMPLATES: Record<string, { label: string; ext: string; template: 
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Hello, VERNIQ Online IDE!");
+        System.out.println("Hello, Chakriva Online IDE!");
         
         // Echo input from stdin
         if (scanner.hasNextLine()) {
@@ -73,7 +73,7 @@ int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    cout << "Hello, VERNIQ Online IDE (GCC 14)!" << "\\n";
+    cout << "Hello, Chakriva Online IDE (GCC 14)!" << "\\n";
     
     string inputLine;
     if (getline(cin, inputLine)) {
@@ -88,7 +88,7 @@ int main() {
     template: `import sys
 
 def main():
-    print("Hello, VERNIQ Online IDE (Python 3.12)!")
+    print("Hello, Chakriva Online IDE (Python 3.12)!")
     
     # Process standard input
     input_data = sys.stdin.read().strip()
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     label: 'TypeScript 5.7',
     ext: 'ts',
     template: `function solve(input: string): void {
-    console.log("Hello, VERNIQ Online IDE (TypeScript)!");
+    console.log("Hello, Chakriva Online IDE (TypeScript)!");
     if (input.trim()) {
         const lines = input.trim().split("\\n");
         console.log(\`Processed \${lines.length} lines of input.\`);
@@ -126,7 +126,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello, VERNIQ Online IDE (Go 1.23)!")
+	fmt.Println("Hello, Chakriva Online IDE (Go 1.23)!")
 	scanner := bufio.NewScanner(os.Stdin)
 	if scanner.Scan() {
 		fmt.Printf("Input received: %s\\n", scanner.Text())

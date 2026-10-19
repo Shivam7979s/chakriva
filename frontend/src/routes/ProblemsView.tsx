@@ -166,7 +166,7 @@ export const ProblemsView: React.FC = () => {
         <PageHeader
           badge="Problem Catalog"
           title="Engineering Problems & Challenges"
-          subtitle="Dense 3,392-problem catalog repository classified by hierarchical domain taxonomy, with mathematical proofs, sandbox test vectors, and spaced-repetition revision cycles."
+          subtitle="Comprehensive problem catalog classified by hierarchical domain taxonomy, with mathematical proofs, sandbox test vectors, and spaced-repetition revision cycles."
           actions={
             <div className="flex items-center gap-4 bg-[#181C28] p-3 rounded-lg border border-white/[0.08]">
               <div className="text-center px-4 border-r border-white/[0.08]">
@@ -194,7 +194,7 @@ export const ProblemsView: React.FC = () => {
           <div className="flex flex-col md:flex-row items-center gap-3 justify-between">
             <div className="w-full md:w-96">
               <Input
-                placeholder="Search by title, Verniq ID (e.g. VRQ-000001), domain, or topic..."
+                placeholder="Search by title, Chakriva ID (e.g. CKR-000001), domain, or topic..."
                 leftIcon={<Search className="w-4 h-4 text-text-secondary" />}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -401,10 +401,10 @@ export const ProblemsView: React.FC = () => {
                         key={prob.id}
                         className="h-11 hover:bg-white/[0.02] bg-[#12151E] transition-colors group"
                       >
-                        {/* Verniq ID */}
+                        {/* Chakriva ID */}
                         <td className="py-2 px-3 text-text-secondary font-mono text-[11px] whitespace-nowrap">
                           <span className="bg-white/[0.04] text-text-secondary px-1.5 py-0.5 rounded border border-white/[0.06]">
-                            {prob.verniq_id || 'VRQ-INDEX'}
+                            {prob.verniq_id ? prob.verniq_id.replace(/^VRQ-/, 'CKR-') : (prob.id ? `CKR-${String(prob.id).slice(0, 6).toUpperCase().padStart(6, '0')}` : 'CKR-INDEX')}
                           </span>
                         </td>
 
