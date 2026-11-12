@@ -87,6 +87,18 @@ public class Submission implements Serializable {
     @Column(name = "completed_at")
     private Instant completedAt;
 
+    @Column(name = "attempt", nullable = false)
+    private int attempt = 1;
+
+    @Column(name = "max_attempts", nullable = false)
+    private int maxAttempts = 3;
+
+    @Column(name = "lease_expires_at")
+    private Instant leaseExpiresAt;
+
+    @Column(name = "worker_id")
+    private String workerId;
+
     public Submission() {}
 
     public SubmissionStatus getStatus() {
@@ -331,5 +343,37 @@ public class Submission implements Serializable {
 
     public void setCompletedAt(Instant completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public int getAttempt() {
+        return attempt;
+    }
+
+    public void setAttempt(int attempt) {
+        this.attempt = attempt;
+    }
+
+    public int getMaxAttempts() {
+        return maxAttempts;
+    }
+
+    public void setMaxAttempts(int maxAttempts) {
+        this.maxAttempts = maxAttempts;
+    }
+
+    public Instant getLeaseExpiresAt() {
+        return leaseExpiresAt;
+    }
+
+    public void setLeaseExpiresAt(Instant leaseExpiresAt) {
+        this.leaseExpiresAt = leaseExpiresAt;
+    }
+
+    public String getWorkerId() {
+        return workerId;
+    }
+
+    public void setWorkerId(String workerId) {
+        this.workerId = workerId;
     }
 }

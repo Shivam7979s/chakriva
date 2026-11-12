@@ -102,8 +102,8 @@ export const useProblemBySlug = (slug: string) => {
 
       setTestCases(sampleCases);
 
-      // Authoritative visible sample test cases from Spring Boot problem catalog
-      setCanonicalTestCount(sampleCases.length || 4);
+      // Only use canonical count if explicitly provided by backend metadata, else 0 (protected)
+      setCanonicalTestCount((detailDto as Record<string, any>).canonicalTestCount || 0);
 
       setLoading(false);
       return;
@@ -112,18 +112,15 @@ export const useProblemBySlug = (slug: string) => {
       console.warn('[useProblemBySlug] Spring Boot API failed, attempting fallback:', springBootErr);
     }
 
-    // Fallback locator
+    // Fallback locator (only if explicitly matching slug)
     const fallbackProb =
-      FALLBACK_PROBLEMS.find((p) => p.slug === slug || p.verniq_id === slug) || FALLBACK_PROBLEMS[0];
-    const fallbackTCs =
-      FALLBACK_SAMPLE_TEST_CASES[slug] ||
-      FALLBACK_SAMPLE_TEST_CASES[fallbackProb.slug] ||
-      [];
+      FALLBACK_PROBLEMS.find((p) => p.slug === slug || p.verniq_id === slug) || null;
+    const fallbackTCs = FALLBACK_SAMPLE_TEST_CASES[slug] || [];
 
     if (!isSupabaseConfigured()) {
       setProblem(fallbackProb);
       setTestCases(fallbackTCs);
-      setCanonicalTestCount(fallbackTCs.length);
+      setCanonicalTestCount(0);
       setLoading(false);
       return;
     }
@@ -203,19 +200,39 @@ export const useProblemBySlug = (slug: string) => {
 
         setProblem(mappedProblem);
 
-        // Safe Fallback Sample Test Cases (Zero direct querying of internal test_cases)
-        setTestCases(fallbackTCs);
-        setCanonicalTestCount(fallbackTCs.length);
+        // Fetch authentic sample test cases only (Anti-leak: strictly query is_sample = true)
+        const { data: sampleData } = await supabase
+          .from('test_cases')
+          .select('id, problem_id, input, expected_output, is_sample, order_index, explanation')
+          .eq('problem_id', row.id)
+          .eq('is_sample', true)
+          .order('order_index', { ascending: true });
+
+        const mappedSampleCases: TestCase[] = (sampleData && sampleData.length > 0)
+          ? sampleData.map((st) => ({
+              id: st.id,
+              problem_id: st.problem_id,
+              input: st.input,
+              expected_output: st.expected_output,
+              is_sample: true,
+              order_index: st.order_index,
+              explanation: st.explanation,
+            }))
+          : (FALLBACK_SAMPLE_TEST_CASES[row.slug] || []);
+
+        setTestCases(mappedSampleCases);
+        // Canonical test count is zero/protected unless backend metadata provides official count
+        setCanonicalTestCount(0);
       } else {
         setProblem(fallbackProb);
         setTestCases(fallbackTCs);
-        setCanonicalTestCount(fallbackTCs.length);
+        setCanonicalTestCount(0);
       }
     } catch (err: unknown) {
       console.warn('Failed to fetch problem by slug from Supabase, using fallback:', err);
       setProblem(fallbackProb);
       setTestCases(fallbackTCs);
-      setCanonicalTestCount(fallbackTCs.length);
+      setCanonicalTestCount(0);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/actions/Button';
 import { useToast } from '@/components/ui/feedback/Toast';
@@ -27,6 +28,8 @@ import {
   AlertTriangle,
   Bookmark,
   RefreshCw,
+  Pencil,
+  Sparkles,
 } from 'lucide-react';
 import { MonacoCodeEditor } from '@/components/editor/MonacoCodeEditor';
 import { runCode } from '@/lib/submissionService';
@@ -38,129 +41,42 @@ import {
   saveLocalIdeState,
   ScratchTab,
 } from '@/lib/ideDraftService';
+import { CodeSpaceNavTabs } from '@/features/codespace/components/CodeSpaceNavTabs';
+import {
+  CODESPACE_LANGUAGES,
+  QUICK_STARTER_TEMPLATES,
+  getLanguageSpec,
+} from '@/features/codespace/data/codespaceTemplates';
 
 export type { ScratchTab };
 export type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'error';
-
-const DEFAULT_TEMPLATES: Record<string, { label: string; ext: string; template: string }> = {
-  java: {
-    label: 'Java (OpenJDK 21)',
-    ext: 'java',
-    template: `import java.util.*;
-
-public class Main {
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Hello, Chakriva Online IDE!");
-        
-        // Echo input from stdin
-        if (scanner.hasNextLine()) {
-            System.out.println("Input received: " + scanner.nextLine());
-        }
-    }
-}`,
-  },
-  cpp: {
-    label: 'C++ (GCC 14)',
-    ext: 'cpp',
-    template: `#include <iostream>
-#include <vector>
-#include <string>
-
-using namespace std;
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-
-    cout << "Hello, Chakriva Online IDE (GCC 14)!" << "\\n";
-    
-    string inputLine;
-    if (getline(cin, inputLine)) {
-        cout << "Input received: " << inputLine << "\\n";
-    }
-    return 0;
-}`,
-  },
-  python: {
-    label: 'Python 3.12',
-    ext: 'py',
-    template: `import sys
-
-def main():
-    print("Hello, Chakriva Online IDE (Python 3.12)!")
-    
-    # Process standard input
-    input_data = sys.stdin.read().strip()
-    if input_data:
-        print(f"Input received:\\n{input_data}")
-
-if __name__ == "__main__":
-    main()`,
-  },
-  typescript: {
-    label: 'TypeScript 5.7',
-    ext: 'ts',
-    template: `function solve(input: string): void {
-    console.log("Hello, Chakriva Online IDE (TypeScript)!");
-    if (input.trim()) {
-        const lines = input.trim().split("\\n");
-        console.log(\`Processed \${lines.length} lines of input.\`);
-        lines.forEach((l, i) => console.log(\`[\${i + 1}] \${l}\`));
-    }
-}
-
-// Sample Stdin execution
-const stdinInput = "Sample Test Input";
-solve(stdinInput);`,
-  },
-  go: {
-    label: 'Go 1.23',
-    ext: 'go',
-    template: `package main
-
-import (
-	"bufio"
-	"fmt"
-	"os"
-)
-
-func main() {
-	fmt.Println("Hello, Chakriva Online IDE (Go 1.23)!")
-	scanner := bufio.NewScanner(os.Stdin)
-	if scanner.Scan() {
-		fmt.Printf("Input received: %s\\n", scanner.Text())
-	}
-}`,
-  },
-};
 
 export const StandaloneIdeView: React.FC = () => {
   const { toast } = useToast();
   const { user, preferredLanguage, updatePreferredLanguage } = useAuth();
   const location = useLocation();
 
-  // Tab State with Zero-Latency Synchronous LocalStorage Restoration
   const [tabs, setTabs] = useState<ScratchTab[]>(() => {
     const savedState = getLocalIdeState(user?.id);
     if (savedState && savedState.tabs.length > 0) {
       return savedState.tabs;
     }
     const defaultLang = preferredLanguage || 'java';
+    const langSpec = getLanguageSpec(defaultLang);
     return [
       {
         id: 'tab-1',
-        title: 'Code 1',
-        language: defaultLang,
-        code: (DEFAULT_TEMPLATES[defaultLang] || DEFAULT_TEMPLATES.java).template,
+        title: `Main.${langSpec.ext}`,
+        language: langSpec.id,
+        code: langSpec.defaultTemplate,
         stdin: 'Hello World 42',
       },
       {
         id: 'tab-2',
-        title: 'Code 2',
+        title: 'scratch.py',
         language: 'python',
-        code: DEFAULT_TEMPLATES.python.template,
-        stdin: 'Python Stdin Vector',
+        code: CODESPACE_LANGUAGES.python.defaultTemplate,
+        stdin: 'Python Stdin Stream',
       },
     ];
   });
@@ -174,15 +90,19 @@ export const StandaloneIdeView: React.FC = () => {
   });
 
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
+  const [loadedCodespaceId, setLoadedCodespaceId] = useState<string | null>(null);
+  const [renamingTabId, setRenamingTabId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState('');
+  const [templateMenuOpen, setTemplateMenuOpen] = useState(false);
+  const [isSavingVault, setIsSavingVault] = useState(false);
 
-  // Monotonic revision and autosave refs
   const revisionRef = useRef<number>(0);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const tabsRef = useRef<ScratchTab[]>(tabs);
   const activeTabIdRef = useRef<string>(activeTabId);
   const userIdRef = useRef<string | undefined>(user?.id);
+  const templateMenuRef = useRef<HTMLDivElement>(null);
 
-  // Keep refs in sync
   useEffect(() => {
     tabsRef.current = tabs;
     activeTabIdRef.current = activeTabId;
@@ -195,7 +115,16 @@ export const StandaloneIdeView: React.FC = () => {
     }
   }, [user?.id]);
 
-  // Trigger autosave (debounced for rapid typing, immediate for structural changes)
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (templateMenuRef.current && !templateMenuRef.current.contains(e.target as Node)) {
+        setTemplateMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
   const triggerAutosave = useCallback(
     (updatedTabs: ScratchTab[], activeId: string, immediate: boolean = false) => {
       tabsRef.current = updatedTabs;
@@ -226,7 +155,6 @@ export const StandaloneIdeView: React.FC = () => {
     []
   );
 
-  // Synchronously flush pending code on browser window beforeunload or pagehide
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (debounceTimerRef.current) {
@@ -258,7 +186,7 @@ export const StandaloneIdeView: React.FC = () => {
     };
   }, []);
 
-  // Handle incoming codespace snippet from route navigation
+  // Handle incoming codespace snippet or template from route state
   useEffect(() => {
     const stateData = location.state as {
       code?: string;
@@ -270,7 +198,8 @@ export const StandaloneIdeView: React.FC = () => {
 
     if (stateData && stateData.code !== undefined) {
       const lang = stateData.language || 'java';
-      const title = stateData.title || 'Code 1';
+      const title = stateData.title || 'Snippet';
+      setLoadedCodespaceId(stateData.codespaceId || null);
       setTabs((prev) => {
         const nextTabs = [
           {
@@ -288,26 +217,23 @@ export const StandaloneIdeView: React.FC = () => {
       setActiveTabId('tab-codespace');
       toast({
         type: 'info',
-        title: 'CodeSpace Loaded',
-        message: `Opened "${title}" from your cloud vault.`,
+        title: stateData.codespaceId ? 'Vault Snippet Loaded' : 'Template Loaded',
+        message: `Opened "${title}" in CodeSpace Studio.`,
       });
     }
   }, [location.state, triggerAutosave, toast]);
 
-  // Active Tab Derived
   const activeTab = useMemo(
     () => tabs.find((t) => t.id === activeTabId) || tabs[0],
     [tabs, activeTabId]
   );
 
-  // Editor and Console States
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedInput, setCopiedInput] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
 
-  // Execution Output State
   const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(null);
   const { submission: liveSubmission } = useSubmissionRealtime(activeSubmissionId);
 
@@ -323,7 +249,6 @@ export const StandaloneIdeView: React.FC = () => {
     memoryKb: 0,
   });
 
-  // Sync Supabase Realtime updates into terminal
   useEffect(() => {
     if (liveSubmission) {
       if (liveSubmission.verdict === 'pending' || liveSubmission.verdict === 'running') {
@@ -332,8 +257,8 @@ export const StandaloneIdeView: React.FC = () => {
           status: 'running',
           stdout:
             liveSubmission.verdict === 'pending'
-              ? 'Submitting job to judge queue...\nWaiting for execution container worker...'
-              : 'Compiling code in isolated remote container...\nEvaluating test stream...',
+              ? 'Submitting job to judge queue...\nWaiting for isolated execution container...'
+              : 'Compiling code in isolated container...\nEvaluating standard stream...',
           runtimeMs: 0,
           memoryKb: 0,
         });
@@ -342,10 +267,12 @@ export const StandaloneIdeView: React.FC = () => {
         const isSuccess = liveSubmission.verdict === 'accepted';
         let fullOutput = liveSubmission.stdout_output || '';
         if (liveSubmission.stderr_output) {
-          fullOutput += (fullOutput ? '\n\n' : '') + '[STDERR / DIAGNOSTICS]\n' + liveSubmission.stderr_output;
+          fullOutput +=
+            (fullOutput ? '\n\n' : '') + '[STDERR / DIAGNOSTICS]\n' + liveSubmission.stderr_output;
         }
         if (liveSubmission.compile_output) {
-          fullOutput += (fullOutput ? '\n\n' : '') + '[COMPILATION OUTPUT]\n' + liveSubmission.compile_output;
+          fullOutput +=
+            (fullOutput ? '\n\n' : '') + '[COMPILATION OUTPUT]\n' + liveSubmission.compile_output;
         }
         setExecutionResult({
           status: isSuccess
@@ -363,23 +290,21 @@ export const StandaloneIdeView: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Line count
-  const lineCount = useMemo(() => {
-    return activeTab.code.split('\n').length;
-  }, [activeTab.code]);
+  const lineCount = useMemo(() => activeTab.code.split('\n').length, [activeTab.code]);
+  const activeLangSpec = useMemo(
+    () => getLanguageSpec(activeTab.language),
+    [activeTab.language]
+  );
 
-  // Select tab
   const handleSelectTab = (tabId: string) => {
     setActiveTabId(tabId);
     triggerAutosave(tabsRef.current, tabId, true);
   };
 
-  // Retry save
   const retrySave = () => {
     triggerAutosave(tabsRef.current, activeTabIdRef.current, true);
   };
 
-  // Update active tab code
   const updateActiveTabCode = (newCode: string) => {
     setTabs((prev) => {
       const updated = prev.map((t) => (t.id === activeTab.id ? { ...t, code: newCode } : t));
@@ -388,7 +313,6 @@ export const StandaloneIdeView: React.FC = () => {
     });
   };
 
-  // Update active tab stdin
   const updateActiveTabStdin = (newStdin: string) => {
     setTabs((prev) => {
       const updated = prev.map((t) => (t.id === activeTab.id ? { ...t, stdin: newStdin } : t));
@@ -397,16 +321,27 @@ export const StandaloneIdeView: React.FC = () => {
     });
   };
 
-  // Change language
+  const commitRenameTab = (tabId: string) => {
+    const clean = renameDraft.trim();
+    setRenamingTabId(null);
+    if (!clean) return;
+    setTabs((prev) => {
+      const updated = prev.map((t) => (t.id === tabId ? { ...t, title: clean } : t));
+      triggerAutosave(updated, activeTabIdRef.current, true);
+      return updated;
+    });
+  };
+
   const handleLanguageChange = (newLang: string) => {
     updatePreferredLanguage(newLang);
+    const nextSpec = getLanguageSpec(newLang);
     setTabs((prev) => {
       const updated = prev.map((t) => {
         if (t.id === activeTab.id) {
           return {
             ...t,
             language: newLang,
-            code: DEFAULT_TEMPLATES[newLang]?.template || t.code,
+            code: nextSpec.defaultTemplate || t.code,
           };
         }
         return t;
@@ -416,27 +351,39 @@ export const StandaloneIdeView: React.FC = () => {
     });
   };
 
-  // Add new tab
-  const handleAddTab = () => {
+  const handleAddTab = (preset?: {
+    title: string;
+    language: string;
+    code: string;
+    stdin: string;
+  }) => {
     const nextIdx = tabs.length + 1;
     const newId = `tab-${Date.now()}`;
-    const newTab: ScratchTab = {
-      id: newId,
-      title: `Code ${nextIdx}`,
-      language: 'cpp',
-      code: DEFAULT_TEMPLATES.cpp.template,
-      stdin: '',
-    };
+    const newTab: ScratchTab = preset
+      ? {
+          id: newId,
+          title: preset.title,
+          language: preset.language,
+          code: preset.code,
+          stdin: preset.stdin,
+        }
+      : {
+          id: newId,
+          title: `scratch-${nextIdx}.cpp`,
+          language: 'cpp',
+          code: CODESPACE_LANGUAGES.cpp.defaultTemplate,
+          stdin: '',
+        };
     const nextTabs = [...tabs, newTab];
     setTabs(nextTabs);
     setActiveTabId(newId);
+    setTemplateMenuOpen(false);
     triggerAutosave(nextTabs, newId, true);
   };
 
-  // Close tab
   const handleCloseTab = (idToClose: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (tabs.length === 1) return; // Keep at least one tab
+    if (tabs.length === 1) return;
     const nextTabs = tabs.filter((t) => t.id !== idToClose);
     const nextActiveId = activeTabId === idToClose ? nextTabs[0].id : activeTabId;
     setTabs(nextTabs);
@@ -446,35 +393,30 @@ export const StandaloneIdeView: React.FC = () => {
     triggerAutosave(nextTabs, nextActiveId, true);
   };
 
-
-  // Copy Code
   const handleCopyCode = () => {
     navigator.clipboard.writeText(activeTab.code);
     setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
+    setTimeout(() => setCopiedCode(false), 1800);
   };
 
-  // Copy Input
   const handleCopyInput = () => {
     navigator.clipboard.writeText(activeTab.stdin);
     setCopiedInput(true);
-    setTimeout(() => setCopiedInput(false), 2000);
+    setTimeout(() => setCopiedInput(false), 1800);
   };
 
-  // Reset Code
   const handleResetCode = () => {
-    const template = DEFAULT_TEMPLATES[activeTab.language]?.template;
+    const template = getLanguageSpec(activeTab.language).defaultTemplate;
     if (template) {
       updateActiveTabCode(template);
       toast({
         type: 'info',
-        title: 'Code Reset',
-        message: `Restored default ${DEFAULT_TEMPLATES[activeTab.language].label} boilerplate.`,
+        title: 'Buffer Reset',
+        message: `Restored clean ${activeLangSpec.label} template.`,
       });
     }
   };
 
-  // Format Code (lightweight indentation beautifier)
   const handleFormatCode = () => {
     const lines = activeTab.code.split('\n');
     let indent = 0;
@@ -497,16 +439,15 @@ export const StandaloneIdeView: React.FC = () => {
     toast({
       type: 'success',
       title: 'Formatted',
-      message: 'Indentation standardized to 4 spaces.',
+      message: 'Indentation normalized to 4 spaces.',
     });
   };
 
-  // Run Code Execution via Isolated Judge Service
   const handleRunCode = async () => {
     setIsExecuting(true);
     setExecutionResult({
       status: 'running',
-      stdout: 'Compiling code in isolated remote container...\nEvaluating test stream...',
+      stdout: 'Compiling code in isolated remote container...\nEvaluating stdin stream...',
       runtimeMs: 0,
       memoryKb: 0,
     });
@@ -529,9 +470,8 @@ export const StandaloneIdeView: React.FC = () => {
     }
   };
 
-  // Download code as file
   const handleDownloadCode = () => {
-    const ext = DEFAULT_TEMPLATES[activeTab.language]?.ext || 'txt';
+    const ext = activeLangSpec.ext || 'txt';
     const blob = new Blob([activeTab.code], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -541,7 +481,6 @@ export const StandaloneIdeView: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Open file from local disk
   const handleOpenFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -561,128 +500,256 @@ export const StandaloneIdeView: React.FC = () => {
     e.target.value = '';
   };
 
-  // Share code snippet
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     toast({
       type: 'success',
-      title: 'Workspace Link Copied',
-      message: 'Share this link with your peers or interview mentor.',
+      title: 'Studio Link Copied',
+      message: 'Copied current CodeSpace Studio route to clipboard.',
     });
   };
 
-  // Save active scratchpad to CodeSpace Vault
   const handleSaveToVault = async () => {
     if (!user) {
       toast({
         type: 'warning',
-        title: 'Authentication Required',
-        message: 'Sign in to commit scratchpads to your cloud CodeSpace vault.',
+        title: 'Sign In Required',
+        message: 'Sign in to sync snippets to your CodeSpace Vault.',
       });
       return;
     }
+
+    setIsSavingVault(true);
     try {
-      const { error } = await supabase.from('user_codespaces').insert({
-        user_id: user.id,
-        title: activeTab.title,
-        language: activeTab.language,
-        code_buffer: activeTab.code,
-        stdin_buffer: activeTab.stdin || null,
-        tags: ['scratchpad'],
-      });
-      if (error) throw error;
-      toast({
-        type: 'success',
-        title: 'Saved to CodeSpace',
-        message: `"${activeTab.title}" committed to your personal vault.`,
-      });
+      if (loadedCodespaceId && activeTab.id === 'tab-codespace') {
+        const { error } = await supabase
+          .from('user_codespaces')
+          .update({
+            title: activeTab.title,
+            language: activeTab.language,
+            code_buffer: activeTab.code,
+            stdin_buffer: activeTab.stdin || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', loadedCodespaceId);
+        if (error) throw error;
+        toast({
+          type: 'success',
+          title: 'Vault Snippet Updated',
+          message: `Synced changes for "${activeTab.title}" in CodeSpace Vault.`,
+        });
+      } else {
+        const { data, error } = await supabase
+          .from('user_codespaces')
+          .insert({
+            user_id: user.id,
+            title: activeTab.title,
+            language: activeTab.language,
+            code_buffer: activeTab.code,
+            stdin_buffer: activeTab.stdin || null,
+            tags: ['studio'],
+          })
+          .select('id')
+          .single();
+        if (error) throw error;
+        if (data?.id) {
+          setLoadedCodespaceId(data.id);
+        }
+        toast({
+          type: 'success',
+          title: 'Saved to Vault',
+          message: `"${activeTab.title}" committed to your CodeSpace Vault.`,
+        });
+      }
     } catch (err) {
       console.error('Failed to save to vault:', err);
       toast({
         type: 'error',
-        title: 'Save Failed',
-        message: 'Could not commit scratchpad to database.',
+        title: 'Vault Save Failed',
+        message: 'Could not commit scratchpad to cloud storage.',
       });
+    } finally {
+      setIsSavingVault(false);
     }
   };
 
   return (
     <div
       className={cn(
-        'flex flex-col bg-[#0B0D13] text-text-primary transition-all duration-150',
+        'flex flex-col bg-[#08090C] text-[#F3F6FF] transition-all duration-150',
         isFullscreen
           ? 'fixed inset-0 z-modal'
-          : 'min-h-[calc(100vh-3.5rem)] border-t border-white/[0.08]'
+          : 'min-h-[calc(100vh-3.5rem)] border-t border-[#171D2D]'
       )}
     >
-      {/* ============================================================== */}
-      {/* 1. WORKSPACE TOP BAR & MULTI-TAB STRIP */}
-      {/* ============================================================== */}
-      <div className="h-12 bg-[#12151E] border-b border-white/[0.08] px-3 flex items-center justify-between gap-3 shrink-0 select-none">
-        {/* Left: Tab Strip */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
-          {tabs.map((tab) => {
-            const isActive = tab.id === activeTab.id;
-            return (
-              <div
-                key={tab.id}
-                onClick={() => handleSelectTab(tab.id)}
-                className={cn(
-                  'h-8 px-3 rounded-md flex items-center gap-2 cursor-pointer transition-colors text-xs font-mono group shrink-0 border',
-                  isActive
-                    ? 'bg-[#181C28] text-white border-white/[0.12] font-semibold shadow-xs'
-                    : 'bg-transparent text-text-secondary border-transparent hover:bg-white/[0.03] hover:text-text-primary'
-                )}
-              >
-                <FileCode2 className={cn('w-3.5 h-3.5', isActive ? 'text-primary' : 'text-text-muted')} />
-                <span>{tab.title}</span>
-                {tabs.length > 1 && (
-                  <button
-                    onClick={(e) => handleCloseTab(tab.id, e)}
-                    className="p-0.5 rounded hover:bg-white/[0.1] text-text-muted hover:text-white transition-colors"
-                    title="Close tab"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
+      {/* 1. UNIFIED WORKSPACE BAR & MULTI-TAB STRIP */}
+      <div className="bg-[#0B0E16] border-b border-[#171D2D] px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2.5 shrink-0 select-none">
+        {/* Left: Workspace Switcher + Tab Strip */}
+        <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-auto no-scrollbar">
+          <CodeSpaceNavTabs activeTab="studio" compact />
 
-          {/* Add Tab Button */}
-          <button
-            onClick={handleAddTab}
-            className="w-7 h-7 rounded-md border border-white/[0.06] hover:border-white/[0.12] bg-[#181C28] text-text-muted hover:text-white flex items-center justify-center transition-colors"
-            title="Open new scratchpad tab"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
+          <div className="h-5 w-px bg-[#171D2D] shrink-0 hidden sm:block" />
+
+          <div className="flex items-center gap-1 min-w-0">
+            {tabs.map((tab) => {
+              const isActive = tab.id === activeTab.id;
+              const isRenaming = renamingTabId === tab.id;
+              const tabLang = getLanguageSpec(tab.language);
+
+              return (
+                <div
+                  key={tab.id}
+                  onClick={() => handleSelectTab(tab.id)}
+                  onDoubleClick={() => {
+                    setRenamingTabId(tab.id);
+                    setRenameDraft(tab.title);
+                  }}
+                  className={cn(
+                    'h-8 px-2.5 rounded-lg flex items-center gap-2 cursor-pointer transition-colors text-xs font-mono shrink-0 border',
+                    isActive
+                      ? 'bg-[#152443] text-[#F8FAFF] border-[#3B82F6]/35 font-semibold'
+                      : 'bg-[#0F131D] text-[#7C8BA6] border-[#181F30] hover:bg-[#141A29] hover:text-[#D5E1F7]'
+                  )}
+                >
+                  <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', tabLang.dotClass)} />
+                  {isRenaming ? (
+                    <input
+                      autoFocus
+                      value={renameDraft}
+                      onChange={(e) => setRenameDraft(e.target.value)}
+                      onBlur={() => commitRenameTab(tab.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitRenameTab(tab.id);
+                        if (e.key === 'Escape') setRenamingTabId(null);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-24 bg-[#080B12] border border-[#3B82F6]/60 rounded px-1.5 py-0.5 text-[11px] text-[#F8FAFF] focus:outline-none"
+                    />
+                  ) : (
+                    <span className="max-w-[130px] truncate">{tab.title}</span>
+                  )}
+
+                  {isActive && !isRenaming && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRenamingTabId(tab.id);
+                        setRenameDraft(tab.title);
+                      }}
+                      title="Rename tab"
+                      className="p-0.5 rounded text-[#7C8BA6] hover:text-[#F8FAFF] transition-colors cursor-pointer"
+                    >
+                      <Pencil className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+
+                  {tabs.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleCloseTab(tab.id, e)}
+                      className="p-0.5 rounded hover:bg-[#1E335E] text-[#64748B] hover:text-[#F8FAFF] transition-colors cursor-pointer"
+                      title="Close tab"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Add Blank Tab */}
+            <button
+              type="button"
+              onClick={() => handleAddTab()}
+              className="w-8 h-8 rounded-lg border border-[#181F30] hover:border-[#243B6B] bg-[#0F131D] hover:bg-[#152443] text-[#7C8BA6] hover:text-[#F8FAFF] flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+              title="New scratchpad tab"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Quick Starter Blueprint Menu */}
+            <div className="relative shrink-0" ref={templateMenuRef}>
+              <button
+                type="button"
+                onClick={() => setTemplateMenuOpen(!templateMenuOpen)}
+                className="h-8 px-2.5 rounded-lg border border-[#181F30] hover:border-[#243B6B] bg-[#0F131D] hover:bg-[#141A29] text-[11px] font-mono text-[#94A1B8] hover:text-[#00B8A3] inline-flex items-center gap-1 transition-colors cursor-pointer"
+                title="Insert starter blueprint tab"
+              >
+                <Sparkles className="w-3 h-3 text-[#00B8A3]" />
+                <span className="hidden md:inline">Blueprints</span>
+              </button>
+
+              <AnimatePresence>
+                {templateMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 top-10 z-40 w-72 rounded-xl border border-[#212B42] bg-[#0F131D] shadow-2xl p-1.5 space-y-1 text-left"
+                  >
+                    <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[#64748B]">
+                      Open Starter Blueprint
+                    </div>
+                    {QUICK_STARTER_TEMPLATES.map((tpl) => {
+                      const spec = getLanguageSpec(tpl.language);
+                      return (
+                        <button
+                          key={tpl.id}
+                          type="button"
+                          onClick={() =>
+                            handleAddTab({
+                              title: `${tpl.id}.${spec.ext}`,
+                              language: tpl.language,
+                              code: tpl.code,
+                              stdin: tpl.stdin,
+                            })
+                          }
+                          className="w-full rounded-lg px-2.5 py-2 hover:bg-[#152443] transition-colors text-left cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-[#F8FAFF]">{tpl.title}</span>
+                            <span className="text-[10px] font-mono text-[#60A5FA]">
+                              {spec.shortLabel}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#7C8BA6] mt-0.5 line-clamp-1">
+                            {tpl.description}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
 
-        {/* Right: Action Toolbar */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Language Selector Dropdown */}
+        {/* Right: Language + Save Telemetry + Toolbar + Run CTA */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap">
           <select
+            aria-label="Target runtime language"
             value={activeTab.language}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className="h-8 px-3 rounded-md bg-[#181C28] border border-white/[0.08] text-xs font-mono text-white focus:outline-none focus:border-blue-500 cursor-pointer"
+            className="h-8 px-2.5 rounded-lg bg-[#0F131D] border border-[#1B2234] text-xs font-mono text-[#E2E8F5] focus:outline-none focus:border-[#3B82F6]/60 cursor-pointer"
           >
-            {Object.entries(DEFAULT_TEMPLATES).map(([key, val]) => (
-              <option key={key} value={key} className="bg-[#181C28] text-white">
+            {Object.values(CODESPACE_LANGUAGES).map((val) => (
+              <option key={val.id} value={val.id} className="bg-[#0F131D] text-[#E2E8F5]">
                 {val.label}
               </option>
             ))}
           </select>
 
-          {/* Autosave Status Indicator */}
           <div
             id="autosave-status"
-            className="flex items-center gap-1.5 text-xs font-mono px-2 select-none"
+            className="flex items-center gap-1.5 text-[11px] font-mono px-2 select-none"
             aria-live="polite"
           >
             {saveStatus === 'saving' && (
-              <span className="flex items-center gap-1 text-text-tertiary">
-                <RefreshCw className="w-3 h-3 animate-spin text-primary" />
+              <span className="flex items-center gap-1 text-[#8E9BB3]">
+                <RefreshCw className="w-3 h-3 animate-spin text-[#60A5FA]" />
                 <span>Saving...</span>
               </span>
             )}
@@ -693,15 +760,16 @@ export const StandaloneIdeView: React.FC = () => {
               </span>
             )}
             {saveStatus === 'unsaved' && (
-              <span className="flex items-center gap-1 text-text-secondary">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span className="flex items-center gap-1 text-[#94A1B8]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
                 <span>Unsaved</span>
               </span>
             )}
             {saveStatus === 'error' && (
               <button
+                type="button"
                 onClick={retrySave}
-                className="flex items-center gap-1 text-[#FF375F] hover:underline cursor-pointer"
+                className="flex items-center gap-1 text-[#F43F5E] hover:underline cursor-pointer"
                 title="Save failed. Click to retry."
               >
                 <AlertTriangle className="w-3 h-3" />
@@ -710,57 +778,60 @@ export const StandaloneIdeView: React.FC = () => {
             )}
           </div>
 
-          {/* Reset Code */}
           <button
+            type="button"
             onClick={handleResetCode}
-            className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="p-1.5 rounded-lg text-[#7C8BA6] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
             title="Reset to boilerplate"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
 
-          {/* Format / Beautify */}
           <button
+            type="button"
             onClick={handleFormatCode}
-            className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/[0.04] transition-colors"
-            title="Format code (auto-indent)"
+            className="p-1.5 rounded-lg text-[#7C8BA6] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
+            title="Format indentation"
           >
             <Code2 className="w-4 h-4" />
           </button>
 
-          {/* Copy Code */}
           <button
+            type="button"
             onClick={handleCopyCode}
-            className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/[0.04] transition-colors"
-            title="Copy code"
+            className="p-1.5 rounded-lg text-[#7C8BA6] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
+            title="Copy source buffer"
           >
-            {copiedCode ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+            {copiedCode ? <Check className="w-4 h-4 text-[#00B8A3]" /> : <Copy className="w-4 h-4" />}
           </button>
 
-          {/* Save to CodeSpace Vault */}
           <button
+            type="button"
             onClick={handleSaveToVault}
-            className="p-1.5 rounded-md text-neutral-400 hover:text-blue-400 hover:bg-white/[0.04] transition-colors"
-            title="Commit to CodeSpace Vault"
+            disabled={isSavingVault}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#1B2234] bg-[#0F131D] hover:bg-[#152443] hover:border-[#243B6B] text-[11px] font-medium text-[#C3CEE0] hover:text-[#F8FAFF] transition-colors cursor-pointer disabled:opacity-50"
+            title="Save or update snippet in CodeSpace Vault"
           >
-            <Bookmark className="w-4 h-4" />
+            <Bookmark className="w-3.5 h-3.5 text-[#60A5FA]" />
+            <span className="hidden sm:inline">
+              {isSavingVault ? 'Syncing...' : loadedCodespaceId ? 'Update Vault' : 'Save to Vault'}
+            </span>
           </button>
 
-          {/* Fullscreen Toggle */}
           <button
+            type="button"
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="p-1.5 rounded-lg text-[#7C8BA6] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
             title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
 
-          {/* High-Contrast Primary Run Action */}
           <Button
             onClick={handleRunCode}
             disabled={isExecuting}
             size="sm"
-            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm flex items-center gap-1.5"
+            className="bg-[#2563EB] hover:bg-[#3B82F6] text-[#F8FAFF] px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 border border-[#3B82F6]/40"
             title="Compile & Run Code (Ctrl + Enter)"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
@@ -769,14 +840,19 @@ export const StandaloneIdeView: React.FC = () => {
         </div>
       </div>
 
-      {/* ============================================================== */}
-      {/* 2. SPLIT LAYOUT (65% Editor / 35% Input & Output Rails) */}
-      {/* ============================================================== */}
+      {/* 2. SPLIT WORKSPACE (8 Cols Monaco Editor / 4 Cols Stdin & Output) */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
-        {/* ------------------------------------------------------------ */}
-        {/* LEFT PANE: CODE EDITOR (65% / 8 cols) */}
-        {/* ------------------------------------------------------------ */}
-        <div className="lg:col-span-8 flex flex-col border-b lg:border-b-0 lg:border-r border-white/[0.08] bg-[#0E1117] overflow-hidden">
+        {/* LEFT: MONACO CODE EDITOR */}
+        <div className="lg:col-span-8 flex flex-col border-b lg:border-b-0 lg:border-r border-[#171D2D] bg-[#080B12] overflow-hidden min-h-[380px]">
+          <div className="px-4 py-1.5 bg-[#0B0E16] border-b border-[#171D2D] flex items-center justify-between text-[11px] font-mono text-[#64748B]">
+            <div className="flex items-center gap-2">
+              <FileCode2 className="w-3.5 h-3.5 text-[#60A5FA]" />
+              <span className="text-[#C3CEE0]">{activeTab.title}</span>
+              <span className="text-[#475569]">•</span>
+              <span>{activeLangSpec.runtimeLabel}</span>
+            </div>
+            <span className="hidden sm:inline text-[#475569]">Ctrl + Enter to run</span>
+          </div>
           <div className="flex-1 flex overflow-hidden">
             <MonacoCodeEditor
               value={activeTab.code}
@@ -788,29 +864,33 @@ export const StandaloneIdeView: React.FC = () => {
           </div>
         </div>
 
-        {/* ------------------------------------------------------------ */}
-        {/* RIGHT PANE: INPUT & OUTPUT RAILS (35% / 4 cols) */}
-        {/* ------------------------------------------------------------ */}
-        <div className="lg:col-span-4 flex flex-col bg-[#12151E] divide-y divide-white/[0.08] overflow-hidden">
-          {/* TOP BOX: INPUT (stdin) */}
-          <div className="h-44 sm:h-52 flex flex-col p-3 bg-[#12151E] shrink-0">
+        {/* RIGHT: STDIN & EXECUTION CONSOLE */}
+        <div className="lg:col-span-4 flex flex-col bg-[#0B0E16] divide-y divide-[#171D2D] overflow-hidden">
+          {/* STDIN INPUT */}
+          <div className="h-44 sm:h-52 flex flex-col p-3.5 bg-[#0B0E16] shrink-0">
             <div className="flex items-center justify-between pb-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-semibold flex items-center gap-1.5">
-                <Terminal className="w-3.5 h-3.5 text-primary" />
-                Input (stdin)
+              <span className="text-[11px] font-mono uppercase tracking-wider text-[#8E9BB3] font-semibold flex items-center gap-1.5">
+                <Terminal className="w-3.5 h-3.5 text-[#60A5FA]" />
+                <span>Standard Input (stdin)</span>
               </span>
 
               <div className="flex items-center gap-1">
                 <button
+                  type="button"
                   onClick={handleCopyInput}
-                  className="p-1 rounded text-neutral-400 hover:text-white transition-colors"
+                  className="p-1 rounded-md text-[#64748B] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
                   title="Copy Stdin"
                 >
-                  {copiedInput ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedInput ? (
+                    <Check className="w-3.5 h-3.5 text-[#00B8A3]" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
                 </button>
                 <button
+                  type="button"
                   onClick={() => updateActiveTabStdin('')}
-                  className="p-1 rounded text-neutral-400 hover:text-error transition-colors"
+                  className="p-1 rounded-md text-[#64748B] hover:text-[#F43F5E] hover:bg-[#241017] transition-colors cursor-pointer"
                   title="Clear Stdin"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -821,96 +901,94 @@ export const StandaloneIdeView: React.FC = () => {
             <textarea
               value={activeTab.stdin}
               onChange={(e) => updateActiveTabStdin(e.target.value)}
-              placeholder="Provide program standard input here..."
-              className="flex-1 w-full bg-[#181C28] border border-white/[0.08] text-neutral-200 font-mono text-xs sm:text-sm p-2.5 rounded-lg focus:outline-none focus:border-blue-500 resize-none leading-relaxed"
+              placeholder="Provide standard input stream here..."
+              className="flex-1 w-full bg-[#080B12] border border-[#181F30] focus:border-[#3B82F6]/60 text-[#E2E8F5] placeholder-[#475569] font-mono text-xs p-3 rounded-xl focus:outline-none resize-none leading-relaxed transition-colors"
             />
           </div>
 
-          {/* BOTTOM BOX: OUTPUT (stdout / stderr) */}
-          <div className="flex-1 flex flex-col p-3 bg-[#0E1117] overflow-hidden">
-            <div className="flex items-center justify-between pb-2 shrink-0">
+          {/* STDOUT / STDERR CONSOLE */}
+          <div className="flex-1 flex flex-col p-3.5 bg-[#0F131D] overflow-hidden min-h-[220px]">
+            <div className="flex items-center justify-between pb-2.5 shrink-0 gap-2 flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-semibold flex items-center gap-1.5">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#8E9BB3] font-semibold flex items-center gap-1.5">
                   <Code2 className="w-3.5 h-3.5 text-[#00B8A3]" />
-                  Output (stdout / stderr)
+                  <span>Console Output</span>
                 </span>
+
                 {isExecuting ? (
-                  <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 border border-primary/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                    Running in Sandbox
+                  <span className="text-[10px] font-mono font-semibold text-[#60A5FA] bg-[#152443] border border-[#243B6B] px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Running Sandbox</span>
                   </span>
                 ) : executionResult.status === 'success' ? (
-                  <span className="text-[10px] font-mono font-bold text-[#00B8A3] bg-[#00B8A3]/10 border border-[#00B8A3]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-[10px] font-mono font-semibold text-[#00B8A3] bg-[#0B2421] border border-[#15423D] px-2 py-0.5 rounded-full flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
-                    Success (0)
+                    <span>Exit 0</span>
                   </span>
                 ) : executionResult.status === 'ce' ? (
-                  <span className="text-[10px] font-mono font-bold text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-[10px] font-mono font-semibold text-[#FBBF24] bg-[#241A08] border border-[#422F0F] px-2 py-0.5 rounded-full flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
-                    Compilation Error
+                    <span>Compile Error</span>
                   </span>
                 ) : executionResult.status === 're' ? (
-                  <span className="text-[10px] font-mono font-bold text-[#FF375F] bg-[#FF375F]/10 border border-[#FF375F]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-[10px] font-mono font-semibold text-[#F43F5E] bg-[#241017] border border-[#4C1D2A] px-2 py-0.5 rounded-full flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
-                    Runtime Error / TLE
+                    <span>Runtime / Dispatch Error</span>
                   </span>
                 ) : null}
               </div>
 
-              {/* Execution telemetry duration & memory */}
               {executionResult.runtimeMs > 0 && (
-                <div className="flex items-center gap-3 text-[11px] font-mono text-neutral-400">
+                <div className="flex items-center gap-3 text-[11px] font-mono text-[#7C8BA6] tabular-nums">
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-warning" />
-                    <strong className="text-white">{executionResult.runtimeMs}</strong> ms
+                    <Clock className="w-3 h-3 text-[#FBBF24]" />
+                    <strong className="text-[#F8FAFF]">{executionResult.runtimeMs}</strong> ms
                   </span>
                   <span className="flex items-center gap-1">
-                    <HardDrive className="w-3 h-3 text-primary" />
-                    <strong className="text-white">{executionResult.memoryKb}</strong> KB
+                    <HardDrive className="w-3 h-3 text-[#60A5FA]" />
+                    <strong className="text-[#F8FAFF]">{executionResult.memoryKb}</strong> KB
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Output terminal display */}
-            <div className="flex-1 bg-[#12151E] border border-white/[0.08] rounded-lg p-3 font-mono text-xs sm:text-sm text-neutral-200 overflow-y-auto leading-relaxed whitespace-pre-wrap select-text">
+            <div className="flex-1 bg-[#080B12] border border-[#181F30] rounded-xl p-3 font-mono text-xs text-[#E2E8F5] overflow-y-auto leading-relaxed whitespace-pre-wrap select-text">
               {executionResult.status === 'idle' && !isExecuting ? (
-                <div className="h-full flex flex-col items-center justify-center text-center text-neutral-500 space-y-1">
-                  <Terminal className="w-6 h-6 text-neutral-600 mb-1" />
-                  <p className="text-xs">Ready to Run</p>
-                  <p className="text-[11px] text-neutral-600">
-                    Write your code and click <strong className="text-neutral-400">Run Code</strong> (Ctrl+Enter) to evaluate.
+                <div className="h-full flex flex-col items-center justify-center text-center text-[#5B6882] space-y-1.5">
+                  <Terminal className="w-5 h-5 text-[#3F4A61]" />
+                  <p className="text-xs font-medium text-[#8E9BB3]">Ready to Execute</p>
+                  <p className="text-[11px] text-[#5B6882]">
+                    Press <span className="text-[#93C5FD]">Run Code</span> or{' '}
+                    <kbd className="px-1.5 py-0.5 rounded bg-[#0F131D] border border-[#1B2234] text-[10px]">
+                      Ctrl+Enter
+                    </kbd>{' '}
+                    to evaluate.
                   </p>
                 </div>
               ) : (
-                <div className="text-neutral-100">{executionResult.stdout}</div>
+                <div className="text-[#E2E8F5]">{executionResult.stdout}</div>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ============================================================== */}
-      {/* 3. EDITOR STATUS FOOTER BAR */}
-      {/* ============================================================== */}
-      <div className="h-7 bg-[#0B0D13] border-t border-white/[0.08] px-4 text-[11px] text-neutral-400 font-mono flex items-center justify-between shrink-0 select-none">
-        {/* Left Status info */}
-        <div className="flex items-center gap-3">
+      {/* 3. STUDIO STATUS FOOTER BAR */}
+      <div className="h-7 bg-[#08090C] border-t border-[#171D2D] px-4 text-[11px] text-[#64748B] font-mono flex items-center justify-between shrink-0 select-none">
+        <div className="flex items-center gap-3 tabular-nums">
           <span>UTF-8</span>
-          <span className="text-neutral-600">•</span>
+          <span className="text-[#2D384F]">•</span>
           <span>Spaces: 4</span>
-          <span className="text-neutral-600">•</span>
+          <span className="text-[#2D384F]">•</span>
           <span>
-            Ln <strong className="text-neutral-300">{cursorPos.line}</strong>, Col{' '}
-            <strong className="text-neutral-300">{cursorPos.col}</strong>
+            Ln <strong className="text-[#C3CEE0]">{cursorPos.line}</strong>, Col{' '}
+            <strong className="text-[#C3CEE0]">{cursorPos.col}</strong>
           </span>
-          <span className="text-neutral-600">•</span>
+          <span className="text-[#2D384F]">•</span>
           <span>{lineCount} lines</span>
         </div>
 
-        {/* Right utility actions */}
-        <div className="flex items-center gap-3">
-          {/* Hidden file input */}
+        <div className="flex items-center gap-3.5">
           <input
             type="file"
             ref={fileInputRef}
@@ -920,8 +998,9 @@ export const StandaloneIdeView: React.FC = () => {
           />
 
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="hover:text-white transition-colors flex items-center gap-1"
+            className="hover:text-[#F8FAFF] transition-colors flex items-center gap-1 cursor-pointer"
             title="Open local source file"
           >
             <FolderOpen className="w-3 h-3" />
@@ -929,18 +1008,20 @@ export const StandaloneIdeView: React.FC = () => {
           </button>
 
           <button
+            type="button"
             onClick={handleDownloadCode}
-            className="hover:text-white transition-colors flex items-center gap-1"
-            title="Download source code"
+            className="hover:text-[#F8FAFF] transition-colors flex items-center gap-1 cursor-pointer"
+            title="Download source file"
           >
             <Download className="w-3 h-3" />
             <span>Download</span>
           </button>
 
           <button
+            type="button"
             onClick={handleShare}
-            className="hover:text-white transition-colors flex items-center gap-1"
-            title="Share workspace link"
+            className="hover:text-[#F8FAFF] transition-colors flex items-center gap-1 cursor-pointer"
+            title="Share studio URL"
           >
             <Share2 className="w-3 h-3" />
             <span>Share</span>

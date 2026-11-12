@@ -4,6 +4,7 @@ Executes untrusted candidate code inside an air-gapped, resource-constrained,
 ephemeral Docker container with a non-root user, read-only root filesystem,
 tmpfs write boundary, dropped capabilities, and strict timeout/PID controls.
 """
+import json
 import logging
 import os
 import shutil
@@ -411,6 +412,213 @@ class DockerSandbox:
             oom_killed=oom_killed,
             output_truncated=output_truncated,
         )
+
+    def run_suite_in_container(
+        self,
+        submission_spec: Dict[str, Any],
+        scratch_dir: str,
+        timeout_seconds: float = 30.0,
+        execution_id: str = "suite",
+        memory_limit_mb: Optional[int] = None,
+        cpu_limit: Optional[float] = None,
+        on_proc_started: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Executes an entire candidate submission test suite inside a SINGLE hardened Docker container.
+
+        Enforces:
+          - 1 submission -> 1 container -> compile once -> execute all canonical tests -> destroy once
+          - --network none (air-gapped)
+          - --read-only root filesystem
+          - --tmpfs /tmp:rw,exec,nosuid,size=Xm
+          - --cap-drop ALL
+          - --security-opt no-new-privileges:true
+          - --pids-limit N
+          - --memory Xm
+          - --memory-swap Xm
+          - --cpus C
+          - --user 1000:1000 (non-root)
+          - -v {abs_scratch}:/sandbox:ro (read-only mount)
+          - Isolated per-test child process and ephemeral /tmp/tc_{i} directory
+          - Guaranteed container removal in finally block
+        """
+        self.containers_started += 1
+        safe_mem = memory_limit_mb or self.default_memory_mb
+        safe_cpu = cpu_limit or self.default_cpus
+
+        clean_exec_id = "".join(c for c in execution_id if c.isalnum() or c in "-_")[:48]
+        container_name = f"verniq-judge-suite-{clean_exec_id}-{int(time.time() * 1000)}"
+        abs_scratch = os.path.abspath(scratch_dir)
+
+        # 1. Copy in_container_driver.py to scratch_dir
+        driver_src = os.path.join(os.path.dirname(__file__), "in_container_driver.py")
+        driver_dst = os.path.join(scratch_dir, "in_container_driver.py")
+        shutil.copy2(driver_src, driver_dst)
+
+        # 2. Write submission_spec.json to scratch_dir
+        spec_path = os.path.join(scratch_dir, "submission_spec.json")
+        with open(spec_path, "w", encoding="utf-8") as f:
+            json.dump(submission_spec, f)
+
+        # Ensure all files in scratch_dir have read permissions for user 1000
+        for fname in os.listdir(scratch_dir):
+            fpath = os.path.join(scratch_dir, fname)
+            try:
+                os.chmod(fpath, 0o644)
+            except Exception:
+                pass
+
+        docker_cmd = [
+            "docker", "run",
+            "--name", container_name,
+            "--network", "none",
+            "--read-only",
+            "--tmpfs", f"/tmp:rw,exec,nosuid,size={self.tmpfs_size_mb}m",
+            "--cap-drop", "ALL",
+            "--security-opt", "no-new-privileges:true",
+            "--pids-limit", str(self.pids_limit),
+            "--memory", f"{safe_mem}m",
+            "--memory-swap", f"{safe_mem}m",
+            "--cpus", str(safe_cpu),
+            "--user", self.user,
+            "-e", "GOCACHE=/tmp/go-cache",
+            "-e", "GOTMPDIR=/tmp",
+            "-e", "GOMAXPROCS=2",
+            "-v", f"{abs_scratch}:/sandbox:ro",
+            "-i",
+            self.image_name,
+            "python3", "/sandbox/in_container_driver.py", "/sandbox/submission_spec.json",
+        ]
+
+        logger.info("SANDBOX_SUITE_STARTED container=%s image=%s cpus=%.1f memory=%dm", container_name, self.image_name, safe_cpu, safe_mem)
+        start_time = time.perf_counter()
+
+        proc = None
+        timed_out = False
+        oom_killed = False
+        stdout_bytes = b""
+        stderr_bytes = b""
+
+        try:
+            proc = subprocess.Popen(
+                docker_cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            if on_proc_started and callable(on_proc_started):
+                try:
+                    on_proc_started(proc, container_name)
+                except Exception:
+                    pass
+
+            try:
+                stdout_bytes, stderr_bytes = proc.communicate(
+                    timeout=timeout_seconds,
+                )
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                self.containers_timed_out += 1
+                logger.info("SANDBOX_SUITE_TIMEOUT container=%s timeout_seconds=%.2f", container_name, timeout_seconds)
+                try:
+                    subprocess.run(["docker", "kill", container_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=6.0)
+                except Exception:
+                    pass
+                try:
+                    stdout_bytes, stderr_bytes = proc.communicate(timeout=2.0)
+                except Exception:
+                    try:
+                        proc.kill()
+                    except Exception:
+                        pass
+
+        except Exception as err:
+            self.sandbox_errors += 1
+            self.containers_failed += 1
+            logger.error("SANDBOX_SUITE_FAILED container=%s error=%s", container_name, err)
+            raise RuntimeError(f"Docker sandbox suite execution failed: {err}")
+
+        finally:
+            duration_ms = int((time.perf_counter() - start_time) * 1000)
+            try:
+                subprocess.run(
+                    ["docker", "rm", "-f", container_name],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=6.0,
+                )
+                self.containers_cleaned += 1
+                logger.debug("SANDBOX_SUITE_CLEANUP container=%s duration_ms=%d", container_name, duration_ms)
+            except Exception as clean_err:
+                logger.warning("Error cleaning container %s: %s", container_name, clean_err)
+
+        output_truncated = False
+        if len(stdout_bytes) > self.output_limit_bytes:
+            stdout_bytes = stdout_bytes[:self.output_limit_bytes]
+            output_truncated = True
+
+        if len(stderr_bytes) > self.output_limit_bytes:
+            stderr_bytes = stderr_bytes[:self.output_limit_bytes]
+            output_truncated = True
+
+        stdout_str = stdout_bytes.decode("utf-8", errors="replace")
+        stderr_str = stderr_bytes.decode("utf-8", errors="replace")
+        exit_code = proc.returncode if proc and proc.returncode is not None else (124 if timed_out else 1)
+
+        if exit_code == 137 and not timed_out:
+            oom_killed = True
+
+        # Extract delimited JSON result
+        from .in_container_driver import START_MARKER, END_MARKER
+        result_dict = None
+        if START_MARKER in stdout_str and END_MARKER in stdout_str:
+            try:
+                start_idx = stdout_str.index(START_MARKER) + len(START_MARKER)
+                end_idx = stdout_str.index(END_MARKER, start_idx)
+                raw_json = stdout_str[start_idx:end_idx].strip()
+                result_dict = json.loads(raw_json)
+            except Exception as parse_err:
+                logger.warning("Failed to parse JSON result from container %s: %s", container_name, parse_err)
+
+        if result_dict:
+            self.containers_completed += 1
+            result_dict["container_wall_duration_ms"] = duration_ms
+            return result_dict
+
+        if timed_out:
+            return {
+                "verdict": "time_limit_exceeded",
+                "timed_out": True,
+                "runtime_ms": int(timeout_seconds * 1000),
+                "stderr_output": f"Time limit exceeded: container suite timeout after {timeout_seconds:.1f}s",
+                "test_cases_passed": 0,
+                "total_test_cases": len(submission_spec.get("test_cases", [])),
+                "container_wall_duration_ms": duration_ms,
+            }
+
+        if oom_killed:
+            self.containers_failed += 1
+            return {
+                "verdict": "memory_limit_exceeded",
+                "oom_killed": True,
+                "runtime_ms": duration_ms,
+                "memory_kb": safe_mem * 1024,
+                "stderr_output": f"Memory limit exceeded: allocation exceeded {safe_mem}MB container threshold.",
+                "test_cases_passed": 0,
+                "total_test_cases": len(submission_spec.get("test_cases", [])),
+                "container_wall_duration_ms": duration_ms,
+            }
+
+        self.containers_failed += 1
+        return {
+            "verdict": "runtime_error",
+            "runtime_ms": duration_ms,
+            "stderr_output": stderr_str or f"Container process exited with code {exit_code}",
+            "stdout_output": stdout_str,
+            "test_cases_passed": 0,
+            "total_test_cases": len(submission_spec.get("test_cases", [])),
+            "container_wall_duration_ms": duration_ms,
+        }
 
     def get_telemetry(self) -> Dict[str, Any]:
         """Returns safe operational container telemetry."""

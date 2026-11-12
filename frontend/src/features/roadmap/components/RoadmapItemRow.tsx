@@ -183,12 +183,12 @@ export const RoadmapItemRow: React.FC<RoadmapItemRowProps> = ({
 
   return (
     <div
-      className={`p-3.5 rounded-lg border transition-all duration-200 ${
+      className={`p-3.5 rounded-xl border transition-all duration-200 ${
         isCompleted
-          ? 'bg-surface-elevated/40 border-border/60 opacity-95'
+          ? 'bg-[#0C1517] border-[#16302E] opacity-95'
           : isLocked
-          ? 'bg-surface/30 border-border/40 opacity-60'
-          : 'bg-surface-elevated border-border hover:border-border-strong'
+          ? 'bg-[#0B0E16] border-[#151B2B] opacity-60'
+          : 'bg-[#121724] border-[#1B2234] hover:border-[#2B3754]'
       }`}
     >
       <div className="flex items-start gap-3">

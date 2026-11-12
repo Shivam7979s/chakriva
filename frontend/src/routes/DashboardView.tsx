@@ -10,28 +10,18 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { FALLBACK_PROBLEMS } from '@/lib/curriculumData';
 import type { StudySprint, SprintTask } from '@/types';
 import {
-  Flame,
-  CalendarCheck,
   Calendar,
   Clock,
-  Compass,
   MoreVertical,
   CheckCircle2,
   Circle,
   ArrowRight,
   Code2,
-  Layers,
-  Crown,
   FileText,
   MessageSquare,
   BookOpen,
   ChevronRight,
   Target,
-  TrendingUp,
-  Hexagon,
-  Network,
-  Database,
-  Briefcase,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient, type ProgressSummary } from '@/lib/apiClient';
@@ -681,7 +671,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
 
               <div className="space-y-1 relative z-10 max-w-xl text-left">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                  Welcome to Chakriva, {displayName || 'Developer'}! 👋
+                  Welcome to Chakriva, {displayName || 'Developer'}!
                 </h1>
                 <p className="text-xs sm:text-sm text-zinc-400">
                   Systematic technical interview preparation. Master data structures, algorithmic patterns, and runtime rigor.
@@ -730,51 +720,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
 
                     {/* 4 Feature Cards */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                      <div className="p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 space-y-2">
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center">
-                          <Target className="w-4 h-4 text-blue-400" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-white">Target role</div>
-                          <div className="text-[10px] text-zinc-400 mt-0.5 leading-snug">
-                            Placements, internships, or senior IC tracks
-                          </div>
+                      <div className="p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 space-y-1">
+                        <div className="text-xs font-bold text-white">Target role</div>
+                        <div className="text-[10px] text-zinc-400 leading-snug">
+                          Placements, internships, or senior IC tracks
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 space-y-2">
-                        <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center">
-                          <Calendar className="w-4 h-4 text-cyan-400" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-white">Paced cadence</div>
-                          <div className="text-[10px] text-zinc-400 mt-0.5 leading-snug">
-                            Weekly targets matched to your bandwidth
-                          </div>
+                      <div className="p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 space-y-1">
+                        <div className="text-xs font-bold text-white">Paced cadence</div>
+                        <div className="text-[10px] text-zinc-400 leading-snug">
+                          Weekly targets matched to your bandwidth
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 space-y-2">
-                        <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center">
-                          <TrendingUp className="w-4 h-4 text-purple-400" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-white">Adaptive pacing</div>
-                          <div className="text-[10px] text-zinc-400 mt-0.5 leading-snug">
-                            Curriculum adjusts as you solve problems
-                          </div>
+                      <div className="p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 space-y-1">
+                        <div className="text-xs font-bold text-white">Adaptive pacing</div>
+                        <div className="text-[10px] text-zinc-400 leading-snug">
+                          Curriculum adjusts as you solve problems
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 space-y-2">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
-                          <Compass className="w-4 h-4 text-indigo-400" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-white">Pattern invariants</div>
-                          <div className="text-[10px] text-zinc-400 mt-0.5 leading-snug">
-                            Isolate root invariants and edge-case gaps
-                          </div>
+                      <div className="p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 space-y-1">
+                        <div className="text-xs font-bold text-white">Pattern invariants</div>
+                        <div className="text-[10px] text-zinc-400 leading-snug">
+                          Isolate root invariants and edge-case gaps
                         </div>
                       </div>
                     </div>
@@ -897,10 +867,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-4 text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                     <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Hexagon className="w-4 h-4 text-purple-400" />
-                        <h3 className="text-sm font-bold text-white tracking-tight">Recommended starting problems</h3>
-                      </div>
+                      <h3 className="text-sm font-bold text-white tracking-tight">Recommended starting problems</h3>
                       <p className="text-xs text-zinc-400">
                         Essential algorithmic patterns to build your problem-solving baseline.
                       </p>
@@ -978,10 +945,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-4 text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                     <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-cyan-400" />
-                        <h3 className="text-sm font-bold text-white tracking-tight">Explore learning paths</h3>
-                      </div>
+                      <h3 className="text-sm font-bold text-white tracking-tight">Explore learning paths</h3>
                       <p className="text-xs text-zinc-400">
                         Start with the right path based on your current level.
                       </p>
@@ -1003,9 +967,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center">
-                            <Code2 className="w-4 h-4 text-blue-400" />
-                          </div>
                           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-950/60 text-blue-300 border border-blue-500/30">
                             Foundation
                           </span>
@@ -1032,9 +993,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center">
-                            <Network className="w-4 h-4 text-purple-400" />
-                          </div>
                           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-500/30">
                             Core
                           </span>
@@ -1061,9 +1019,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <div className="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/30 text-teal-400 flex items-center justify-center">
-                            <Database className="w-4 h-4 text-teal-400" />
-                          </div>
                           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-teal-950/60 text-teal-300 border border-teal-500/30">
                             Systems
                           </span>
@@ -1090,9 +1045,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 flex items-center justify-center">
-                            <Briefcase className="w-4 h-4 text-orange-400" />
-                          </div>
                           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-orange-950/60 text-orange-300 border border-orange-500/30">
                             Placement
                           </span>
@@ -1139,7 +1091,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-3.5 relative overflow-hidden text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                     <div className="flex items-center gap-2">
-                      <Compass className="w-4 h-4 text-cyan-400" />
                       <h4 className="text-sm font-bold text-white tracking-tight">Diagnostic Mentor</h4>
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-400 border border-cyan-500/30">
                         STANDBY
@@ -1170,10 +1121,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 {/* CARD 6: Curated Sheets */}
                 <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-3.5 text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                    <div className="flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-cyan-400" />
-                      <h4 className="text-sm font-bold text-white tracking-tight">Curated Sheets</h4>
-                    </div>
+                    <h4 className="text-sm font-bold text-white tracking-tight">Curated Sheets</h4>
                     <Link
                       to="/app/sheets"
                       className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
@@ -1190,23 +1138,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                         to="/app/sheets"
                         className="group flex items-center justify-between p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 hover:bg-[#131A2B] hover:border-white/10 transition-all"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          {sheet.iconType === 'crown' ? (
-                            <Crown className="w-4 h-4 text-amber-400 shrink-0" />
-                          ) : sheet.iconType === 'flame' ? (
-                            <Flame className="w-4 h-4 text-orange-400 shrink-0" />
-                          ) : (
-                            <span className="w-4 h-4 rounded-full flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">
-                              G
-                            </span>
-                          )}
-                          <div className="min-w-0 space-y-0.5">
-                            <div className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
-                              {sheet.title}
-                            </div>
-                            <div className="text-[11px] text-zinc-400 truncate">
-                              {sheet.description}
-                            </div>
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
+                            {sheet.title}
+                          </div>
+                          <div className="text-[11px] text-zinc-400 truncate">
+                            {sheet.description}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 text-xs font-mono text-zinc-400 shrink-0 ml-2">
@@ -1244,7 +1181,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
             <div className="py-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                  Welcome back, {displayName || 'Developer'} 👋
+                  Welcome back, {displayName || 'Developer'}
                 </h1>
                 <p className="text-xs text-zinc-400">Pick up where you left off.</p>
               </div>
@@ -1279,8 +1216,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-4 text-left">
                   {/* Top Label: YOUR LEARNING PATH + On Track + Options */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs tracking-wider uppercase">
-                      <Compass className="w-4 h-4 text-cyan-400" />
+                    <div className="text-cyan-400 font-bold text-xs tracking-wider uppercase">
                       <span>YOUR LEARNING PATH</span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -1336,7 +1272,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                   <div className="pt-3 border-t border-white/[0.06] space-y-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-2">
-                        <CalendarCheck className="w-4 h-4 text-cyan-400" />
                         <h3 className="text-sm font-bold text-white">Today's plan</h3>
                         <span className="text-[11px] font-mono text-zinc-400 px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08]">
                           3 tasks
@@ -1379,10 +1314,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-4 text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                     <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-cyan-400" />
-                        <h3 className="text-sm font-bold text-white tracking-tight">Recommended problems</h3>
-                      </div>
+                      <h3 className="text-sm font-bold text-white tracking-tight">Recommended problems</h3>
                       <p className="text-xs text-zinc-400">
                         Picked for your current level. These will help you build a strong foundation.
                       </p>
@@ -1481,7 +1413,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-3.5 relative overflow-hidden text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                     <div className="flex items-center gap-2">
-                      <Compass className="w-4 h-4 text-cyan-400" />
                       <h4 className="text-sm font-bold text-white tracking-tight">Diagnostic Mentor</h4>
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950/50 text-cyan-400 border border-cyan-500/30">
                         {chakrivaInsight.badge}
@@ -1512,10 +1443,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 {/* CARD 5: Curated Sheets */}
                 <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-3.5 text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                    <div className="flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-cyan-400" />
-                      <h4 className="text-sm font-bold text-white tracking-tight">Curated Sheets</h4>
-                    </div>
+                    <h4 className="text-sm font-bold text-white tracking-tight">Curated Sheets</h4>
                     <Link
                       to="/app/sheets"
                       className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
@@ -1532,23 +1460,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                         to="/app/sheets"
                         className="group flex items-center justify-between p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 hover:bg-[#131A2B] hover:border-white/10 transition-all"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          {sheet.iconType === 'crown' ? (
-                            <Crown className="w-4 h-4 text-amber-400 shrink-0" />
-                          ) : sheet.iconType === 'flame' ? (
-                            <Flame className="w-4 h-4 text-orange-400 shrink-0" />
-                          ) : (
-                            <span className="w-4 h-4 rounded-full flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">
-                              G
-                            </span>
-                          )}
-                          <div className="min-w-0 space-y-0.5">
-                            <div className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
-                              {sheet.title}
-                            </div>
-                            <div className="text-[11px] text-zinc-400 truncate">
-                              {sheet.description}
-                            </div>
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
+                            {sheet.title}
+                          </div>
+                          <div className="text-[11px] text-zinc-400 truncate">
+                            {sheet.description}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 text-xs font-mono text-zinc-400 shrink-0 ml-2">
@@ -1583,10 +1500,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
               <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-4 w-full h-full flex flex-col justify-between text-left">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-cyan-400" />
-                    <h3 className="text-sm font-bold text-white tracking-tight">Recent submissions</h3>
-                  </div>
+                  <h3 className="text-sm font-bold text-white tracking-tight">Recent submissions</h3>
                   <Link
                     to="/app/progress"
                     className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"

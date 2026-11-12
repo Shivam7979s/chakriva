@@ -40,6 +40,47 @@ logging.basicConfig(
 logger = logging.getLogger("judge-worker")
 
 
+class LeaseHeartbeat:
+    """Background daemon thread periodically renewing the durable job lease during execution."""
+
+    def __init__(
+        self,
+        consumer: Optional[RedisConsumer],
+        job_id: str,
+        interval_seconds: float = 20.0,
+        extension_seconds: int = 60,
+    ):
+        self.consumer = consumer
+        self.job_id = job_id
+        self.interval_seconds = interval_seconds
+        self.extension_seconds = extension_seconds
+        self._stop_event = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+
+    def start(self):
+        if not self.consumer or not hasattr(self.consumer, "renew_lease"):
+            return
+        self._thread = threading.Thread(
+            target=self._run,
+            daemon=True,
+            name=f"lease-hb-{str(self.job_id)[:8]}"
+        )
+        self._thread.start()
+
+    def _run(self):
+        while not self._stop_event.wait(timeout=self.interval_seconds):
+            try:
+                renewed = self.consumer.renew_lease(self.job_id, extension_seconds=self.extension_seconds)
+                logger.debug("LEASE_HEARTBEAT job_id=%s renewed=%s", self.job_id, renewed)
+            except Exception as e:
+                logger.warning("LEASE_HEARTBEAT_FAILED job_id=%s: %s", self.job_id, e)
+
+    def stop(self):
+        self._stop_event.set()
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=2.0)
+
+
 class JudgeWorker:
     """Production judge worker daemon consuming jobs from Redis and executing via SandboxRunner."""
 
@@ -324,6 +365,35 @@ class JudgeWorker:
             job.mode.value,
         )
 
+        raw_payload = getattr(job, "_raw_payload", None)
+        if not raw_payload:
+            try:
+                raw_payload = json.dumps(job.model_dump(by_alias=True))
+            except Exception:
+                raw_payload = ""
+
+        # Phase J.9.4: Durable Lease Claim
+        if hasattr(self.consumer, "claim_lease"):
+            try:
+                self.consumer.claim_lease(
+                    job_id=job.jobId,
+                    submission_id=job.submissionId,
+                    worker_id=self.worker_id,
+                    attempt=getattr(job, "attempt", 1) or 1,
+                    raw_payload=raw_payload,
+                )
+            except Exception as lease_err:
+                logger.warning("Failed to claim lease for job %s: %s", job.jobId, lease_err)
+
+        # Start reliable background lease heartbeat for long-running execution
+        heartbeat = LeaseHeartbeat(
+            consumer=self.consumer,
+            job_id=job.jobId,
+            interval_seconds=20.0,
+            extension_seconds=60,
+        )
+        heartbeat.start()
+
         try:
             # Mode resolution
             if job.mode == JobMode.RUN:
@@ -387,6 +457,8 @@ class JudgeWorker:
                 totalTestCases=0,
                 stderrOutput=f"Worker internal error: {str(e)}",
             )
+        finally:
+            heartbeat.stop()
 
         # Update telemetry and store in memory
         self.latest_result = judge_res
@@ -408,6 +480,7 @@ class JudgeWorker:
         )
 
         # Deliver result to application plane via callback if enabled (Phase J.5.4)
+        cb_ok = False
         if self.callback_client and self.callback_client.is_enabled:
             try:
                 cb_ok = self.callback_client.send_result(judge_res)
@@ -425,6 +498,14 @@ class JudgeWorker:
                     job.jobId,
                     cb_err,
                 )
+
+        # Phase J.9.4: Clean up lease if callback succeeded or in standalone tests
+        cb_succeeded = cb_ok if (self.callback_client and self.callback_client.is_enabled) else True
+        if cb_succeeded and hasattr(self.consumer, "release_lease"):
+            try:
+                self.consumer.release_lease(job.jobId, raw_payload)
+            except Exception as clean_err:
+                logger.warning("Error releasing lease for job %s: %s", job.jobId, clean_err)
 
         self.current_job_id = None
         self.state = "WAITING_FOR_JOB"

@@ -40,7 +40,7 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
     }
     if (isLocked) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-white/[0.04] text-text-muted border border-border">
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-[#131826] text-[#7C8BA6] border border-[#1B2234]">
           <Lock className="w-3.5 h-3.5" />
           LOCKED
         </span>
@@ -55,7 +55,7 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-surface-subtle text-text-muted border border-border">
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-[#131826] text-[#8592A8] border border-[#1B2234]">
         <Circle className="w-3.5 h-3.5" />
         AVAILABLE
       </span>
@@ -64,18 +64,18 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
 
   return (
     <div
-      className={`rounded-lg border transition-all duration-200 ${
+      className={`rounded-xl border transition-all duration-200 ${
         isCompleted
-          ? 'bg-surface/50 border-border/80'
+          ? 'bg-[#0F131D] border-[#1A2133]'
           : isLocked
-          ? 'bg-surface/20 border-border/40 opacity-75'
+          ? 'bg-[#0B0E16] border-[#151B2B] opacity-75'
           : isInProgress
-          ? 'bg-surface border-primary/40 shadow-elevation-1'
-          : 'bg-surface border-border shadow-elevation-1'
+          ? 'bg-[#0F131D] border-[#3B82F6]/35'
+          : 'bg-[#0F131D] border-[#192033]'
       } p-4 sm:p-5 space-y-4`}
     >
       {/* Day Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#171D2D]">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
@@ -104,9 +104,9 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
             <div className="text-xs font-mono font-medium text-text-secondary">
               <strong className="text-text-primary font-bold">{completedCount}</strong> / {totalCount} items
             </div>
-            <div className="w-24 bg-surface-subtle h-1.5 rounded-full overflow-hidden border border-white/[0.04] mt-1">
+            <div className="w-24 bg-[#141A29] h-1.5 rounded-full overflow-hidden mt-1">
               <div
-                className="bg-[#00B8A3] h-full transition-all duration-300 rounded-full"
+                className="bg-gradient-to-r from-[#3B82F6] to-[#00B8A3] h-full transition-all duration-300 rounded-full"
                 style={{
                   width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%`,
                 }}
@@ -119,7 +119,7 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
 
       {/* Learning Objectives (if present) */}
       {day.learningObjectives && day.learningObjectives.length > 0 && (
-        <div className="rounded-md bg-surface-subtle/60 p-3 border border-border/60">
+        <div className="rounded-xl bg-[#121724] p-3 border border-[#192033]">
           <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-text-secondary uppercase tracking-wider mb-2">
             <Target className="w-3.5 h-3.5 text-primary" />
             <span>Learning Objectives</span>

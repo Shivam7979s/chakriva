@@ -1,0 +1,316 @@
+{
+  "timestamp": "2026-10-20T22:51:37.192Z",
+  "databaseConnected": true,
+  "counts": {
+    "rawMasterProblems": 3392,
+    "pilotReportProblems": 20,
+    "dbTotalProblems": 3392,
+    "dbPublishedProblems": 512,
+    "dbDraftProblems": 2865,
+    "dbJudgeReadyProblems": 513,
+    "dbTotalTestCases": 77130
+  },
+  "canonicalProblems": [
+    {
+      "declaredVerniqId": "VRQ-000001",
+      "declaredSlug": "two-sum",
+      "declaredTitle": "Two Sum",
+      "declaredDifficulty": "easy",
+      "topic": "Arrays & Hashing",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "00000000-0000-0000-0000-000000000301",
+        "verniq_id": "VRQ-000001",
+        "slug": "two-sum",
+        "title": "Two Sum",
+        "difficulty": "easy",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 80,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000006",
+      "declaredSlug": "best-time-to-buy-and-sell-stock",
+      "declaredTitle": "Best Time to Buy and Sell Stock",
+      "declaredDifficulty": "easy",
+      "topic": "Arrays & Hashing",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "00000000-0000-0000-0000-000000000302",
+        "verniq_id": "VRQ-000006",
+        "slug": "best-time-to-buy-and-sell-stock",
+        "title": "Best Time to Buy and Sell Stock",
+        "difficulty": "easy",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 80,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000016",
+      "declaredSlug": "3sum",
+      "declaredTitle": "3Sum",
+      "declaredDifficulty": "medium",
+      "topic": "Two Pointers",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "00000000-0000-0000-0000-000000000303",
+        "verniq_id": "VRQ-000016",
+        "slug": "3sum",
+        "title": "3Sum",
+        "difficulty": "medium",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 150,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000012",
+      "declaredSlug": "container-with-most-water",
+      "declaredTitle": "Container With Most Water",
+      "declaredDifficulty": "medium",
+      "topic": "Two Pointers",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "00000000-0000-0000-0000-000000000305",
+        "verniq_id": "VRQ-000012",
+        "slug": "container-with-most-water",
+        "title": "Container With Most Water",
+        "difficulty": "medium",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 150,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000004",
+      "declaredSlug": "valid-parentheses",
+      "declaredTitle": "Valid Parentheses",
+      "declaredDifficulty": "easy",
+      "topic": "Stacks & Queues",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "37fdb83b-2cf5-4f3d-beee-bc44a3f94b70",
+        "verniq_id": "VRQ-000004",
+        "slug": "valid-parentheses",
+        "title": "Valid Parentheses",
+        "difficulty": "easy",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 80,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000005",
+      "declaredSlug": "longest-substring-without-repeating-characters",
+      "declaredTitle": "Longest Substring Without Repeating Characters",
+      "declaredDifficulty": "medium",
+      "topic": "Sliding Window",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "aac2ef68-30bd-45b5-b60b-b7651e8ea7da",
+        "verniq_id": "VRQ-000005",
+        "slug": "longest-substring-without-repeating-characters",
+        "title": "Longest Substring Without Repeating Characters",
+        "difficulty": "medium",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 150,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000018",
+      "declaredSlug": "search-in-rotated-sorted-array",
+      "declaredTitle": "Search in Rotated Sorted Array",
+      "declaredDifficulty": "medium",
+      "topic": "Binary Search",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "00000000-0000-0000-0000-000000000304",
+        "verniq_id": "VRQ-000018",
+        "slug": "search-in-rotated-sorted-array",
+        "title": "Search in Rotated Sorted Array",
+        "difficulty": "medium",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 150,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000003",
+      "declaredSlug": "merge-intervals",
+      "declaredTitle": "Merge Intervals",
+      "declaredDifficulty": "medium",
+      "topic": "Intervals & Sorting",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "4b670993-5986-4cf3-b784-05d965f0f914",
+        "verniq_id": "VRQ-000003",
+        "slug": "merge-intervals",
+        "title": "Merge Intervals",
+        "difficulty": "medium",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 150,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000002",
+      "declaredSlug": "lru-cache",
+      "declaredTitle": "LRU Cache",
+      "declaredDifficulty": "medium",
+      "topic": "Composite Design & Caching",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "ad5382c5-a258-49fd-ad77-6cf8dfe6c325",
+        "verniq_id": "VRQ-000002",
+        "slug": "lru-cache",
+        "title": "LRU Cache",
+        "difficulty": "medium",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 150,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000010",
+      "declaredSlug": "trapping-rain-water",
+      "declaredTitle": "Trapping Rain Water",
+      "declaredDifficulty": "hard",
+      "topic": "Monotonic Stacks & Two Pointers",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "00000000-0000-0000-0000-000000000306",
+        "verniq_id": "VRQ-000010",
+        "slug": "trapping-rain-water",
+        "title": "Trapping Rain Water",
+        "difficulty": "hard",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 200,
+      "issues": []
+    },
+    {
+      "declaredVerniqId": "VRQ-000137",
+      "declaredSlug": "maximum-depth-of-binary-tree",
+      "declaredTitle": "Maximum Depth of Binary Tree",
+      "declaredDifficulty": "easy",
+      "topic": "Binary Trees",
+      "stages": {
+        "stage1_recordExists": true,
+        "stage2_contentReviewed": true,
+        "stage3_judgeAvailable": true,
+        "stage4_testsValidated": true,
+        "stage5_productionEligible": true
+      },
+      "dbMatchBySlug": {
+        "id": "e998cc35-f539-446b-b480-a4acc970c993",
+        "verniq_id": "VRQ-000137",
+        "slug": "maximum-depth-of-binary-tree",
+        "title": "Maximum Depth of Binary Tree",
+        "difficulty": "easy",
+        "workflow_status": "published",
+        "judge_readiness_status": "JUDGE_READY"
+      },
+      "dbMatchById": null,
+      "testCaseCount": 80,
+      "issues": []
+    }
+  ],
+  "mismatches": [],
+  "roadmapTasks": {
+    "total": 69,
+    "practice": 11,
+    "concept": 11,
+    "revision": 47,
+    "assessment": 0,
+    "invalid": 0
+  },
+  "prerequisiteAudit": {
+    "totalTopics": 9,
+    "isAcyclic": true,
+    "errors": []
+  },
+  "readinessSummary": {}
+}

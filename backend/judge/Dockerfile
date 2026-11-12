@@ -1,6 +1,7 @@
 # ==============================================================================
-# VERNIQ Online Judge Sandbox & Worker Container
-# Languages: GCC 14 (C++20), OpenJDK 21, Python 3.12, Node.js 20/tsx, Go 1.22
+# CHAKRIVA Online Judge — Worker & Sandbox Container
+# Languages: GCC 14 (C++20), OpenJDK 21, Python 3.12,
+#            Node.js 20/tsx, Go 1.22
 # ==============================================================================
 
 FROM ubuntu:24.04
@@ -9,7 +10,9 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
+# ------------------------------------------------------------------------------
 # Install core development toolchains
+# ------------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc-14 \
@@ -30,22 +33,47 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up isolated non-privileged sandbox execution user
+# ------------------------------------------------------------------------------
+# Create isolated non-root worker/sandbox user
+# ------------------------------------------------------------------------------
 RUN useradd -m -s /bin/bash sandboxuser
 
+# ------------------------------------------------------------------------------
+# Application directory
+# ------------------------------------------------------------------------------
 WORKDIR /app
 
-# Copy dependency specifications and install
+# ------------------------------------------------------------------------------
+# Install Python dependencies
+# ------------------------------------------------------------------------------
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt --break-system-packages
 
-# Copy judge source code
+RUN pip3 install \
+    --no-cache-dir \
+    -r requirements.txt \
+    --break-system-packages
+
+# ------------------------------------------------------------------------------
+# Copy judge worker source
+# ------------------------------------------------------------------------------
 COPY . .
 
-# Grant appropriate permissions
-RUN chown -R sandboxuser:sandboxuser /app
+# ------------------------------------------------------------------------------
+# Prepare writable application cache BEFORE dropping privileges
+#
+# The worker's CompilationCache creates /app/.cache at startup.
+# sandboxuser must own /app so the worker can create/use its cache
+# without running as root.
+# ------------------------------------------------------------------------------
+RUN mkdir -p /app/.cache \
+    && chown -R sandboxuser:sandboxuser /app
 
+# ------------------------------------------------------------------------------
+# Drop privileges
+# ------------------------------------------------------------------------------
 USER sandboxuser
 
-# Air-gapped container execution entrypoint
+# ------------------------------------------------------------------------------
+# Start worker
+# ------------------------------------------------------------------------------
 CMD ["python3", "-m", "src.worker"]

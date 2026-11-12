@@ -1,4 +1,5 @@
 """Isolated execution sandbox runner for untrusted code with compilation caching and structured telemetry."""
+import base64
 import os
 import re
 import shutil
@@ -262,6 +263,161 @@ class SandboxRunner:
             with open(source_file_path, "w", encoding="utf-8") as f:
                 f.write(source_code)
 
+            effective_timeout = self.time_limit_seconds * profile.time_limit_multiplier
+
+            # ==================================================================
+            # HARDENED PRODUCTION DOCKER EXECUTION (1 Container per Suite)
+            # 1 submission -> 1 isolated Docker sandbox -> compile once
+            # -> execute all canonical tests with preserved isolation -> destroy once
+            # ==================================================================
+            if use_docker:
+                docker_compile_cmd = None
+                if compile_cmd:
+                    if profile.name == "java":
+                        docker_compile_cmd = ["javac", "-d", "/tmp/build", f"/sandbox/{source_filename}"]
+                    elif profile.name in ("cpp", "c++"):
+                        docker_compile_cmd = ["g++", "-O3", f"/sandbox/{source_filename}", "-o", "/tmp/build/solution"]
+                    elif profile.name == "go":
+                        docker_compile_cmd = ["go", "build", "-o", "/tmp/build/solution", f"/sandbox/{source_filename}"]
+                    else:
+                        docker_compile_cmd = list(compile_cmd)
+
+                container_run_cmd = list(profile.run_cmd)
+                if profile.name == "java":
+                    container_run_cmd = [
+                        "java",
+                        "-XX:+TieredCompilation",
+                        "-XX:TieredStopAtLevel=1",
+                        "-XX:MaxRAMPercentage=75.0",
+                        "-Xss4m",
+                        "-cp",
+                        "/tmp/build",
+                        class_name,
+                    ]
+                elif profile.name in ("cpp", "c++", "go"):
+                    container_run_cmd = ["/tmp/build/solution"]
+                elif profile.name in ("python", "py", "python3"):
+                    container_run_cmd = ["python3", f"/tmp/build/{source_filename}"]
+                elif profile.name in ("typescript", "ts"):
+                    container_run_cmd = ["tsx", f"/tmp/build/{source_filename}"]
+
+                cache_key = None
+                cached_files = None
+                if docker_compile_cmd:
+                    cache_key = self.cache.compute_key(
+                        profile.name, source_code, docker_compile_cmd, env_tag="docker"
+                    )
+                    cached_files = self.cache.get(cache_key, scratch_dir)
+
+                is_precompiled = bool(cached_files)
+                cached_compilation = is_precompiled
+
+                # Test cases preparation
+                total_cases = len(test_cases)
+                if total_cases == 0:
+                    test_cases = [TestCaseItem(input="", expected_output=None)]
+                    total_cases = 1
+
+                submission_spec = {
+                    "language": profile.name,
+                    "source_filename": source_filename,
+                    "compile_cmd": docker_compile_cmd if not is_precompiled else None,
+                    "run_cmd": container_run_cmd,
+                    "time_limit_seconds": effective_timeout,
+                    "memory_limit_mb": self.memory_limit_mb,
+                    "output_limit_bytes": config.docker_output_limit_bytes,
+                    "is_custom_run": is_custom_run,
+                    "is_precompiled": is_precompiled,
+                    "test_cases": [tc.model_dump() for tc in test_cases],
+                }
+
+                def on_started(proc, cname):
+                    job_registry.register(exec_id, proc, container_name=cname)
+
+                execution_started_at = now_iso()
+                t_exec_start = time.perf_counter()
+
+                # Bounded suite timeout
+                max_suite_timeout = max(30.0, min(180.0, effective_timeout * len(test_cases) + 25.0))
+
+                try:
+                    suite_res = self.docker_sandbox.run_suite_in_container(
+                        submission_spec=submission_spec,
+                        scratch_dir=scratch_dir,
+                        timeout_seconds=max_suite_timeout,
+                        execution_id=exec_id,
+                        memory_limit_mb=self.memory_limit_mb,
+                        cpu_limit=config.docker_cpus,
+                        on_proc_started=on_started,
+                    )
+                except Exception as dock_err:
+                    job_registry.unregister(exec_id)
+                    return ExecutionResult(
+                        verdict="internal_error",
+                        stderr_output=f"Docker sandbox suite execution error: {dock_err}",
+                        test_cases_passed=0,
+                        total_test_cases=total_cases,
+                    )
+                finally:
+                    job_registry.unregister(exec_id)
+
+                t_exec_end = time.perf_counter()
+                exec_total_ms = int((t_exec_end - t_exec_start) * 1000)
+                total_duration_ms = int((time.perf_counter() - req_start_wall) * 1000)
+                execution_finished_at = now_iso()
+
+                # Save compiled artifacts to host cache if produced
+                if not is_precompiled and cache_key and suite_res.get("compiled_artifacts"):
+                    produced_files = []
+                    for art_name, b64content in suite_res["compiled_artifacts"].items():
+                        art_path = os.path.join(scratch_dir, art_name)
+                        try:
+                            with open(art_path, "wb") as f:
+                                f.write(base64.b64decode(b64content))
+                            produced_files.append(art_name)
+                        except Exception:
+                            pass
+                    if produced_files:
+                        self.cache.put(cache_key, scratch_dir, produced_files, profile.name)
+
+                compile_ms = suite_res.get("compile_ms", 0)
+                compile_started_at = execution_started_at
+                compile_finished_at = execution_started_at
+
+                telemetry = self._build_telemetry(
+                    exec_id, req_received_at, queued_timestamp, worker_acquired_at,
+                    sandbox_created_at, compile_started_at, compile_finished_at,
+                    execution_started_at, execution_finished_at, sandbox_startup_ms, compile_ms,
+                    exec_total_ms, total_duration_ms, cached_compilation
+                )
+
+                job_registry.cleanup_cancel_flag(exec_id)
+
+                failed_info_dict = suite_res.get("first_failed_test") or suite_res.get("firstFailedTest")
+                failed_info = FailedTestCaseInfo(**failed_info_dict) if failed_info_dict else None
+
+                sample_results = None
+                if suite_res.get("sample_test_results"):
+                    sample_results = [SampleTestResult(**s) for s in suite_res["sample_test_results"]]
+
+                return ExecutionResult(
+                    verdict=suite_res.get("verdict", "internal_error"),
+                    runtime_ms=suite_res.get("runtime_ms", 0),
+                    memory_kb=suite_res.get("memory_kb", 1024),
+                    stdout_output=suite_res.get("stdout_output"),
+                    stderr_output=suite_res.get("stderr_output"),
+                    compile_output=suite_res.get("compile_output"),
+                    test_cases_passed=suite_res.get("test_cases_passed", 0),
+                    total_test_cases=suite_res.get("total_test_cases", total_cases),
+                    first_failed_test=failed_info,
+                    firstFailedTest=failed_info,
+                    sample_test_results=sample_results,
+                    telemetry=telemetry,
+                )
+
+            # ==================================================================
+            # HOST EXECUTION FALLBACK (when use_docker is False)
+            # ==================================================================
             # 1. Compilation Phase
             compile_started_at = None
             compile_finished_at = None
@@ -283,70 +439,6 @@ class SandboxRunner:
                     compile_finished_at = now_iso()
                     compile_ms = 0
                 else:
-                    if use_docker:
-                        try:
-                            docker_compile_cmd = list(compile_cmd)
-                            if profile.name in ("cpp", "c++"):
-                                docker_compile_cmd = ["g++", "-O3", source_filename, "-o", "solution"]
-                            elif profile.name == "go":
-                                docker_compile_cmd = ["go", "build", "-o", "solution", source_filename]
-
-                            c_res = self.docker_sandbox.compile_in_container(
-                                compile_cmd=docker_compile_cmd,
-                                scratch_dir=scratch_dir,
-                                timeout_seconds=18.0,
-                                execution_id=exec_id,
-                                memory_limit_mb=self.memory_limit_mb,
-                                cpu_limit=config.docker_cpus,
-                            )
-                            t_comp_end = time.perf_counter()
-                            compile_finished_at = now_iso()
-                            compile_ms = int((t_comp_end - t_comp_start) * 1000)
-
-                            if c_res.exit_code != 0 or c_res.timed_out:
-                                return ExecutionResult(
-                                    verdict="compilation_error",
-                                    compile_output=c_res.stderr or c_res.stdout or ("Compilation timed out after 12.0 seconds." if c_res.timed_out else "Compilation failed."),
-                                    test_cases_passed=0,
-                                    total_test_cases=len(test_cases),
-                                    telemetry=ExecutionTelemetry(
-                                        execution_id=exec_id,
-                                        request_received_at=req_received_at,
-                                        job_queued_at=queued_timestamp,
-                                        worker_acquired_at=worker_acquired_at,
-                                        sandbox_created_at=sandbox_created_at,
-                                        compile_started_at=compile_started_at,
-                                        compile_finished_at=compile_finished_at,
-                                        compile_ms=compile_ms,
-                                        total_ms=int((time.perf_counter() - req_start_wall) * 1000),
-                                        cached_compilation=False,
-                                    )
-                                )
-
-                            produced_files = []
-                            if profile.name == "java":
-                                produced_files = [f for f in os.listdir(scratch_dir) if f.endswith(".class")]
-                            elif profile.name in ("cpp", "c++", "go"):
-                                produced_files = ["solution"]
-
-                            if produced_files:
-                                self.cache.put(cache_key, scratch_dir, produced_files, profile.name)
-
-                        except subprocess.TimeoutExpired:
-                            return ExecutionResult(
-                                verdict="compilation_error",
-                                compile_output="Compilation timed out after 12.0 seconds.",
-                                test_cases_passed=0,
-                                total_test_cases=len(test_cases),
-                            )
-                        except Exception as err:
-                            return ExecutionResult(
-                                verdict="compilation_error",
-                                compile_output=f"Compilation execution failed: {str(err)}",
-                                test_cases_passed=0,
-                                total_test_cases=len(test_cases),
-                            )
-                    else:
                         try:
                             compile_proc = subprocess.run(
                                 compile_cmd,
@@ -454,91 +546,44 @@ class SandboxRunner:
                 timed_out_flag = False
                 oom_flag = False
 
-                if use_docker:
-                    container_run_cmd = list(profile.run_cmd)
-                    if profile.name == "java":
-                        container_run_cmd = [
-                            "java",
-                            "-XX:+TieredCompilation",
-                            "-XX:TieredStopAtLevel=1",
-                            "-XX:MaxRAMPercentage=75.0",
-                            "-Xss4m",
-                            "-cp",
-                            ".",
-                            class_name
-                        ]
-                    elif profile.name in ("cpp", "c++", "go"):
-                        container_run_cmd = ["./solution"]
-                    elif profile.name in ("python", "py", "python3"):
-                        container_run_cmd = ["python3", source_filename]
-                    elif profile.name in ("typescript", "ts"):
-                        container_run_cmd = ["tsx", source_filename]
+                tc_dir = os.path.join(scratch_dir, f"tc_{index}")
+                os.makedirs(tc_dir, exist_ok=True)
+                try:
+                    proc = subprocess.Popen(
+                        run_cmd,
+                        cwd=tc_dir,
+                        stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                    )
+                    job_registry.register(exec_id, proc)
 
-                    def on_started(proc, cname):
-                        job_registry.register(exec_id, proc, container_name=cname)
-
+                    stdout_data, stderr_data = proc.communicate(
+                        input=tc.input or "",
+                        timeout=effective_timeout,
+                    )
+                    job_registry.unregister(exec_id)
+                    duration_ms = int((time.perf_counter() - start_time) * 1000)
+                    proc_returncode = proc.returncode
+                except subprocess.TimeoutExpired:
+                    job_registry.unregister(exec_id)
                     try:
-                        docker_res = self.docker_sandbox.run_in_container(
-                            cmd=container_run_cmd,
-                            scratch_dir=scratch_dir,
-                            stdin_data=tc.input or "",
-                            timeout_seconds=effective_timeout + 1.2,
-                            execution_id=f"{exec_id}-tc{index+1}",
-                            memory_limit_mb=self.memory_limit_mb,
-                            cpu_limit=config.docker_cpus,
-                            on_proc_started=on_started,
-                        )
-                        job_registry.unregister(exec_id)
-
-                        duration_ms = docker_res.duration_ms
-                        stdout_data = docker_res.stdout
-                        stderr_data = docker_res.stderr
-                        proc_returncode = docker_res.exit_code
-                        timed_out_flag = docker_res.timed_out
-                        oom_flag = docker_res.oom_killed
-                    except Exception as dock_err:
-                        job_registry.unregister(exec_id)
-                        return ExecutionResult(
-                            verdict="internal_error",
-                            stderr_output=f"Docker sandbox execution error: {dock_err}",
-                            test_cases_passed=passed_count,
-                            total_test_cases=total_cases,
-                        )
-                else:
-                    try:
-                        proc = subprocess.Popen(
-                            run_cmd,
-                            cwd=scratch_dir,
-                            stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            text=True,
-                        )
-                        job_registry.register(exec_id, proc)
-
-                        stdout_data, stderr_data = proc.communicate(
-                            input=tc.input or "",
-                            timeout=effective_timeout,
-                        )
-                        job_registry.unregister(exec_id)
-                        duration_ms = int((time.perf_counter() - start_time) * 1000)
-                        proc_returncode = proc.returncode
-                    except subprocess.TimeoutExpired:
-                        job_registry.unregister(exec_id)
-                        try:
-                            if sys.platform == "win32":
-                                subprocess.run(
-                                    ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
-                                    stdout=subprocess.DEVNULL,
-                                    stderr=subprocess.DEVNULL,
-                                    timeout=2,
-                                )
-                            proc.kill()
-                            proc.wait(timeout=1.0)
-                        except Exception:
-                            pass
-                        timed_out_flag = True
-                        duration_ms = int(effective_timeout * 1000)
+                        if sys.platform == "win32":
+                            subprocess.run(
+                                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL,
+                                timeout=2,
+                            )
+                        proc.kill()
+                        proc.wait(timeout=1.0)
+                    except Exception:
+                        pass
+                    timed_out_flag = True
+                    duration_ms = int(effective_timeout * 1000)
+                finally:
+                    shutil.rmtree(tc_dir, ignore_errors=True)
 
                 max_runtime_ms = max(max_runtime_ms, duration_ms)
                 last_stdout = stdout_data

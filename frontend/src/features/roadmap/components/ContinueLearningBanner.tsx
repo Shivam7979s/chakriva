@@ -49,7 +49,7 @@ export const ContinueLearningBanner: React.FC<ContinueLearningBannerProps> = ({
 
   if (!target) {
     return (
-      <div className="rounded-lg border border-border bg-surface-elevated p-5 shadow-elevation-1">
+      <div className="rounded-xl border border-[#1B2234] bg-[#0F131D] p-5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Sparkles className="w-5 h-5" />
@@ -117,7 +117,7 @@ export const ContinueLearningBanner: React.FC<ContinueLearningBannerProps> = ({
               NEXT UP
             </div>
             <div className="flex items-center gap-2.5 mt-1">
-              <span className="p-1 rounded bg-white/[0.04] border border-white/[0.06]">
+              <span className="p-1 rounded bg-[#141A29] border border-[#1E263B]">
                 {getItemIcon(target.itemType)}
               </span>
               <h3 className="text-base sm:text-lg font-semibold text-text-primary tracking-[-0.01em]">
@@ -164,7 +164,7 @@ export const ContinueLearningBanner: React.FC<ContinueLearningBannerProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => onMarkComplete(target.itemId)}
-                  className="text-xs font-mono border-border hover:bg-surface text-text-secondary hover:text-text-primary"
+                  className="text-xs font-mono !border-[#1E263B] !bg-[#0B0E16] hover:!bg-[#151C2D] text-[#C3CEE0] hover:text-white"
                 >
                   <Check className="w-3.5 h-3.5 mr-1 text-[#00B8A3]" />
                   Mark Done

@@ -50,7 +50,10 @@ public record JudgeJobPayload(
     String customInput,
 
     @JsonProperty("createdAt")
-    String createdAt
+    String createdAt,
+
+    @JsonProperty("attempt")
+    Integer attempt
 ) implements Serializable {
 
     public static final String CONTRACT_VERSION = "1";
@@ -68,6 +71,36 @@ public record JudgeJobPayload(
             Integer memoryLimitMb,
             String customInput
     ) {
+        return of(
+            jobId,
+            submissionId,
+            problemId,
+            problemVerniqId,
+            problemVersion,
+            language,
+            sourceCode,
+            mode,
+            timeLimitMs,
+            memoryLimitMb,
+            customInput,
+            1
+        );
+    }
+
+    public static JudgeJobPayload of(
+            String jobId,
+            String submissionId,
+            String problemId,
+            String problemVerniqId,
+            Integer problemVersion,
+            String language,
+            String sourceCode,
+            String mode,
+            Integer timeLimitMs,
+            Integer memoryLimitMb,
+            String customInput,
+            Integer attempt
+    ) {
         String effectiveMode = (mode != null && !mode.isBlank()) ? mode.toUpperCase().trim() : "SUBMIT";
         return new JudgeJobPayload(
             CONTRACT_VERSION,
@@ -82,7 +115,8 @@ public record JudgeJobPayload(
             timeLimitMs != null ? timeLimitMs : 2000,
             memoryLimitMb != null ? memoryLimitMb : 256,
             customInput,
-            Instant.now().toString()
+            Instant.now().toString(),
+            attempt != null ? attempt : 1
         );
     }
 
@@ -131,6 +165,7 @@ public record JudgeJobPayload(
             ", memoryLimitMb=" + memoryLimitMb +
             ", customInput=" + (customInput != null ? "'<SET len=" + customInput.length() + ">'" : "null") +
             ", createdAt='" + createdAt + '\'' +
+            ", attempt=" + attempt +
             ']';
     }
 }

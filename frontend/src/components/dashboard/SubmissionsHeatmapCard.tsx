@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Flame, X, ChevronDown } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   buildRolling12MonthCalendar,
@@ -79,10 +79,7 @@ export const SubmissionsHeatmapCard: React.FC<SubmissionsHeatmapCardProps> = ({
       <div className="space-y-1.5 select-none">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {/* Left: Activity Title */}
-          <div className="flex items-center gap-2">
-            <Flame className="w-4 h-4 text-orange-500 shrink-0" />
-            <h3 className="font-bold text-white text-sm tracking-tight">{title}</h3>
-          </div>
+          <h3 className="font-bold text-white text-sm tracking-tight">{title}</h3>
 
           {/* Right: Active days & Max streak OR Dropdown */}
           {showDropdown ? (

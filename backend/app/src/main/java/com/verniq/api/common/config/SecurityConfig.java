@@ -66,6 +66,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Public Health & Probe endpoints
                 .requestMatchers("/api/v1/health/**").permitAll()
+                .requestMatchers("/api/v1/ai/health").permitAll()
                 .requestMatchers("/api/v1/live", "/api/v1/ready").permitAll()
                 .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/metrics/**").permitAll()
                 .requestMatchers("/error").permitAll()

@@ -212,6 +212,7 @@ export interface TestCase {
   expected_output: string;
   is_sample: boolean;
   order_index: number;
+  explanation?: string | null;
 }
 
 export type ProblemWorkflowStatus =
@@ -417,6 +418,7 @@ export interface Problem {
   human_reviewed?: boolean;
   provenance_status?: string;
   judge_readiness_status?: 'NOT_READY' | 'TESTS_PENDING' | 'LIMITS_PENDING' | 'JUDGE_READY';
+  editorial_markdown?: string | null;
   created_at?: string;
   updated_at?: string;
 }

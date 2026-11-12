@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/actions/Button';
 import {
   Play,
   Send,
@@ -89,6 +88,10 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
   const [selectedCaseIndex, setSelectedCaseIndex] = useState<number>(0);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isFailedTestCollapsed, setIsFailedTestCollapsed] = useState<boolean>(false);
+  const [consoleHeight, setConsoleHeight] = useState<number>(270);
+  const [isDraggingHeight, setIsDraggingHeight] = useState<boolean>(false);
+  const dragStartY = React.useRef<number>(0);
+  const startHeight = React.useRef<number>(270);
 
   // Auto-switch to 'result' tab when execution triggers or finishes
   useEffect(() => {
@@ -98,6 +101,60 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
       setIsFailedTestCollapsed(false);
     }
   }, [verdict]);
+
+  // Handle vertical resizing of console panel
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingHeight(true);
+    dragStartY.current = e.clientY;
+    startHeight.current = consoleHeight;
+  };
+
+  const handleTouchResizeStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      setIsDraggingHeight(true);
+      dragStartY.current = e.touches[0].clientY;
+      startHeight.current = consoleHeight;
+    }
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingHeight) return;
+      const delta = dragStartY.current - e.clientY; // dragging upwards expands console
+      const newHeight = Math.max(140, Math.min(550, startHeight.current + delta));
+      setConsoleHeight(newHeight);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDraggingHeight || e.touches.length === 0) return;
+      const delta = dragStartY.current - e.touches[0].clientY;
+      const newHeight = Math.max(140, Math.min(550, startHeight.current + delta));
+      setConsoleHeight(newHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingHeight(false);
+    };
+
+    if (isDraggingHeight) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleMouseUp);
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDraggingHeight]);
 
   const selectedCase = testCases[selectedCaseIndex] || testCases[0];
 
@@ -250,29 +307,54 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
 
   return (
     <div
+      style={isCollapsed ? undefined : { height: `${consoleHeight}px` }}
       className={cn(
-        'flex flex-col border-t border-white/[0.08] bg-[#0E1117] shadow-elevation-2 transition-all duration-150',
-        isCollapsed ? 'h-11' : 'h-72 sm:h-80',
+        'flex flex-col border-t border-[#1C2230] bg-[#0B0F19] text-[#F3F4F6] shrink-0 transition-none select-none relative',
+        isCollapsed ? 'h-10' : '',
         className
       )}
     >
+      {/* Draggable resize handle */}
+      <div
+        onMouseDown={handleResizeStart}
+        onTouchStart={handleTouchResizeStart}
+        onDoubleClick={() => setConsoleHeight(270)}
+        className={cn(
+          'w-full h-1.5 hover:h-2 cursor-row-resize transition-all select-none group flex items-center justify-center shrink-0 z-20',
+          isDraggingHeight ? 'bg-cyan-500/40' : 'bg-[#1C2230] hover:bg-cyan-500/30'
+        )}
+        title="Drag to resize console (double-click to reset)"
+      >
+        <div
+          className={cn(
+            'w-8 h-0.5 rounded-full transition-colors',
+            isDraggingHeight ? 'bg-cyan-400' : 'bg-zinc-600 group-hover:bg-cyan-400'
+          )}
+        />
+      </div>
+
       {/* Console Header Bar */}
-      <div className="flex items-center justify-between px-3 h-11 border-b border-white/[0.08] bg-[#12151E] shrink-0">
-        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center justify-between px-3 h-10 border-b border-[#1C2230] bg-[#0B0F19] shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar">
           <button
             onClick={() => {
               setIsCollapsed(false);
               setActiveTab('testcases');
             }}
             className={cn(
-              'px-2.5 py-1 text-xs font-mono font-medium rounded flex items-center gap-1.5 transition-colors',
+              'px-2.5 py-1 text-xs font-mono font-medium rounded-md flex items-center gap-1.5 transition-colors',
               activeTab === 'testcases' && !isCollapsed
-                ? 'bg-[#181C28] text-white border border-white/[0.12] font-semibold'
-                : 'text-neutral-400 hover:text-white'
+                ? 'bg-[#111521] text-cyan-300 border border-[#1C2230] font-semibold shadow-xs'
+                : 'text-zinc-400 hover:text-white'
             )}
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Testcases</span>
+            <span>Test Cases</span>
+            {sampleTestCount > 0 && (
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] text-zinc-400 border border-white/[0.06]">
+                {sampleTestCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -281,10 +363,10 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
               setActiveTab('custom_input');
             }}
             className={cn(
-              'px-2.5 py-1 text-xs font-mono font-medium rounded flex items-center gap-1.5 transition-colors',
+              'px-2.5 py-1 text-xs font-mono font-medium rounded-md flex items-center gap-1.5 transition-colors',
               activeTab === 'custom_input' && !isCollapsed
-                ? 'bg-[#181C28] text-white border border-white/[0.12] font-semibold'
-                : 'text-neutral-400 hover:text-white'
+                ? 'bg-[#111521] text-cyan-300 border border-[#1C2230] font-semibold shadow-xs'
+                : 'text-zinc-400 hover:text-white'
             )}
           >
             <Terminal className="w-3.5 h-3.5" />
@@ -297,12 +379,13 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
               setActiveTab('result');
             }}
             className={cn(
-              'px-2.5 py-1 text-xs font-mono font-medium rounded flex items-center gap-1.5 transition-colors relative',
+              'px-2.5 py-1 text-xs font-mono font-medium rounded-md flex items-center gap-1.5 transition-colors relative',
               activeTab === 'result' && !isCollapsed
-                ? 'bg-[#181C28] text-white border border-white/[0.12] font-semibold'
-                : 'text-neutral-400 hover:text-white'
+                ? 'bg-[#111521] text-cyan-300 border border-[#1C2230] font-semibold shadow-xs'
+                : 'text-zinc-400 hover:text-white'
             )}
           >
+            <BarChart3 className="w-3.5 h-3.5" />
             <span>Result</span>
             {verdict !== 'idle' && (
               <span
@@ -311,7 +394,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                   verdict === 'ac' || verdict === 'accepted'
                     ? 'bg-[#00B8A3]'
                     : verdict === 'running' || verdict === 'pending'
-                    ? 'bg-primary'
+                    ? 'bg-cyan-400'
                     : 'bg-[#FF375F]'
                 )}
               />
@@ -319,84 +402,77 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
           </button>
         </div>
 
-        {/* Middle Informational Label */}
-        <div className="hidden xl:flex items-center gap-1.5 text-[11px] font-sans text-neutral-400 px-2 truncate">
-          <Info className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-          <span>Run Code uses sample tests for quick feedback. Submit runs the full canonical test suite.</span>
-        </div>
 
         {/* Right Action Buttons */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 rounded text-neutral-400 hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-colors"
             title={isCollapsed ? 'Expand Console' : 'Collapse Console'}
           >
             {isCollapsed ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
 
           {isExecuting && onCancel && (
-            <Button
-              size="sm"
-              variant="outline"
+            <button
               onClick={onCancel}
-              leftIcon={<Square className="w-3 h-3 fill-current text-red-400" />}
-              className="h-7 text-xs font-mono bg-red-950/60 hover:bg-red-900/80 border-red-800/60 text-red-200"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 transition-colors"
               title="Stop execution and release isolated sandbox resources"
             >
-              Stop
-            </Button>
+              <Square className="w-3 h-3 fill-current text-rose-400" />
+              <span>Stop</span>
+            </button>
           )}
 
-          <Button
-            size="sm"
-            variant="secondary"
+          <button
             onClick={onRunCode}
             disabled={isExecuting || submittingState === 'submitting' || submittingState === 'queued' || submittingState === 'judging'}
-            leftIcon={<Play className="w-3.5 h-3.5 fill-current text-primary" />}
-            className="h-7 text-xs font-mono"
-            title="Compile & run against sample test cases (Ctrl + ')"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono font-medium bg-[#111521] hover:bg-[#181F30] text-zinc-200 hover:text-white border border-[#1C2230] transition-colors shadow-xs disabled:opacity-50"
+            title="Compile & run against sample test cases (Ctrl + Enter)"
           >
-            {executionMode === 'run' && isExecuting ? 'Running...' : 'Run Code'}
-          </Button>
+            <Play className="w-3 h-3 fill-current text-cyan-400" />
+            <span>{executionMode === 'run' && isExecuting ? 'Running...' : 'Run Code'}</span>
+            <span className="hidden sm:inline-block text-[10px] font-mono text-zinc-500 ml-0.5 px-1 py-0.2 rounded bg-black/40 border border-white/5">Ctrl+↵</span>
+          </button>
 
-          <Button
-            size="sm"
-            variant="primary"
+          <button
             onClick={onSubmit}
             disabled={isExecuting || submittingState === 'submitting' || submittingState === 'queued' || submittingState === 'judging'}
-            leftIcon={<Send className="w-3.5 h-3.5" />}
-            className="h-7 text-xs font-mono bg-blue-600 hover:bg-blue-500 text-white"
-            title="Submit solution to remote judge sandbox (Ctrl + Enter)"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-md text-xs font-mono font-semibold bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-black transition-all shadow-[0_0_12px_rgba(6,182,212,0.25)] disabled:opacity-50"
+            title="Submit solution to remote judge sandbox"
           >
-            {submittingState === 'submitting'
-              ? 'Submitting...'
-              : submittingState === 'queued'
-              ? 'Queued...'
-              : submittingState === 'judging'
-              ? 'Judging...'
-              : 'Submit'}
-          </Button>
+            <Send className="w-3 h-3 text-black" />
+            <span>
+              {submittingState === 'submitting'
+                ? 'Submitting...'
+                : submittingState === 'queued'
+                ? 'Queued...'
+                : submittingState === 'judging'
+                ? 'Judging...'
+                : 'Submit'}
+            </span>
+          </button>
         </div>
       </div>
 
       {/* Console Content Area */}
       {!isCollapsed && (
-        <div className="flex-1 overflow-y-auto p-3 text-xs font-mono bg-[#0B0D13] select-text">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 text-xs font-mono bg-[#08090B] select-text">
           {/* TAB 1: TESTCASE */}
           {activeTab === 'testcases' && (
             <div className="space-y-3">
               {/* Informational Banner */}
-              <div className="flex items-center justify-between text-[11px] font-sans text-neutral-400 bg-white/[0.02] border border-white/[0.06] px-3 py-1.5 rounded">
-                <span className="flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Run Code uses sample tests for quick feedback. Submit runs the full canonical test suite.</span>
+              <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 text-[11px] font-sans text-neutral-400 bg-white/[0.02] border border-white/[0.06] px-3 py-1.5 rounded">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <Info className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span className="truncate">Run Code tests visible samples. Submit verifies against the full canonical test suite.</span>
                 </span>
-                {canonicalTestCount > 0 && (
-                  <span className="font-mono text-[10px] text-neutral-400 shrink-0">
-                    Sample: {testCases.length} / Canonical: {canonicalTestCount}
-                  </span>
-                )}
+                <span className="font-mono text-[10px] text-cyan-300/80 bg-white/[0.03] px-2 py-0.5 rounded border border-white/[0.06] shrink-0 whitespace-nowrap">
+                  Sample: {testCases.length} (Visible) / Canonical:{' '}
+                  {canonicalTestCount > testCases.length
+                    ? `${canonicalTestCount}`
+                    : 'Full Suite (Protected)'}
+                </span>
               </div>
 
               {/* Case selector pills */}
@@ -572,11 +648,9 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                                 style={{ width: `${(testCasesPassed / (totalTestCases || 1)) * 100}%` }}
                               />
                             </div>
-                            {canonicalTestCount > 0 && (
-                              <span className="text-[10px] font-mono text-neutral-400 mt-1">
-                                Full suite: {canonicalTestCount} canonical tests on Submit
-                              </span>
-                            )}
+                            <span className="text-[10px] font-mono text-neutral-400 mt-1">
+                              Full suite: {canonicalTestCount > testCases.length ? `${canonicalTestCount} canonical tests` : 'Complete canonical suite (Protected)'} on Submit
+                            </span>
                           </>
                         )}
                       </div>
@@ -816,9 +890,9 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                   <Cpu className="w-7 h-7 text-neutral-500 mb-1" />
                   <p className="text-sm font-sans font-medium text-neutral-200">Ready to Evaluate Solution</p>
                   <p className="text-xs text-neutral-400 max-w-md leading-relaxed">
-                    <strong className="text-white">Run Code</strong> uses sample tests ({sampleTestCount || testCases.length || 3}) for quick feedback.
+                    <strong className="text-white">Run Code</strong> evaluates visible sample tests ({sampleTestCount || testCases.length || 0}) for fast feedback.
                     <br />
-                    <strong className="text-blue-400">Submit</strong> evaluates the full canonical test suite ({canonicalTestCount > 0 ? `${canonicalTestCount} tests` : '200+ tests'}).
+                    <strong className="text-cyan-400">Submit</strong> validates against the full canonical test suite ({canonicalTestCount > testCases.length ? `${canonicalTestCount} tests` : 'Protected Canonical Suite'}).
                   </p>
                 </div>
               )}

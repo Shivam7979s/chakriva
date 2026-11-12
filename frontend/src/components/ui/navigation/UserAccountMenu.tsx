@@ -153,16 +153,26 @@ export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({ className = ''
             </button>
           </div>
 
-          {/* Sign Out Section */}
+          {/* Sign Out / Sign In Section */}
           <div className="pt-1.5 border-t border-white/[0.08]">
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-xs font-medium text-left"
-            >
-              <LogOut className="w-3.5 h-3.5 text-red-400" />
-              <span>Sign out</span>
-            </button>
+            {user ? (
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-xs font-medium text-left"
+              >
+                <LogOut className="w-3.5 h-3.5 text-red-400" />
+                <span>Sign out</span>
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setIsOpen(false)}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[#00d2ff] hover:bg-white/[0.05] transition-colors text-xs font-medium text-left"
+              >
+                <span>Sign in / Register</span>
+              </Link>
+            )}
           </div>
         </div>
       )}

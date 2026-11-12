@@ -57,14 +57,14 @@ export const SprintAccordion: React.FC<SprintAccordionProps> = ({
     }
     if (isLocked) {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-white/[0.04] text-text-muted border border-border">
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-[#131826] text-[#7C8BA6] border border-[#1B2234]">
           <Lock className="w-3.5 h-3.5" />
           LOCKED
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-surface-subtle text-text-muted border border-border">
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-[#131826] text-[#8592A8] border border-[#1B2234]">
         UPCOMING
       </span>
     );
@@ -74,12 +74,12 @@ export const SprintAccordion: React.FC<SprintAccordionProps> = ({
     <div
       className={`rounded-xl border transition-all duration-200 overflow-hidden ${
         isActive
-          ? 'bg-surface border-primary/50 shadow-elevation-1'
+          ? 'bg-[#0F131D] border-[#3B82F6]/40'
           : isCompleted
-          ? 'bg-surface/50 border-border/80'
+          ? 'bg-[#0F131D] border-[#1A2133]'
           : isLocked
-          ? 'bg-surface/20 border-border/40 opacity-80'
-          : 'bg-surface border-border shadow-elevation-1'
+          ? 'bg-[#0B0E16] border-[#151B2B] opacity-80'
+          : 'bg-[#0F131D] border-[#192033]'
       }`}
     >
       {/* Sprint Header Bar */}
@@ -142,7 +142,7 @@ export const SprintAccordion: React.FC<SprintAccordionProps> = ({
           </div>
 
           {/* Bottom Metrics Bar */}
-          <div className="pl-6 sm:pl-6 pt-1 flex items-center justify-between border-t border-border/40 mt-1">
+          <div className="pl-6 sm:pl-6 pt-2 flex items-center justify-between border-t border-[#171D2D] mt-1">
             <div className="flex items-center gap-1.5 text-xs font-mono text-text-muted">
               <Clock className="w-3.5 h-3.5 text-text-muted" />
               <span>~{sprint.estimatedHours} hrs</span>
@@ -153,9 +153,9 @@ export const SprintAccordion: React.FC<SprintAccordionProps> = ({
                 <strong className="text-text-primary font-bold">{completedDays}</strong> / {totalDays} {totalDays === 1 ? 'day' : 'days'}
               </span>
 
-              <div className="w-24 bg-surface-subtle h-1.5 rounded-full overflow-hidden border border-white/[0.04]">
+              <div className="w-24 bg-[#141A29] h-1.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-[#00B8A3] h-full transition-all duration-300 rounded-full"
+                  className="bg-gradient-to-r from-[#3B82F6] to-[#00B8A3] h-full transition-all duration-300 rounded-full"
                   style={{ width: `${percentage}%` }}
                 />
               </div>
@@ -166,7 +166,7 @@ export const SprintAccordion: React.FC<SprintAccordionProps> = ({
 
       {/* Sprint Days Content */}
       {isExpanded && (
-        <div className="p-4 sm:p-6 bg-surface/40 border-t border-border space-y-5">
+        <div className="p-4 sm:p-6 bg-[#0B0E16] border-t border-[#171D2D] space-y-5">
           {sprint.days.map((day) => (
             <DayTimeline
               key={day.id}

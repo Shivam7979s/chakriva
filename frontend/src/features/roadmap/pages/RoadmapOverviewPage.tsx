@@ -81,7 +81,7 @@ export const RoadmapOverviewPage: React.FC<RoadmapOverviewPageProps> = ({
         <p className="text-xs text-text-secondary">{error}</p>
         <button
           onClick={() => refetch()}
-          className="px-4 py-2 rounded bg-surface-elevated hover:bg-surface-subtle border border-border text-xs font-mono text-text-primary transition-colors"
+          className="px-4 py-2 rounded-lg bg-[#121724] hover:bg-[#171E30] border border-[#1B2234] text-xs font-mono text-[#F3F6FF] transition-colors cursor-pointer"
         >
           Try Again
         </button>
@@ -148,8 +148,8 @@ export const RoadmapOverviewPage: React.FC<RoadmapOverviewPageProps> = ({
             })}
 
             {filteredSprints.length === 0 && (
-              <div className="py-12 text-center rounded-lg border border-dashed border-border bg-surface/30">
-                <Compass className="w-8 h-8 text-text-muted mx-auto mb-2" />
+              <div className="py-12 text-center rounded-xl border border-dashed border-[#1E263B] bg-[#0F131D]">
+                <Compass className="w-8 h-8 text-[#6D7B94] mx-auto mb-2" />
                 <p className="text-sm font-medium text-text-secondary">
                   No sprints match the selected filter.
                 </p>

@@ -113,6 +113,12 @@ class JudgeJob(BaseModel):
         max_length=65536,
         description="Explicit user-provided input for RUN mode. Must be None or ignored in SUBMIT mode."
     )
+    attempt: Optional[int] = Field(
+        default=1,
+        ge=1,
+        le=10,
+        description="Current execution attempt number (1-indexed)."
+    )
     createdAt: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         description="UTC timestamp when the job was originated."

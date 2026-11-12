@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface AcceptanceSolvedCardProps {
@@ -69,10 +68,7 @@ export const AcceptanceSolvedCard: React.FC<AcceptanceSolvedCardProps> = ({
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-        <div className="flex items-center gap-2">
-          <BarChart2 className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-sm font-bold text-white tracking-tight">Your progress</h3>
-        </div>
+        <h3 className="text-sm font-bold text-white tracking-tight">Your progress</h3>
         <Link
           to="/app/progress"
           className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"

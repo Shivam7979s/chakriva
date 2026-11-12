@@ -34,10 +34,15 @@ class RedisConsumer:
         self.backoff_max = self.cfg.redis_backoff_max
         self.current_backoff = self.backoff_initial
 
-        # Telemetry counters
         self.jobs_received = 0
         self.jobs_rejected = 0
         self.redis_errors = 0
+
+        # Lease tracking configuration
+        self.lease_prefix = "verniq:submissions:lease:"
+        self.active_leases_key = "verniq:submissions:leases:active"
+        self.processing_queue = f"verniq:submissions:processing:{self.worker_id}"
+        self.default_lease_duration_seconds = 60
 
         # Redis client instance
         self._injected_client = client is not None
@@ -279,4 +284,160 @@ class RedisConsumer:
             return None
 
         _, raw_payload = popped
-        return self.parse_job(raw_payload)
+        job = self.parse_job(raw_payload)
+        if job is not None:
+            setattr(job, "_raw_payload", raw_payload)
+        return job
+
+    def claim_lease(
+        self,
+        job_id: str,
+        submission_id: str,
+        worker_id: str,
+        attempt: int = 1,
+        raw_payload: str = "",
+        lease_duration_seconds: Optional[int] = None,
+    ) -> bool:
+        """Atomically registers an in-flight lease for the claimed job."""
+        if not self.client:
+            return False
+        duration = lease_duration_seconds or self.default_lease_duration_seconds
+        expires_at_ms = int((time.time() + duration) * 1000)
+        lease_key = f"{self.lease_prefix}{job_id}"
+        lease_data = {
+            "jobId": str(job_id),
+            "submissionId": str(submission_id),
+            "workerId": str(worker_id),
+            "attempt": str(attempt),
+            "claimedAt": datetime.now(timezone.utc).isoformat(),
+            "leaseExpiresAt": str(expires_at_ms),
+            "payload": raw_payload or "",
+        }
+        try:
+            if hasattr(self.client, "pipeline"):
+                pipe = self.client.pipeline()
+                pipe.hset(lease_key, mapping=lease_data)
+                pipe.expire(lease_key, int(duration * 3))
+                pipe.zadd(self.active_leases_key, {job_id: expires_at_ms})
+                if raw_payload:
+                    pipe.rpush(self.processing_queue, raw_payload)
+                pipe.execute()
+            else:
+                self.client.hset(lease_key, mapping=lease_data)
+                self.client.expire(lease_key, int(duration * 3))
+                self.client.zadd(self.active_leases_key, {job_id: expires_at_ms})
+                if raw_payload:
+                    self.client.rpush(self.processing_queue, raw_payload)
+            logger.info(
+                "LEASE_CLAIMED job_id=%s submission_id=%s worker_id=%s attempt=%d expires_in=%ds",
+                job_id,
+                submission_id,
+                worker_id,
+                attempt,
+                duration,
+            )
+            return True
+        except Exception as e:
+            logger.warning("Failed to register lease for job %s: %s", job_id, e)
+            return False
+
+    def renew_lease(self, job_id: str, extension_seconds: Optional[int] = None) -> bool:
+        """Renews an active lease, extending its expiration timestamp."""
+        if not self.client:
+            return False
+        duration = extension_seconds or self.default_lease_duration_seconds
+        expires_at_ms = int((time.time() + duration) * 1000)
+        lease_key = f"{self.lease_prefix}{job_id}"
+        try:
+            if hasattr(self.client, "exists") and not self.client.exists(lease_key):
+                return False
+            if hasattr(self.client, "pipeline"):
+                pipe = self.client.pipeline()
+                pipe.hset(lease_key, "leaseExpiresAt", str(expires_at_ms))
+                pipe.expire(lease_key, int(duration * 3))
+                pipe.zadd(self.active_leases_key, {job_id: expires_at_ms})
+                pipe.execute()
+            else:
+                self.client.hset(lease_key, "leaseExpiresAt", str(expires_at_ms))
+                self.client.expire(lease_key, int(duration * 3))
+                self.client.zadd(self.active_leases_key, {job_id: expires_at_ms})
+            logger.info("LEASE_RENEWED job_id=%s extended_by=%ds", job_id, duration)
+            return True
+        except Exception as e:
+            logger.warning("Failed to renew lease for job %s: %s", job_id, e)
+            return False
+
+    def release_lease(self, job_id: str, raw_payload: Optional[str] = None) -> bool:
+        """Cleans up the in-flight lease and processing queue entry upon completion."""
+        if not self.client:
+            return False
+        lease_key = f"{self.lease_prefix}{job_id}"
+        try:
+            if hasattr(self.client, "pipeline"):
+                pipe = self.client.pipeline()
+                pipe.delete(lease_key)
+                pipe.zrem(self.active_leases_key, job_id)
+                if raw_payload:
+                    pipe.lrem(self.processing_queue, 1, raw_payload)
+                pipe.execute()
+            else:
+                self.client.delete(lease_key)
+                self.client.zrem(self.active_leases_key, job_id)
+                if raw_payload:
+                    self.client.lrem(self.processing_queue, 1, raw_payload)
+            logger.info("LEASE_RELEASED job_id=%s", job_id)
+            return True
+        except Exception as e:
+            logger.warning("Failed to release lease for job %s: %s", job_id, e)
+            return False
+
+    def recover_stranded_jobs_on_startup(self, max_attempts: int = 3) -> int:
+        """Inspects and requeues any in-flight jobs left in the worker's processing queue after a crash."""
+        if not self.client:
+            return 0
+        try:
+            items = self.client.lrange(self.processing_queue, 0, -1)
+            if not items:
+                return 0
+            recovered = 0
+            for raw_payload in items:
+                try:
+                    data = json.loads(raw_payload)
+                    job_id = data.get("jobId")
+                    attempt = int(data.get("attempt", 1))
+                    next_attempt = attempt + 1
+
+                    pipe = self.client.pipeline()
+                    pipe.lrem(self.processing_queue, 1, raw_payload)
+                    if job_id:
+                        pipe.delete(f"{self.lease_prefix}{job_id}")
+                        pipe.zrem(self.active_leases_key, job_id)
+
+                    if attempt < max_attempts:
+                        data["attempt"] = next_attempt
+                        requeue_payload = json.dumps(data)
+                        pipe.rpush(self.queue_name, requeue_payload)
+                        logger.warning(
+                            "STRANDED_JOB_REQUEUED worker_id=%s job_id=%s attempt=%d->%d",
+                            self.worker_id,
+                            job_id,
+                            attempt,
+                            next_attempt,
+                        )
+                        recovered += 1
+                    else:
+                        logger.error(
+                            "STRANDED_JOB_EXHAUSTED worker_id=%s job_id=%s attempt=%d max_attempts=%d",
+                            self.worker_id,
+                            job_id,
+                            attempt,
+                            max_attempts,
+                        )
+                    pipe.execute()
+                except Exception as parse_err:
+                    self.client.lrem(self.processing_queue, 1, raw_payload)
+                    logger.warning("Failed to parse stranded job payload: %s", parse_err)
+            return recovered
+        except Exception as e:
+            logger.warning("Error recovering stranded jobs on startup: %s", e)
+            return 0

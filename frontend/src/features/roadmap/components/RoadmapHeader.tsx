@@ -26,7 +26,7 @@ export const RoadmapHeader: React.FC<RoadmapHeaderProps> = ({
       actions={
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
           {/* Track Completion Card */}
-          <div className="p-4 rounded-lg border border-white/[0.08] bg-[#181C28] w-full sm:w-80 space-y-2.5 shadow-elevation-1">
+          <div className="p-4 rounded-xl border border-[#1B2234] bg-[#0F131D] w-full sm:w-80 space-y-2.5">
             <div className="flex items-center justify-between text-xs font-mono font-semibold tracking-wider text-text-muted uppercase">
               <span className="flex items-center gap-1.5 text-text-secondary">
                 <Award className="w-3.5 h-3.5 text-primary" />
@@ -45,7 +45,7 @@ export const RoadmapHeader: React.FC<RoadmapHeaderProps> = ({
 
             {/* Subtle Progress Bar */}
             <div
-              className="w-full bg-[#1C212E] h-1.5 rounded-full overflow-hidden border border-white/[0.04]"
+              className="w-full bg-[#141A29] h-1.5 rounded-full overflow-hidden"
               role="progressbar"
               aria-valuenow={percentage}
               aria-valuemin={0}
@@ -53,7 +53,7 @@ export const RoadmapHeader: React.FC<RoadmapHeaderProps> = ({
               aria-label={`Track completion progress: ${percentage}%`}
             >
               <div
-                className="bg-[#00B8A3] h-full transition-all duration-300 rounded-full"
+                className="bg-gradient-to-r from-[#3B82F6] to-[#00B8A3] h-full transition-all duration-300 rounded-full"
                 style={{ width: `${percentage}%` }}
               />
             </div>
@@ -76,7 +76,7 @@ export const RoadmapHeader: React.FC<RoadmapHeaderProps> = ({
             disabled={loading}
             aria-label="Refresh curriculum progress"
             title="Sync curriculum progress"
-            className="p-3 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center shrink-0 self-start sm:self-center"
+            className="p-3 rounded-xl border border-[#1B2234] bg-[#0F131D] hover:bg-[#151C2D] text-[#94A1B8] hover:text-[#F3F6FF] transition-colors flex items-center justify-center shrink-0 self-start sm:self-center cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-primary' : ''}`} />
           </button>

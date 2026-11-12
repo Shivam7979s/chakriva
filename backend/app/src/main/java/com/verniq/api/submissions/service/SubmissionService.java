@@ -118,6 +118,8 @@ public class SubmissionService {
 
         String judgeJobId = UUID.randomUUID().toString();
         submission.setJudgeJobId(judgeJobId);
+        submission.setAttempt(1);
+        submission.setMaxAttempts(3);
 
         submission = submissionRepository.save(submission);
 
@@ -362,6 +364,9 @@ public class SubmissionService {
 
             if (parsedCompletedAt != null) {
                 submission.setCompletedAt(parsedCompletedAt);
+            }
+            if (callback.workerId() != null && !callback.workerId().isBlank()) {
+                submission.setWorkerId(callback.workerId().trim());
             }
 
             submission = submissionRepository.save(submission);

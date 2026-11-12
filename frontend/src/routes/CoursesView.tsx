@@ -1,175 +1,103 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/layout/Container';
 import { PageHeader } from '@/components/ui/layout/PageHeader';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/data/Card';
-import { Badge } from '@/components/ui/data/Badge';
-import { Button } from '@/components/ui/actions/Button';
-import { Layers, Clock, ArrowRight, Terminal, CheckCircle2, Compass } from 'lucide-react';
-
-interface CourseTrack {
-  id: string;
-  title: string;
-  subtitle: string;
-  level: string;
-  modules: number;
-  duration: string;
-  labSandbox: string;
-  prerequisite: string;
-  topics: string[];
-}
+import { Layers, Clock, ArrowRight, Terminal, Compass, CheckCircle2 } from 'lucide-react';
+import { LEARN_TRACKS, formatMinutesLabel } from '@/features/learn/data/learnCatalog';
+import { learnProgressService } from '@/features/learn/services/learnProgressService';
 
 export const CoursesView: React.FC = () => {
-  const [enrolledIds, setEnrolledIds] = useState<Record<string, boolean>>(() => {
-    try {
-      const stored = localStorage.getItem('chakriva_enrolled_courses');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const toggleEnroll = (id: string) => {
-    setEnrolledIds((prev) => {
-      const updated = { ...prev, [id]: !prev[id] };
-      try {
-        localStorage.setItem('chakriva_enrolled_courses', JSON.stringify(updated));
-      } catch {
-        // ignore storage errors
-      }
-      return updated;
-    });
-  };
-
-  const courses: CourseTrack[] = [
-    {
-      id: 'course-1',
-      title: 'Database Internals from First Principles',
-      subtitle: 'Build an ACID-compliant B+ Tree storage engine in Rust with write-ahead logging (WAL) and MVCC.',
-      level: 'Advanced Systems',
-      modules: 12,
-      duration: '36 hours',
-      labSandbox: 'Rust 1.78 / Cargo Toolchain',
-      prerequisite: 'Memory Models & Pointers',
-      topics: ['B+ Trees', 'WAL & ARIES', 'Buffer Pool', 'MVCC Isolation'],
-    },
-    {
-      id: 'course-2',
-      title: 'Distributed Consensus: Raft & Paxos',
-      subtitle: 'Implement a distributed key-value store with leader election, log replication, snapshotting, and fault injection testing.',
-      level: 'Distributed Systems',
-      modules: 8,
-      duration: '24 hours',
-      labSandbox: 'Go 1.23 / Chaos Network Sim',
-      prerequisite: 'Concurrency & Network Sockets',
-      topics: ['Leader Election', 'Log Compaction', 'Network Partitions', 'Jepsen Tests'],
-    },
-    {
-      id: 'course-3',
-      title: 'High-Throughput Microservices in Go & gRPC',
-      subtitle: 'Production design patterns for connection pooling, streaming protobufs, rate limiting, and zero-downtime rolling updates.',
-      level: 'Backend Architecture',
-      modules: 10,
-      duration: '28 hours',
-      labSandbox: 'Go 1.23 / Protobuf v3',
-      prerequisite: 'HTTP/2 & Thread Pooling',
-      topics: ['Protobuf v3', 'gRPC Streams', 'Circuit Breakers', 'OpenTelemetry'],
-    },
-    {
-      id: 'course-4',
-      title: 'Compiler Construction: Lexing to LLVM IR',
-      subtitle: 'Design a statically-typed language frontend with recursive descent parsing, AST semantic analysis, and LLVM code generation.',
-      level: 'Compilers & Languages',
-      modules: 14,
-      duration: '42 hours',
-      labSandbox: 'LLVM 18 / Clang C++ Toolchain',
-      prerequisite: 'Context-Free Grammars',
-      topics: ['Lexical Analysis', 'Type Inference', 'CFG Optimization', 'LLVM Target'],
-    },
-  ];
+  const masterclassTracks = useMemo(
+    () => LEARN_TRACKS.filter((t) => t.category === 'systems_labs'),
+    []
+  );
+  const progress = useMemo(() => learnProgressService.getState(), []);
 
   return (
-    <div className="py-8 space-y-8 text-left">
+    <div className="py-8 space-y-8 text-left text-[#F3F6FF]">
       <Container size="xl">
-        {/* Standardized Sleek Page Header */}
         <PageHeader
           badge="Engineering Masterclasses"
           title="Advanced Systems & Engineering Tracks"
-          subtitle="Comprehensive, code-intensive masterclasses taught through real-world systems implementations, test fixtures, and architectural diagrams."
+          subtitle="Comprehensive, systems-level engineering tracks taught through architectural invariants, failure modes, and runtime walkthroughs."
         />
 
-        {/* Courses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {courses.map((course) => {
-            const isEnrolled = Boolean(enrolledIds[course.id]);
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          {masterclassTracks.map((course) => {
+            const stats = learnProgressService.getTrackCompletion(course, progress);
             return (
-              <Card key={course.id} className="hover:border-border-strong transition-colors flex flex-col justify-between">
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="neutral">{course.level}</Badge>
-                    <div className="flex items-center gap-3 text-xs text-text-muted font-mono">
+              <div
+                key={course.id}
+                className="rounded-2xl border border-[#192033] bg-[#0F131D] hover:border-[#29344E] p-5 transition-colors flex flex-col justify-between gap-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-[#291E0B] text-[#FCD34D]">
+                      {course.levelBadge}
+                    </span>
+                    <div className="flex items-center gap-3 text-xs text-[#7C8BA6] font-mono">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
-                        {course.duration}
+                        {formatMinutesLabel(course.totalMinutes)}
                       </span>
                       <span className="flex items-center gap-1">
                         <Layers className="w-3.5 h-3.5" />
-                        {course.modules} modules
+                        {course.lessons.length} lessons
                       </span>
                     </div>
                   </div>
-                  <CardTitle className="text-base text-text-primary">{course.title}</CardTitle>
-                  <CardDescription className="text-xs leading-relaxed mt-1">
-                    {course.subtitle}
-                  </CardDescription>
-                </CardHeader>
 
-                <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-1.5">
-                    {course.topics.map((t) => (
-                      <span
-                        key={t}
-                        className="px-2 py-0.5 rounded text-[11px] font-mono bg-surface-subtle border border-border text-text-muted"
-                      >
-                        {t}
-                      </span>
-                    ))}
+                  <div>
+                    <h2 className="text-base font-semibold text-[#F8FAFF]">{course.title}</h2>
+                    <p className="text-xs text-[#8592A8] leading-relaxed mt-1">{course.subtitle}</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-[11px] font-mono p-2.5 rounded-lg bg-surface-subtle/60 border border-border/60">
+                  <div className="grid grid-cols-2 gap-2 text-[11px] font-mono p-3 rounded-xl bg-[#0B0E16] border border-[#171D2D]">
                     <div>
-                      <span className="text-text-muted block text-[10px]">PREREQUISITE</span>
-                      <span className="text-text-primary font-medium">{course.prerequisite}</span>
+                      <span className="text-[#6D7B94] block text-[10px]">PREREQUISITE</span>
+                      <span className="text-[#E2E8F5] font-medium">
+                        {course.prerequisites[0] || 'Core CS'}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-text-muted block text-[10px]">LAB SANDBOX</span>
-                      <span className="text-sky-400 font-medium flex items-center gap-1">
-                        <Terminal className="w-3 h-3" />
-                        {course.labSandbox}
+                      <span className="text-[#6D7B94] block text-[10px]">ARCHITECTURE FOCUS</span>
+                      <span className="text-[#60A5FA] font-medium flex items-center gap-1 truncate">
+                        <Terminal className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{course.environmentLabel || 'Interactive'}</span>
                       </span>
                     </div>
                   </div>
+                </div>
 
-                  <div className="pt-2 flex items-center justify-between gap-3">
-                    <Link to="/roadmaps" className="text-[11px] text-text-muted hover:text-text-primary font-mono flex items-center gap-1">
-                      <Compass className="w-3.5 h-3.5 text-accent" />
-                      <span>View Roadmap DAG</span>
-                    </Link>
+                <div className="pt-3 border-t border-[#171D2D] flex items-center justify-between gap-3">
+                  <Link
+                    to="/app/roadmap"
+                    className="text-[11px] text-[#7C8BA6] hover:text-[#F3F6FF] font-mono flex items-center gap-1.5 transition-colors"
+                  >
+                    <Compass className="w-3.5 h-3.5 text-[#00B8A3]" />
+                    <span>Adaptive Roadmap</span>
+                  </Link>
 
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={isEnrolled ? 'secondary' : 'primary'}
-                        onClick={() => toggleEnroll(course.id)}
-                        leftIcon={isEnrolled ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : undefined}
-                        rightIcon={!isEnrolled ? <ArrowRight className="w-3.5 h-3.5" /> : undefined}
-                      >
-                        {isEnrolled ? 'Enrolled in Track' : 'Enroll in Syllabus'}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Link
+                    to={`/app/learn/${course.slug}/${course.lessons[0].slug}`}
+                    className="px-3.5 py-2 rounded-xl border border-[#243B6B] bg-[#152443] hover:bg-[#1C3159] text-xs font-medium text-[#F3F6FF] inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    {stats.completed > 0 ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#00B8A3]" />
+                        <span>
+                          Continue ({stats.completed}/{stats.total})
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Open Syllabus</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </Link>
+                </div>
+              </div>
             );
           })}
         </div>

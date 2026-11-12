@@ -567,11 +567,226 @@ export const apiClient = {
   async getAnalyticsTrends(): Promise<TrendPointDto[]> {
     return request<TrendPointDto[]>('/api/v1/analytics/trends', { method: 'GET' }, true);
   },
+
+  // ==============================================================================
+  // CHAKRIVA PHASE 2: PERSONALIZED ADAPTIVE ROADMAP PERSISTENCE
+  // ==============================================================================
+
+  /**
+   * Retrieves the authenticated user's active personalized roadmap.
+   * Returns null if no active plan exists (204 No Content / 404).
+   */
+  async getPersonalizedRoadmap(): Promise<PersonalizedRoadmapResponse | null> {
+    try {
+      return await request<PersonalizedRoadmapResponse>(
+        '/api/v1/roadmaps/personalized',
+        { method: 'GET' },
+        true
+      );
+    } catch (err: unknown) {
+      if ((err as any)?.status === 404 || (err as any)?.code === 'EMPTY_RESPONSE') {
+        return null;
+      }
+      throw err;
+    }
+  },
+
+  /**
+   * Saves or replaces the authenticated user's personalized roadmap on the server.
+   */
+  async savePersonalizedRoadmap(payload: {
+    title?: string;
+    goal?: string;
+    targetDate?: string;
+    dailyMinutes?: number;
+    version?: number;
+    planData: any;
+  }): Promise<PersonalizedRoadmapResponse> {
+    return request<PersonalizedRoadmapResponse>(
+      '/api/v1/roadmaps/personalized',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      true
+    );
+  },
+
+  /**
+   * Updates an existing personalized roadmap.
+   */
+  async updatePersonalizedRoadmap(payload: {
+    title?: string;
+    goal?: string;
+    targetDate?: string;
+    dailyMinutes?: number;
+    version?: number;
+    planData: any;
+  }): Promise<PersonalizedRoadmapResponse> {
+    return request<PersonalizedRoadmapResponse>(
+      '/api/v1/roadmaps/personalized',
+      {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      },
+      true
+    );
+  },
+
+  /**
+   * Updates roadmap preferences.
+   */
+  async updateRoadmapPreferences(
+    preferences: Record<string, any>,
+    version?: number
+  ): Promise<PersonalizedRoadmapResponse> {
+    return request<PersonalizedRoadmapResponse>(
+      '/api/v1/roadmaps/personalized/preferences',
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ preferences, version }),
+      },
+      true
+    );
+  },
+
+  /**
+   * Applies an approved schedule recalculation proposal to the server.
+   */
+  async reschedulePersonalizedRoadmap(
+    roadmap: any,
+    version?: number
+  ): Promise<PersonalizedRoadmapResponse> {
+    return request<PersonalizedRoadmapResponse>(
+      '/api/v1/roadmaps/personalized/reschedule',
+      {
+        method: 'POST',
+        body: JSON.stringify({ roadmap, version }),
+      },
+      true
+    );
+  },
+
+  /**
+   * Lists all personalized roadmaps (active and paused) for the authenticated user.
+   */
+  async listPersonalizedRoadmaps(): Promise<PersonalizedRoadmapResponse[]> {
+    try {
+      return await request<PersonalizedRoadmapResponse[]>(
+        '/api/v1/roadmaps/personalized/list',
+        { method: 'GET' },
+        true
+      );
+    } catch (err: unknown) {
+      if ((err as any)?.status === 404 || (err as any)?.code === 'EMPTY_RESPONSE') {
+        return [];
+      }
+      throw err;
+    }
+  },
+
+  /**
+   * Creates a distinct new personalized roadmap, pausing any previously active roadmap.
+   */
+  async createNewPersonalizedRoadmap(payload: {
+    title?: string;
+    goal?: string;
+    targetDate?: string;
+    dailyMinutes?: number;
+    version?: number;
+    planData: any;
+  }): Promise<PersonalizedRoadmapResponse> {
+    return request<PersonalizedRoadmapResponse>(
+      '/api/v1/roadmaps/personalized/create',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      true
+    );
+  },
+
+  /**
+   * Updates a specific saved personalized roadmap by ID.
+   */
+  async updatePersonalizedRoadmapById(
+    planId: string,
+    payload: {
+      title?: string;
+      goal?: string;
+      targetDate?: string;
+      dailyMinutes?: number;
+      version?: number;
+      planData: any;
+    }
+  ): Promise<PersonalizedRoadmapResponse> {
+    return request<PersonalizedRoadmapResponse>(
+      `/api/v1/roadmaps/personalized/${encodeURIComponent(planId)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      },
+      true
+    );
+  },
+
+  /**
+   * Sets a roadmap's lifecycle status ('active' or 'paused').
+   */
+  async setPersonalizedRoadmapStatus(
+    planId: string,
+    status: 'active' | 'paused'
+  ): Promise<PersonalizedRoadmapResponse> {
+    return request<PersonalizedRoadmapResponse>(
+      `/api/v1/roadmaps/personalized/${encodeURIComponent(planId)}/status`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      },
+      true
+    );
+  },
+
+  /**
+   * Deactivates or clears the authenticated user's personalized roadmap on the server.
+   */
+  async deletePersonalizedRoadmap(): Promise<void> {
+    return request<void>(
+      '/api/v1/roadmaps/personalized',
+      { method: 'DELETE' },
+      true
+    );
+  },
+
+  /**
+   * Permanently deletes a specific saved roadmap by ID.
+   */
+  async deletePersonalizedRoadmapById(planId: string): Promise<void> {
+    return request<void>(
+      `/api/v1/roadmaps/personalized/${encodeURIComponent(planId)}`,
+      { method: 'DELETE' },
+      true
+    );
+  },
 };
 
 // ==============================================================================
 // ROADMAP DTO INTERFACES
 // ==============================================================================
+
+export interface PersonalizedRoadmapResponse {
+  id: string;
+  userId: string;
+  title: string;
+  goal: string;
+  targetDate: string;
+  dailyMinutes: number;
+  isActive: boolean;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  planData: any;
+}
 
 export interface RoadmapSummaryDto {
   id: string;

@@ -64,6 +64,44 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* ==============================================================================
+     Global Sleek Dark Scrollbars (Never render default OS/browser white scrollbars)
+     ============================================================================== */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #1F293D transparent;
+  }
+
+  /* Chrome, Edge, Safari */
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #1C2333;
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #2D3748;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Eliminate browser scrollbar arrows completely */
+  *::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
 }
 
 @layer utilities {
@@ -78,6 +116,33 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
+  }
+
+  /* Utility to completely hide scrollbars while preserving scrollability */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+
+  /* Custom sleek subtle dark scrollbar utility */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px !important;
+    height: 5px !important;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #1C2436 !important;
+    border-radius: 9999px !important;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #2D3A54 !important;
   }
 }
 
@@ -117,6 +182,229 @@
 }
 .animate-shiny {
   animation: shiny 6s linear infinite;
+}
+
+/* ==========================================================================
+   Riva Next-Gen Cyber-Neural Avatar Animations (GPU-accelerated, 60fps)
+   ========================================================================== */
+@keyframes rivaFluidFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-3.5px) rotate(0.8deg);
+  }
+  66% {
+    transform: translateY(-1px) rotate(-0.8deg);
+  }
+}
+
+@keyframes rivaEyeBlink {
+  0%, 88%, 94%, 100% {
+    transform: scaleY(1);
+  }
+  91% {
+    transform: scaleY(0.08); /* crisp natural blink */
+  }
+}
+
+@keyframes rivaEyeGlance {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  20%, 35% {
+    transform: translate(1.8px, -0.6px); /* glance right */
+  }
+  50%, 65% {
+    transform: translate(-1.8px, 0.4px); /* glance left */
+  }
+  78%, 85% {
+    transform: translate(0, -1px); /* glance slightly up */
+  }
+}
+
+@keyframes rivaHudSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rivaHudSpinReverse {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes rivaGyroscopicRing1 {
+  0% {
+    transform: rotateX(68deg) rotateY(18deg) rotateZ(0deg);
+  }
+  100% {
+    transform: rotateX(68deg) rotateY(18deg) rotateZ(360deg);
+  }
+}
+
+@keyframes rivaGyroscopicRing2 {
+  0% {
+    transform: rotateX(50deg) rotateY(-36deg) rotateZ(360deg);
+  }
+  100% {
+    transform: rotateX(50deg) rotateY(-36deg) rotateZ(0deg);
+  }
+}
+
+@keyframes rivaGyroscopicRingFast {
+  0% {
+    transform: rotateX(68deg) rotateY(18deg) rotateZ(0deg);
+  }
+  100% {
+    transform: rotateX(68deg) rotateY(18deg) rotateZ(360deg);
+  }
+}
+
+@keyframes rivaPlasmaPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.75;
+    filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.4));
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 16px rgba(34, 211, 238, 0.75)) drop-shadow(0 0 24px rgba(129, 140, 248, 0.45));
+  }
+}
+
+@keyframes rivaSynapseScan {
+  0% {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+
+@keyframes rivaWaveform1 {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1.1); }
+}
+@keyframes rivaWaveform2 {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1.35); }
+}
+@keyframes rivaWaveform3 {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1.2); }
+}
+
+@keyframes rivaSleepPulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.riva-fluid-float {
+  animation: rivaFluidFloat 4.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+
+.riva-eye-blink {
+  animation: rivaEyeBlink 4.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: 50% 58%;
+}
+
+.riva-eye-glance {
+  animation: rivaEyeGlance 6.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.riva-hud-spin {
+  animation: rivaHudSpin 3.5s linear infinite;
+  transform-origin: center;
+}
+
+.riva-hud-spin-rev {
+  animation: rivaHudSpinReverse 2.2s linear infinite;
+  transform-origin: center;
+}
+
+.riva-gyro-ring-1 {
+  animation: rivaGyroscopicRing1 12s linear infinite;
+  transform-origin: center;
+  transform-style: preserve-3d;
+}
+
+.riva-gyro-ring-2 {
+  animation: rivaGyroscopicRing2 8.5s linear infinite;
+  transform-origin: center;
+  transform-style: preserve-3d;
+}
+
+.riva-gyro-ring-fast {
+  animation: rivaGyroscopicRingFast 2.2s linear infinite;
+  transform-origin: center;
+}
+
+.riva-plasma-pulse {
+  animation: rivaPlasmaPulse 3.2s ease-in-out infinite;
+}
+
+.riva-synapse-scan {
+  animation: rivaSynapseScan 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.riva-wave-1 {
+  animation: rivaWaveform1 0.85s ease-in-out infinite alternate;
+  transform-origin: 50% 60%;
+}
+.riva-wave-2 {
+  animation: rivaWaveform2 0.65s ease-in-out infinite 0.15s alternate;
+  transform-origin: 50% 60%;
+}
+.riva-wave-3 {
+  animation: rivaWaveform3 0.95s ease-in-out infinite 0.3s alternate;
+  transform-origin: 50% 60%;
+}
+
+.riva-sleep-pulse {
+  animation: rivaSleepPulse 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .riva-fluid-float,
+  .riva-eye-blink,
+  .riva-eye-glance,
+  .riva-hud-spin,
+  .riva-hud-spin-rev,
+  .riva-gyro-ring-1,
+  .riva-gyro-ring-2,
+  .riva-gyro-ring-fast,
+  .riva-plasma-pulse,
+  .riva-synapse-scan,
+  .riva-wave-1,
+  .riva-wave-2,
+  .riva-wave-3,
+  .riva-sleep-pulse {
+    animation: none !important;
+    transform: none !important;
+  }
 }
 
 /* Aura Liquid Glass Utility */

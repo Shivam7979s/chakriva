@@ -30,6 +30,8 @@ import { ChakrivaAiView } from '@/routes/ChakrivaAiView';
 import { ContestsView } from '@/routes/ContestsView';
 import { ProgressView } from '@/routes/ProgressView';
 import { LearnView } from '@/routes/LearnView';
+import { TrackSyllabusView } from '@/features/learn/components/TrackSyllabusView';
+import { LessonWorkspaceView } from '@/features/learn/components/LessonWorkspaceView';
 import { WorkspaceSubView } from '@/routes/WorkspaceSubView';
 import { NotFoundView } from '@/routes/NotFoundView';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -66,19 +68,11 @@ export const App: React.FC = () => {
           />
           <Route
             path="/roadmaps"
-            element={
-              <PublicLayout>
-                <RoadmapsView />
-              </PublicLayout>
-            }
+            element={<RoadmapsView />}
           />
           <Route
             path="/roadmaps/:slug"
-            element={
-              <PublicLayout>
-                <RoadmapsView />
-              </PublicLayout>
-            }
+            element={<RoadmapsView />}
           />
           <Route
             path="/problems"
@@ -323,6 +317,22 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <LearnView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/learn/:trackSlug"
+            element={
+              <ProtectedRoute>
+                <TrackSyllabusView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/learn/:trackSlug/:lessonSlug"
+            element={
+              <ProtectedRoute>
+                <LessonWorkspaceView />
               </ProtectedRoute>
             }
           />

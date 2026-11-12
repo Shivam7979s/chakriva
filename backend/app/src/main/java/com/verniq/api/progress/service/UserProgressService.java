@@ -147,6 +147,9 @@ public class UserProgressService {
                     map.put(p.getProblem().getVerniqId(), status);
                 }
                 map.put(p.getProblem().getId().toString(), status);
+                if (p.getProblem().getSlug() != null) {
+                    map.put(p.getProblem().getSlug(), status);
+                }
             }
         }
 

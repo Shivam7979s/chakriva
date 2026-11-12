@@ -17,13 +17,13 @@ export const ProblemReferenceCard: React.FC<ProblemReferenceCardProps> = ({ refe
   const topics = summary?.topics || [];
 
   return (
-    <div className="mt-2.5 rounded-md border border-border/80 bg-surface-subtle/50 p-3 hover:border-border transition-colors">
+    <div className="mt-2.5 rounded-xl border border-[#192033] bg-[#0B0E16] p-3 hover:border-[#29344E] transition-colors">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Left: Problem Catalog Metadata */}
         <div className="space-y-1.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Permanent Verniq Problem ID */}
-            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-white/[0.06] text-primary border border-white/[0.08]">
+            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[#152443] text-[#60A5FA] border border-[#243B6B]">
               {verniqId}
             </span>
 
@@ -45,7 +45,7 @@ export const ProblemReferenceCard: React.FC<ProblemReferenceCardProps> = ({ refe
               </span>
             )}
             {reference.notes && (
-              <span className="text-[11px] italic text-text-secondary border-l border-border pl-2">
+              <span className="text-[11px] italic text-[#94A1B8] border-l-2 border-[#1B2438] pl-2">
                 {reference.notes}
               </span>
             )}
