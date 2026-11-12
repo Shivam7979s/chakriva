@@ -1,20 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  ArrowRight,
-  Calendar,
-  Clock,
-  Layers,
-  BookOpen,
-  HelpCircle,
-  Plus,
-  Compass,
-  CheckCircle2,
-  Circle,
-  Award,
-  Sparkles,
-} from 'lucide-react';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
 import {
   LEARN_TRACKS,
@@ -30,7 +16,6 @@ import {
   learnProgressService,
   resolveLearnHrefForTask,
 } from '@/features/learn/services/learnProgressService';
-import { TrackEmblem } from '@/features/learn/components/TrackEmblem';
 import { adaptiveRoadmapService } from '@/features/roadmap/services/adaptiveRoadmapService';
 import type { LearnTrack, LearnTrackCategory } from '@/features/learn/types/learn';
 import { cn } from '@/lib/utils';
@@ -50,7 +35,6 @@ export const LearnView: React.FC = () => {
     setSearchParams(next, { replace: true });
   };
 
-  // Group tracks in the active tab by their intent sectionLabel
   const sectionGroups = useMemo(() => {
     const inTab = LEARN_TRACKS.filter((t) => t.category === activeCategory);
     const map = new Map<
@@ -72,7 +56,6 @@ export const LearnView: React.FC = () => {
     return Array.from(map.values());
   }, [activeCategory]);
 
-  // Daily Planner widget data pulled from active Adaptive Roadmap
   const dailyPlanner = useMemo(() => {
     if (!activeRoadmap) return null;
     const todayStr = new Date().toISOString().split('T')[0];
@@ -96,7 +79,6 @@ export const LearnView: React.FC = () => {
     };
   }, [activeRoadmap]);
 
-  // Last visited lesson for instant Zen Resume
   const resumeLesson = useMemo(() => {
     if (!learnState.lastVisitedTrackSlug) return null;
     const track = getLearnTrackBySlug(learnState.lastVisitedTrackSlug);
@@ -118,14 +100,11 @@ export const LearnView: React.FC = () => {
       ]}
     >
       <div className="max-w-7xl mx-auto text-left text-[#F3F6FF]">
-        {/* Visually hidden semantic heading matching clean immediate-catalog Prep Hub UX */}
         <h1 className="sr-only">Prep Hub — CHAKRIVA Structured Learning Catalog</h1>
 
-        {/* 2-Column Workspace Layout: Left Catalog (~8 cols) + Right Daily Planner Rail (~4 cols) */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
           {/* LEFT / MAIN CATALOG COLUMN */}
           <div className="xl:col-span-8 space-y-6">
-            {/* Horizontal Subject Category Tabs (Deep-linked via ?open=...) */}
             <div
               role="tablist"
               aria-label="Prep Hub Categories"
@@ -160,7 +139,7 @@ export const LearnView: React.FC = () => {
               })}
             </div>
 
-            {/* Category Tab Panel: Intent-Grouped Sections & Track Cards */}
+            {/* Category Tab Panel (Matches CHAKRIVA Palette, Zero Card Icons) */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeCategory}
@@ -186,9 +165,8 @@ export const LearnView: React.FC = () => {
                           {group.label}
                         </h2>
                         {group.badge && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-[#152443] text-[#60A5FA] border border-[#243B6B]">
-                            <Award className="w-3 h-3" />
-                            <span>{group.badge}</span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-[#152443] text-[#60A5FA] border border-[#243B6B]">
+                            {group.badge}
                           </span>
                         )}
                       </div>
@@ -213,45 +191,35 @@ export const LearnView: React.FC = () => {
                               )}
                             >
                               <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-3.5 min-w-0">
-                                  <TrackEmblem iconKey={track.iconKey} />
-                                  <div className="min-w-0 pt-0.5">
-                                    <h3 className="text-sm sm:text-base font-semibold text-[#F8FAFF] group-hover:text-[#93C5FD] transition-colors leading-snug">
-                                      {track.title}
-                                    </h3>
-                                    {inActivePlan && (
-                                      <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#0C2624] text-[#00B8A3]">
-                                        Active Roadmap Subject
-                                      </span>
-                                    )}
-                                  </div>
+                                <div className="min-w-0 space-y-1">
+                                  <h3 className="text-sm sm:text-base font-semibold text-[#F8FAFF] group-hover:text-[#93C5FD] transition-colors leading-snug">
+                                    {track.title}
+                                  </h3>
+                                  {inActivePlan && (
+                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#0C2629] text-[#22D3EE]">
+                                      Active Roadmap Subject
+                                    </span>
+                                  )}
                                 </div>
 
-                                <span className="px-3 py-1 rounded-full border border-[#212B42] bg-[#0B0E16] group-hover:bg-[#152443] group-hover:border-[#3B82F6]/45 text-[11px] font-medium text-[#C3CEE0] group-hover:text-white inline-flex items-center gap-1 transition-colors shrink-0">
-                                  <span>Explore</span>
-                                  <ArrowRight className="w-3 h-3" />
+                                <span className="px-3 py-1 rounded-full border border-[#212B42] bg-[#0B0E16] group-hover:bg-[#152443] group-hover:border-[#3B82F6]/45 text-[11px] font-medium text-[#C3CEE0] group-hover:text-white transition-colors shrink-0">
+                                  Explore
                                 </span>
                               </div>
 
-                              {/* Clean Dot-Separated Metadata Footer (Prep Hub Anatomy) */}
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-mono text-[#7C8BA6] pt-1 border-t border-[#171D2D]">
-                                <span className="inline-flex items-center gap-1">
-                                  <Layers className="w-3.5 h-3.5 text-[#5B6882]" />
-                                  <span>{modules.length} Modules</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1">
-                                  <BookOpen className="w-3.5 h-3.5 text-[#5B6882]" />
-                                  <span>{track.lessons.length} Topics</span>
-                                </span>
+                              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-mono text-[#7C8BA6] pt-2.5 border-t border-[#171D2D]">
+                                <span>{modules.length} Modules</span>
+                                <span>·</span>
+                                <span>{track.lessons.length} Topics</span>
                                 {quizCount > 0 && (
-                                  <span className="inline-flex items-center gap-1">
-                                    <HelpCircle className="w-3.5 h-3.5 text-[#5B6882]" />
+                                  <>
+                                    <span>·</span>
                                     <span>{quizCount} Quizzes</span>
-                                  </span>
+                                  </>
                                 )}
-                                <span className="inline-flex items-center gap-1 text-[#94A1B8]">
-                                  <Clock className="w-3.5 h-3.5 text-[#5B6882]" />
-                                  <span>{formatMinutesLabel(track.totalMinutes)}</span>
+                                <span>·</span>
+                                <span className="text-[#94A1B8]">
+                                  {formatMinutesLabel(track.totalMinutes)}
                                 </span>
                               </div>
                             </Link>
@@ -265,15 +233,11 @@ export const LearnView: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* RIGHT UTILITY RAIL: DAILY PLANNER & QUICK RESUME */}
+          {/* RIGHT UTILITY RAIL (Zero Card Icons) */}
           <aside className="xl:col-span-4 space-y-4">
-            {/* Daily Planner Card (Synced Live to Adaptive Roadmap) */}
             <div className="rounded-2xl border border-[#181F30] bg-[#0B0E16] p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#3B82F6]" />
-                  <h2 className="text-sm font-semibold text-[#F8FAFF]">Daily Planner</h2>
-                </div>
+                <h2 className="text-sm font-semibold text-[#F8FAFF]">Daily Planner</h2>
                 <Link
                   to="/app/roadmap"
                   className="text-[11px] font-mono text-[#60A5FA] hover:underline"
@@ -301,11 +265,12 @@ export const LearnView: React.FC = () => {
                           className="flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl border border-[#171D2D] bg-[#0F131D] hover:border-[#3B82F6]/40 transition-colors"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
-                            {done ? (
-                              <CheckCircle2 className="w-4 h-4 text-[#00B8A3] shrink-0" />
-                            ) : (
-                              <Circle className="w-4 h-4 text-[#5B6882] shrink-0" />
-                            )}
+                            <span
+                              className={cn(
+                                'w-1.5 h-1.5 rounded-full shrink-0',
+                                done ? 'bg-[#00B8A3]' : 'bg-[#475569]'
+                              )}
+                            />
                             <span
                               className={cn(
                                 'text-xs truncate',
@@ -324,17 +289,13 @@ export const LearnView: React.FC = () => {
                   </div>
                   <Link
                     to="/app/roadmap/adaptive"
-                    className="w-full py-2 rounded-xl border border-dashed border-[#243B6B] bg-[#0F172A]/60 hover:bg-[#152443] text-xs font-medium text-[#93C5FD] flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full py-2 rounded-xl border border-dashed border-[#243B6B] bg-[#0F172A]/60 hover:bg-[#152443] text-xs font-medium text-[#93C5FD] flex items-center justify-center transition-colors"
                   >
-                    <Compass className="w-3.5 h-3.5" />
-                    <span>Manage Adaptive Schedule</span>
+                    Manage Adaptive Schedule
                   </Link>
                 </div>
               ) : (
-                <div className="py-5 px-3 rounded-xl border border-[#171D2D] bg-[#0F131D] text-center space-y-3">
-                  <div className="w-9 h-9 rounded-full bg-[#141A29] mx-auto flex items-center justify-center text-[#60A5FA]">
-                    <Calendar className="w-4 h-4" />
-                  </div>
+                <div className="py-5 px-4 rounded-xl border border-[#171D2D] bg-[#0F131D] text-center space-y-3">
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-[#E2E8F5]">No tasks for today</div>
                     <p className="text-[11px] text-[#7C8BA6] leading-relaxed">
@@ -343,22 +304,17 @@ export const LearnView: React.FC = () => {
                   </div>
                   <Link
                     to="/app/roadmap"
-                    className="w-full py-2 rounded-xl border border-dashed border-[#253352] hover:border-[#3B82F6]/60 bg-[#0B0E16] hover:bg-[#131B2E] text-xs font-medium text-[#C3CEE0] hover:text-white inline-flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full py-2 rounded-xl border border-dashed border-[#253352] hover:border-[#3B82F6]/60 bg-[#0B0E16] hover:bg-[#131B2E] text-xs font-medium text-[#C3CEE0] hover:text-white inline-flex items-center justify-center transition-colors"
                   >
-                    <Plus className="w-3.5 h-3.5 text-[#3B82F6]" />
-                    <span>Add tasks</span>
+                    Add tasks
                   </Link>
                 </div>
               )}
             </div>
 
-            {/* Resume Last Studio Session Card */}
             {resumeLesson && (
               <div className="rounded-2xl border border-[#181F30] bg-gradient-to-b from-[#101522] to-[#0B0E16] p-5 space-y-3">
-                <div className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#00B8A3]">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Resume Focus Mode</span>
-                </div>
+                <div className="text-[11px] font-mono text-[#22D3EE]">Resume Focus Mode</div>
                 <div>
                   <div className="text-[11px] text-[#7C8BA6]">{resumeLesson.track.shortTitle}</div>
                   <div className="text-sm font-medium text-[#F8FAFF] mt-0.5 line-clamp-2">
@@ -367,10 +323,9 @@ export const LearnView: React.FC = () => {
                 </div>
                 <Link
                   to={`/app/learn/${resumeLesson.track.slug}/${resumeLesson.lesson.slug}`}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#243B6B] bg-[#152443] hover:bg-[#1C3159] text-xs font-medium text-[#F3F6FF] inline-flex items-center justify-center gap-1.5 transition-colors"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#243B6B] bg-[#152443] hover:bg-[#1C3159] text-xs font-medium text-[#F3F6FF] inline-flex items-center justify-center transition-colors"
                 >
-                  <span>Continue Lesson</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  Continue Lesson
                 </Link>
               </div>
             )}

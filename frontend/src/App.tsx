@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AppShell } from '@/components/ui/layout/AppShell';
 import { PublicLayout } from '@/components/ui/layout/PublicLayout';
 import { AuthLayout } from '@/components/ui/layout/AuthLayout';
@@ -26,8 +26,10 @@ import { SprintPlanView } from '@/routes/SprintPlanView';
 import { StudyPlanView } from '@/routes/StudyPlanView';
 import { RevisionView } from '@/routes/RevisionView';
 import { SheetsView } from '@/routes/SheetsView';
+import { SheetDetailView } from '@/features/sheets/components/SheetDetailView';
 import { ChakrivaAiView } from '@/routes/ChakrivaAiView';
 import { ContestsView } from '@/routes/ContestsView';
+import { ContestDetailView } from '@/features/contests/components/ContestDetailView';
 import { ProgressView } from '@/routes/ProgressView';
 import { LearnView } from '@/routes/LearnView';
 import { TrackSyllabusView } from '@/features/learn/components/TrackSyllabusView';
@@ -39,6 +41,11 @@ import { AdminRoute } from '@/components/auth/AdminRoute';
 import { ProblemAuthoringView } from '@/routes/ProblemAuthoringView';
 import { AuraLandingView } from '@/routes/AuraLandingView';
 import { ChakrivaLandingView } from '@/routes/ChakrivaLandingView';
+
+const LegacySheetDetailRedirect: React.FC = () => {
+  const { sheetId } = useParams<{ sheetId: string }>();
+  return <Navigate to={sheetId ? `/app/sheets/${sheetId}` : '/app/sheets'} replace />;
+};
 
 export const App: React.FC = () => {
   return (
@@ -270,6 +277,14 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/sheets/:sheetId"
+            element={
+              <ProtectedRoute>
+                <LegacySheetDetailRedirect />
+              </ProtectedRoute>
+            }
+          />
 
           {/* =======================================================
               PRIMARY 9 AUTHENTICATED CHAKRIVA HUBS
@@ -366,6 +381,14 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/app/sheets/:sheetId"
+            element={
+              <ProtectedRoute>
+                <SheetDetailView />
+              </ProtectedRoute>
+            }
+          />
 
           {/* 6. CHAKRIVA: "Understand me." */}
           <Route
@@ -403,6 +426,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <ContestsView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/contests/:contestId"
+            element={
+              <ProtectedRoute>
+                <ContestDetailView />
               </ProtectedRoute>
             }
           />

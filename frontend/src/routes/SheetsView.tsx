@@ -1,131 +1,101 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/data/Card';
-import { Badge } from '@/components/ui/data/Badge';
-import { Button } from '@/components/ui/actions/Button';
-import { DifficultyBadge } from '@/components/learning/DifficultyBadge';
-import { FALLBACK_PROBLEMS } from '@/lib/curriculumData';
+import { useProblems } from '@/hooks/useProblems';
+import { useUserProgress } from '@/hooks/useUserProgress';
+import { cn } from '@/lib/utils';
 import {
-  ArrowRight,
-  Code2,
-} from 'lucide-react';
+  SHEET_CATEGORY_TABS,
+  SHEETS_CATALOG,
+  getSavedLastSheetId,
+  getSheetById,
+  resolveSheetCategoryQuery,
+  resolveSheetSummary,
+} from '@/features/sheets/data/sheetsCatalog';
+import type { SheetCategory } from '@/features/sheets/types/sheet';
 
-interface SheetMeta {
-  id: string;
-  category: 'chakriva' | 'company' | 'topic' | 'goal' | 'beginner';
-  title: string;
-  subtitle: string;
-  description: string;
-  problemCount: number;
-  difficultyFocus: string;
-  badge: string;
-  highlightedSlugs: string[];
-}
-
-const SHEETS_CATALOG: SheetMeta[] = [
-  {
-    id: 'chakriva-core-150',
-    category: 'chakriva',
-    title: 'Chakriva Core 150 Invariants',
-    subtitle: 'The Master Algorithmic Pathway',
-    description: '150 hand-curated problem patterns spanning arrays, invariant bounds, tree recursion, dynamic programming, and graphs.',
-    problemCount: 150,
-    difficultyFocus: '30% Easy • 55% Medium • 15% Hard',
-    badge: 'Flagship Track',
-    highlightedSlugs: ['two-sum', 'best-time-to-buy-and-sell-stock', '3sum', 'search-in-rotated-sorted-array'],
-  },
-  {
-    id: 'sde-foundations-75',
-    category: 'chakriva',
-    title: 'SDE High-Yield 75',
-    subtitle: 'High-Frequency Interview Classics',
-    description: 'Essential 75 patterns universally asked across top product engineering interviews and online assessments.',
-    problemCount: 75,
-    difficultyFocus: '40% Easy • 50% Medium • 10% Hard',
-    badge: 'High Yield',
-    highlightedSlugs: ['two-sum', 'valid-anagram', 'container-with-most-water', 'trapping-rain-water'],
-  },
-  {
-    id: 'company-google',
-    category: 'company',
-    title: 'Google SDE Readiness',
-    subtitle: 'Deep Algorithmic Rigor',
-    description: 'Focus on boundary conditions, invariants, monotonic structures, graph traversals, and dynamic programming.',
-    problemCount: 65,
-    difficultyFocus: '15% Easy • 60% Medium • 25% Hard',
-    badge: 'Tier-1 Target',
-    highlightedSlugs: ['search-in-rotated-sorted-array', 'trapping-rain-water', '3sum'],
-  },
-  {
-    id: 'company-amazon',
-    category: 'company',
-    title: 'Amazon Online Assessment & Rounds',
-    subtitle: 'High-Volume Systems & Patterns',
-    description: 'Top recurring problems from Amazon campus and off-campus assessments: BFS/DFS, Trees, and Sliding Window.',
-    problemCount: 50,
-    difficultyFocus: '35% Easy • 55% Medium • 10% Hard',
-    badge: 'Assessment Prep',
-    highlightedSlugs: ['best-time-to-buy-and-sell-stock', 'two-sum', 'container-with-most-water'],
-  },
-  {
-    id: 'topic-dp',
-    category: 'topic',
-    title: 'Dynamic Programming Invariants',
-    subtitle: 'Optimal Substructure & Overlapping Subproblems',
-    description: 'From 1D linear recurrence to 2D grid DP, knapsack variations, and state-compression bitmasks.',
-    problemCount: 45,
-    difficultyFocus: '10% Easy • 65% Medium • 25% Hard',
-    badge: 'Pattern Mastery',
-    highlightedSlugs: ['best-time-to-buy-and-sell-stock', 'trapping-rain-water'],
-  },
-  {
-    id: 'topic-binary-search',
-    category: 'topic',
-    title: 'Monotonic Search Spaces & Binary Search',
-    subtitle: 'Predicate Bisection Invariants',
-    description: 'Master binary search on values, rotated arrays, and finding lower/upper bounds without off-by-one errors.',
-    problemCount: 30,
-    difficultyFocus: '25% Easy • 60% Medium • 15% Hard',
-    badge: 'Mathematical Invariant',
-    highlightedSlugs: ['search-in-rotated-sorted-array'],
-  },
-  {
-    id: 'goal-30-day-sprint',
-    category: 'goal',
-    title: '30-Day Intensive Sprint',
-    subtitle: 'Time-Boxed Interview Ramp-Up',
-    description: 'Designed for candidates with upcoming interview loops within 4 weeks. Covers core algorithmic fundamentals daily.',
-    problemCount: 60,
-    difficultyFocus: '40% Easy • 50% Medium • 10% Hard',
-    badge: 'Accelerated',
-    highlightedSlugs: ['two-sum', '3sum', 'container-with-most-water'],
-  },
-  {
-    id: 'beginner-foundations',
-    category: 'beginner',
-    title: 'Algorithmic Zero-to-One',
-    subtitle: 'For Beginners & Core Engineering Transition',
-    description: 'Step-by-step introduction to computational complexity, dual pointers, basic hash maps, and recursion.',
-    problemCount: 40,
-    difficultyFocus: '75% Easy • 25% Medium • 0% Hard',
-    badge: 'Foundations',
-    highlightedSlugs: ['two-sum', 'valid-anagram', 'best-time-to-buy-and-sell-stock'],
-  },
-];
+const CATEGORY_LABEL_MAP: Record<SheetCategory, string> = {
+  chakriva: 'Flagship',
+  company: 'Company',
+  topic: 'Topic',
+  goal: 'Sprint',
+  beginner: 'Beginner',
+};
 
 export const SheetsView: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<
-    'all' | 'chakriva' | 'company' | 'topic' | 'goal' | 'beginner'
-  >('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeCategory = resolveSheetCategoryQuery(searchParams.get('category'));
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredSheets =
-    selectedCategory === 'all'
-      ? SHEETS_CATALOG
-      : SHEETS_CATALOG.filter((s) => s.category === selectedCategory);
+  const { problems, loading: problemsLoading, refetch } = useProblems();
+  const { progressMap, revisionMap } = useUserProgress();
 
-  const getProblem = (slug: string) =>
-    FALLBACK_PROBLEMS.find((p) => p.slug === slug);
+  const handleSelectCategory = (catId: 'all' | SheetCategory) => {
+    const next = new URLSearchParams(searchParams);
+    if (catId === 'all') {
+      next.delete('category');
+    } else {
+      next.set('category', catId);
+    }
+    setSearchParams(next, { replace: true });
+  };
+
+  const resolvedSheets = useMemo(
+    () =>
+      SHEETS_CATALOG.map((sheet) =>
+        resolveSheetSummary(sheet, problems, progressMap, revisionMap)
+      ),
+    [problems, progressMap, revisionMap]
+  );
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: resolvedSheets.length };
+    for (const s of resolvedSheets) {
+      counts[s.definition.category] = (counts[s.definition.category] || 0) + 1;
+    }
+    return counts;
+  }, [resolvedSheets]);
+
+  const filteredSheets = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return resolvedSheets.filter((entry) => {
+      const def = entry.definition;
+      if (activeCategory !== 'all' && def.category !== activeCategory) {
+        return false;
+      }
+      if (!q) return true;
+      const stepTitles = def.steps.map((s) => s.title).join(' ');
+      const haystack = `${def.title} ${def.subtitle} ${def.description} ${def.recommendedFor} ${stepTitles}`.toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [resolvedSheets, activeCategory, searchQuery]);
+
+  const globalSheetStats = useMemo(() => {
+    const uniqueProblemIds = new Set<string>();
+    const solvedIds = new Set<string>();
+    const starredIds = new Set<string>();
+
+    for (const sheet of resolvedSheets) {
+      for (const item of sheet.allProblems) {
+        uniqueProblemIds.add(item.problem.id);
+        if (item.status === 'solved') solvedIds.add(item.problem.id);
+        if (item.isBookmarked) starredIds.add(item.problem.id);
+      }
+    }
+
+    return {
+      totalSheets: resolvedSheets.length,
+      uniqueSolved: solvedIds.size,
+      uniqueTotal: uniqueProblemIds.size,
+      uniqueStarred: starredIds.size,
+    };
+  }, [resolvedSheets]);
+
+  const lastOpenedSheet = useMemo(() => {
+    const id = getSavedLastSheetId();
+    return getSheetById(id);
+  }, []);
 
   return (
     <DashboardLayout
@@ -134,145 +104,265 @@ export const SheetsView: React.FC = () => {
         { label: 'Sheets' },
       ]}
     >
-      <div className="space-y-6 max-w-7xl mx-auto text-left">
-        {/* Hub Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded">
-                Curated Discovery
-              </span>
-              <span className="text-xs font-mono text-neutral-400">
-                {SHEETS_CATALOG.length} Verified Master Sheets
-              </span>
+      <div className="max-w-7xl mx-auto space-y-6 text-left text-[#F3F6FF]">
+        {/* Top Workspace Header Card (Matches CodeSpace / Home / Roadmap Palette, Zero Icons) */}
+        <section className="rounded-2xl border border-[#181F30] bg-gradient-to-b from-[#0F1422] to-[#0B0E16] p-5 sm:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-lg sm:text-xl font-semibold text-[#F8FAFF] tracking-tight">
+                  Preparation Sheets
+                </h1>
+                <span className="text-[11px] font-mono text-[#7C8BA6] px-2.5 py-0.5 rounded-full bg-[#0B0E16] border border-[#1B2234] tabular-nums">
+                  {globalSheetStats.totalSheets} tracks
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-[#8E9BB3] max-w-2xl leading-relaxed">
+                Structured problem pathways organized by algorithmic invariants, company hiring patterns, and preparation sprints.
+              </p>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-sans">
-              Curated Preparation Sheets
-            </h1>
-            <p className="text-sm text-neutral-400 mt-1 max-w-2xl">
-              Targeted collections organized by mathematical invariants, hiring patterns, and time horizons. Pick a sheet to begin focused preparation.
-            </p>
+
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              {lastOpenedSheet && (
+                <Link
+                  to={`/app/sheets/${lastOpenedSheet.id}`}
+                  title={lastOpenedSheet.title}
+                  className="inline-flex items-center px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-[#3B82F6] text-xs font-semibold text-[#F8FAFF] transition-colors max-w-[250px]"
+                >
+                  <span className="truncate">Resume: {lastOpenedSheet.title}</span>
+                </Link>
+              )}
+
+              <Link
+                to="/app/practice"
+                className="inline-flex items-center px-3.5 py-2 rounded-xl border border-[#212B42] bg-[#0B0E16] hover:bg-[#141A29] hover:border-[#3B82F6]/40 text-xs font-medium text-[#D5E1F7] transition-colors"
+              >
+                Browse All Problems
+              </Link>
+            </div>
           </div>
 
-          <Link to="/problems">
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<Code2 className="w-4 h-4 text-neutral-400" />}
-              className="text-xs"
+          {/* Compact Telemetry Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-5 mt-5 border-t border-[#171D2D]">
+            <div className="rounded-xl bg-[#0B0E16] border border-[#171D2D] px-4 py-3 flex items-center justify-between">
+              <span className="text-xs text-[#7C8BA6]">Curated Pathways</span>
+              <span className="text-sm font-mono font-semibold text-[#F8FAFF] tabular-nums">
+                {globalSheetStats.totalSheets}
+              </span>
+            </div>
+            <div className="rounded-xl bg-[#0B0E16] border border-[#171D2D] px-4 py-3 flex items-center justify-between">
+              <span className="text-xs text-[#7C8BA6]">Sheet Problems Solved</span>
+              <span className="text-sm font-mono font-semibold text-[#22D3EE] tabular-nums">
+                {globalSheetStats.uniqueSolved} / {globalSheetStats.uniqueTotal}
+              </span>
+            </div>
+            <div className="rounded-xl bg-[#0B0E16] border border-[#171D2D] px-4 py-3 flex items-center justify-between">
+              <span className="text-xs text-[#7C8BA6]">Revision Bookmarks</span>
+              <span className="text-sm font-mono font-semibold text-[#93C5FD] tabular-nums">
+                {globalSheetStats.uniqueStarred}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Category Tabs & Search Rail */}
+        <section className="rounded-2xl border border-[#181F30] bg-[#0F131D] p-3.5 sm:px-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div
+              role="tablist"
+              aria-label="Sheet Categories"
+              className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0"
             >
-              Browse All Problems
-            </Button>
-          </Link>
-        </div>
+              {SHEET_CATEGORY_TABS.map((tab) => {
+                const isActive = activeCategory === tab.id;
+                const count = categoryCounts[tab.id] || 0;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => handleSelectCategory(tab.id)}
+                    className={cn(
+                      'relative px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer shrink-0 flex items-center gap-1.5',
+                      isActive
+                        ? 'text-[#F8FAFF]'
+                        : 'text-[#7C8BA6] hover:text-[#D5E1F7]'
+                    )}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="sheetsCategoryPill"
+                        transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                        className="absolute inset-0 rounded-xl bg-[#152443] border border-[#3B82F6]/35"
+                      />
+                    )}
+                    <span className="relative z-10">{tab.label}</span>
+                    <span className="relative z-10 font-mono text-[10px] text-[#94A3B8] tabular-nums">
+                      ({count})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Category Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 no-scrollbar border-b border-white/[0.06]">
-          {[
-            { id: 'all', label: 'All Sheets', count: SHEETS_CATALOG.length },
-            { id: 'chakriva', label: 'Chakriva Master', count: 2 },
-            { id: 'company', label: 'Company Targeted', count: 2 },
-            { id: 'topic', label: 'Topic Invariants', count: 2 },
-            { id: 'goal', label: 'Goal Sprints', count: 1 },
-            { id: 'beginner', label: 'Beginner 0→1', count: 1 },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedCategory(tab.id as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 shrink-0 ${
-                selectedCategory === tab.id
-                  ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
-                  : 'text-neutral-400 hover:text-white hover:bg-white/[0.03] border border-transparent'
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span className="font-mono text-[10px] text-neutral-400">({tab.count})</span>
-            </button>
-          ))}
-        </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="relative w-full sm:w-72">
+                <input
+                  id="sheets-catalog-search"
+                  name="sheets-catalog-search"
+                  type="text"
+                  aria-label="Search preparation sheets"
+                  placeholder="Search sheets, companies, topics..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#0B0E16] border border-[#1B2234] focus:border-[#3B82F6]/50 rounded-xl px-3.5 py-2 text-xs text-[#E2E8F5] placeholder-[#5B6882] focus:outline-none transition-colors"
+                />
+              </div>
 
-        {/* Sheets Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {filteredSheets.map((sheet) => (
-            <Card
-              key={sheet.id}
-              className="hover:border-white/[0.18] transition-all bg-[#0F121A] flex flex-col justify-between"
-            >
-              <CardHeader className="space-y-2 pb-3">
-                <div className="flex items-center justify-between">
-                  <Badge variant="primary" className="text-[10px] font-mono">
-                    {sheet.badge}
-                  </Badge>
-                  <span className="text-xs font-mono text-neutral-400">
-                    {sheet.problemCount} Problems
-                  </span>
-                </div>
-                <div>
-                  <CardTitle className="text-lg text-white font-bold">{sheet.title}</CardTitle>
-                  <p className="text-xs font-mono text-blue-400/90 mt-0.5">{sheet.subtitle}</p>
-                </div>
-                <CardDescription className="text-xs text-neutral-400 leading-relaxed">
-                  {sheet.description}
-                </CardDescription>
-              </CardHeader>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="px-3 py-2 rounded-xl bg-[#0B0E16] border border-[#181F30] hover:border-[#29344E] text-[11px] font-medium text-[#7C8BA6] hover:text-[#E2E8F5] transition-colors cursor-pointer shrink-0"
+              >
+                {problemsLoading ? 'Syncing...' : 'Sync'}
+              </button>
+            </div>
+          </div>
+        </section>
 
-              <CardContent className="space-y-4 pt-0">
-                {/* Difficulty distribution indicator */}
-                <div className="px-3 py-1.5 rounded-lg bg-black/40 border border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-neutral-300">
-                  <span className="text-neutral-400">Difficulty Focus:</span>
-                  <span>{sheet.difficultyFocus}</span>
-                </div>
+        {/* Curated Sheets Grid */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${activeCategory}-${searchQuery ? 'filtered' : 'all'}`}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+          >
+            {filteredSheets.length === 0 ? (
+              <div className="rounded-2xl border border-[#181F30] bg-[#0F131D] p-12 text-center space-y-3">
+                <p className="text-sm font-medium text-[#E2E8F5]">
+                  No preparation sheets matched your search.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    handleSelectCategory('all');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#152443] border border-[#3B82F6]/35 text-xs font-medium text-[#93C5FD] hover:text-white transition-colors cursor-pointer"
+                >
+                  Show All Sheets
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {filteredSheets.map((summary) => {
+                  const def = summary.definition;
+                  const total = summary.totalCount;
+                  const easyTotal = summary.difficultyCounts.easy.total;
+                  const medTotal = summary.difficultyCounts.medium.total;
+                  const hardTotal = summary.difficultyCounts.hard.total;
 
-                {/* Sample Problems preview */}
-                <div className="space-y-2">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block">
-                    Core Invariant Previews:
-                  </span>
-                  <div className="space-y-1.5">
-                    {sheet.highlightedSlugs.map((slug) => {
-                      const prob = getProblem(slug);
-                      if (!prob) return null;
-                      return (
-                        <Link
-                          key={slug}
-                          to={`/problems/${slug}`}
-                          className="flex items-center justify-between px-3 py-1.5 rounded bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.05] hover:border-blue-500/30 transition-all text-xs group"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-neutral-400 font-mono text-[10px]">
-                              {prob.verniq_id || 'PROB'}
-                            </span>
-                            <span className="text-neutral-200 group-hover:text-white truncate font-medium">
-                              {prob.title}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <DifficultyBadge difficulty={prob.difficulty} />
-                            <ArrowRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
+                  const easyPct = total > 0 ? (easyTotal / total) * 100 : 0;
+                  const medPct = total > 0 ? (medTotal / total) * 100 : 0;
+                  const hardPct = total > 0 ? (hardTotal / total) * 100 : 0;
 
-                {/* Action CTA */}
-                <div className="pt-2">
-                  <Link to="/problems">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="w-full text-xs font-medium justify-center"
-                      rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+                  return (
+                    <Link
+                      key={def.id}
+                      to={`/app/sheets/${def.id}`}
+                      className="group rounded-2xl border border-[#181F30] bg-[#0F131D] hover:bg-[#131928] hover:border-[#29344E] p-5 sm:p-6 flex flex-col justify-between gap-5 transition-all duration-150"
                     >
-                      Start Practicing Sheet
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                      <div className="space-y-4">
+                        {/* Header Row (Zero Card Icons) */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h2 className="text-base sm:text-lg font-semibold text-[#F8FAFF] group-hover:text-[#93C5FD] transition-colors leading-snug">
+                              {def.title}
+                            </h2>
+                            <p className="text-xs font-mono text-[#7C8BA6] mt-0.5 truncate">
+                              {def.subtitle}
+                            </p>
+                          </div>
+
+                          <span className="text-[10px] font-mono font-medium px-2.5 py-1 rounded-full bg-[#0B0E16] border border-[#1B2234] text-[#94A3B8] shrink-0">
+                            {CATEGORY_LABEL_MAP[def.category]}
+                          </span>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-xs sm:text-sm text-[#8E9BB3] leading-relaxed line-clamp-2">
+                          {def.description}
+                        </p>
+
+                        {/* Step Focus Preview Pills */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {summary.steps.slice(0, 3).map((step) => (
+                            <span
+                              key={step.definition.id}
+                              className="text-[11px] font-mono px-2.5 py-0.5 rounded-lg bg-[#0B0E16] border border-[#171D2D] text-[#94A3B8]"
+                            >
+                              {step.definition.title.split(':')[0].split(',')[0]}
+                            </span>
+                          ))}
+                          {summary.steps.length > 3 && (
+                            <span className="text-[11px] font-mono px-2 py-0.5 rounded-lg bg-[#0B0E16] border border-[#171D2D] text-[#64748B]">
+                              +{summary.steps.length - 3} more
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Restrained Brand-Unified Distribution Bar */}
+                        <div className="rounded-xl bg-[#0B0E16] border border-[#171D2D] p-3 space-y-2">
+                          <div className="flex items-center justify-between text-[11px] font-mono tabular-nums text-[#8E9BB3]">
+                            <span>Difficulty Mix</span>
+                            <span>
+                              {easyTotal} Easy · {medTotal} Med · {hardTotal} Hard
+                            </span>
+                          </div>
+                          <div className="h-1 w-full rounded-full bg-[#151B2B] flex overflow-hidden">
+                            <div style={{ width: `${easyPct}%` }} className="bg-[#22D3EE]/55" />
+                            <div style={{ width: `${medPct}%` }} className="bg-[#3B82F6]/70" />
+                            <div style={{ width: `${hardPct}%` }} className="bg-[#93C5FD]" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Progress + Footer CTA */}
+                      <div className="space-y-3 pt-1 border-t border-[#171D2D]">
+                        <div className="flex items-center justify-between text-xs pt-2">
+                          <span className="text-[#8E9BB3]">Progress</span>
+                          <span className="font-mono font-semibold text-[#F8FAFF] tabular-nums">
+                            {summary.solvedCount} / {total}{' '}
+                            <span className="text-[#22D3EE]">({summary.completionPercent}%)</span>
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-[#0B0E16] overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#22D3EE] transition-all duration-300"
+                            style={{ width: `${summary.completionPercent}%` }}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-[11px] font-mono text-[#7C8BA6] tabular-nums">
+                            {summary.steps.length} Steps · {def.estHours}
+                          </span>
+
+                          <span className="px-3 py-1.5 rounded-xl bg-[#152443] border border-[#243B6B] group-hover:bg-[#2563EB] group-hover:border-[#3B82F6] text-xs font-medium text-[#93C5FD] group-hover:text-white transition-colors">
+                            Open Sheet
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </DashboardLayout>
   );

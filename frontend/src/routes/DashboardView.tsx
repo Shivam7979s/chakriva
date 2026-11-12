@@ -523,7 +523,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
         iconType: 'crown' as const,
       },
       {
-        id: 'sde-high-yield-75',
+        id: 'sde-foundations-75',
         title: 'SDE High-Yield 75',
         description: 'Blind 75 essential algorithmic problems',
         total: 75,
@@ -531,7 +531,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
         iconType: 'flame' as const,
       },
       {
-        id: 'google-sde-readiness',
+        id: 'company-google',
         title: 'Google SDE Readiness',
         description: 'Boundary invariants & graph DP rigor',
         total: 65,
@@ -1135,7 +1135,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                     {curatedSheets.map((sheet) => (
                       <Link
                         key={sheet.id}
-                        to="/app/sheets"
+                        to={`/app/sheets/${sheet.id}`}
                         className="group flex items-center justify-between p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 hover:bg-[#131A2B] hover:border-white/10 transition-all"
                       >
                         <div className="min-w-0 space-y-0.5">
@@ -1457,7 +1457,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                     {curatedSheets.map((sheet) => (
                       <Link
                         key={sheet.id}
-                        to="/app/sheets"
+                        to={`/app/sheets/${sheet.id}`}
                         className="group flex items-center justify-between p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 hover:bg-[#131A2B] hover:border-white/10 transition-all"
                       >
                         <div className="min-w-0 space-y-0.5">

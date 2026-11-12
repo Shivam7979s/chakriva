@@ -1,25 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  ArrowLeft,
-  ChevronDown,
-  ChevronRight,
-  CheckCircle2,
-  Circle,
-  Search,
-  Shuffle,
-  ChevronsUpDown,
-  BookOpen,
-  Code2,
-  Bookmark,
-  FileText,
-  Play,
-  Compass,
-  ShieldCheck,
-  Clock,
-  HelpCircle,
-} from 'lucide-react';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
 import {
   LEARN_TRACKS,
@@ -30,7 +11,6 @@ import {
   formatMinutesLabel,
 } from '../data/learnCatalog';
 import { learnProgressService } from '../services/learnProgressService';
-import { TrackEmblem } from './TrackEmblem';
 import { CANONICAL_CATALOG_PROBLEMS } from '@/features/roadmap/utils/adaptiveEngine';
 import type { LearnProgressState } from '../types/learn';
 import { cn } from '@/lib/utils';
@@ -50,7 +30,6 @@ export const TrackSyllabusView: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'bookmarked'>('all');
   const [showDifficulty, setShowDifficulty] = useState(true);
 
-  // URL-persisted expanded module IDs (?open=...) — defaults to first 2 modules open
   const openParam = searchParams.get('open');
   const expandedModuleIds = useMemo(() => {
     if (openParam === 'none') return new Set<string>();
@@ -89,32 +68,46 @@ export const TrackSyllabusView: React.FC = () => {
   const handlePickRandom = () => {
     const pending = track.lessons.filter((l) => !progress.completedLessonIds[l.id]);
     const pool = pending.length > 0 ? pending : track.lessons;
-    const picked = pool[Math.floor(Math.random() * pool.length)];
-    if (picked) {
-      navigate(`/app/learn/${track.slug}/${picked.slug}`);
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    if (pick) {
+      navigate(`/app/learn/${track.slug}/${pick.slug}`);
     }
   };
 
-  const stats = learnProgressService.getTrackCompletion(track, progress);
-  const firstPendingLesson =
-    track.lessons.find((l) => !progress.completedLessonIds[l.id]) || track.lessons[0];
+  const stats = useMemo(
+    () => learnProgressService.getTrackCompletion(track, progress),
+    [track, progress]
+  );
 
-  const quizCount = track.lessons.filter((l) => Boolean(l.microCheck)).length;
-  const interactiveCount = track.lessons.filter((l) => Boolean(l.interactiveTrace)).length;
-
-  // Difficulty breakdown
   const difficultyBreakdown = useMemo(() => {
     const counts = {
       foundation: { total: 0, done: 0 },
       intermediate: { total: 0, done: 0 },
       advanced: { total: 0, done: 0 },
     };
-    for (const l of track.lessons) {
-      counts[l.difficulty].total += 1;
-      if (progress.completedLessonIds[l.id]) counts[l.difficulty].done += 1;
+    for (const lesson of track.lessons) {
+      counts[lesson.difficulty].total += 1;
+      if (progress.completedLessonIds[lesson.id]) {
+        counts[lesson.difficulty].done += 1;
+      }
     }
     return counts;
-  }, [track.lessons, progress.completedLessonIds]);
+  }, [track, progress]);
+
+  const quizCount = useMemo(
+    () => track.lessons.filter((l) => Boolean(l.microCheck)).length,
+    [track]
+  );
+
+  const interactiveCount = useMemo(
+    () => track.lessons.filter((l) => Boolean(l.interactiveTrace)).length,
+    [track]
+  );
+
+  const firstPendingLesson = useMemo(
+    () => track.lessons.find((l) => !progress.completedLessonIds[l.id]) || track.lessons[0],
+    [track, progress]
+  );
 
   const problemBySlug = useMemo(() => {
     const map = new Map<string, (typeof CANONICAL_CATALOG_PROBLEMS)[number]>();
@@ -126,16 +119,19 @@ export const TrackSyllabusView: React.FC = () => {
     const q = search.trim().toLowerCase();
     return modules
       .map((mod) => {
-        const filteredLessons = mod.lessons.filter((l) => {
-          const isDone = Boolean(progress.completedLessonIds[l.id]);
-          const isSaved = Boolean(progress.bookmarkedLessonIds[l.id]);
+        const lessons = mod.lessons.filter((lesson) => {
+          const isDone = Boolean(progress.completedLessonIds[lesson.id]);
+          const isSaved = Boolean(progress.bookmarkedLessonIds[lesson.id]);
           if (statusFilter === 'pending' && isDone) return false;
           if (statusFilter === 'completed' && !isDone) return false;
           if (statusFilter === 'bookmarked' && !isSaved) return false;
-          if (!q) return true;
-          return `${l.title} ${l.summary} ${l.keyInvariant}`.toLowerCase().includes(q);
+          if (q) {
+            const hay = `${lesson.title} ${lesson.summary} ${lesson.moduleTitle}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
         });
-        return { ...mod, lessons: filteredLessons };
+        return { ...mod, lessons };
       })
       .filter((mod) => mod.lessons.length > 0);
   }, [modules, search, statusFilter, progress]);
@@ -151,80 +147,69 @@ export const TrackSyllabusView: React.FC = () => {
       ]}
     >
       <div className="max-w-6xl mx-auto space-y-6 text-left text-[#F3F6FF]">
-        {/* Top Breadcrumb Back Link + Header */}
+        {/* Top Breadcrumb Back Link + Header (Zero Card Icons) */}
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link
               to={categoryBackUrl}
-              className="inline-flex items-center gap-1.5 text-xs text-[#8592A8] hover:text-[#F3F6FF] transition-colors"
+              className="inline-flex items-center text-xs text-[#8592A8] hover:text-[#F3F6FF] transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>
-                Prep Hub / {LEARN_CATEGORY_LABELS[track.category]} /{' '}
-                <strong className="text-[#F3F6FF] font-medium">{track.shortTitle}</strong>
-              </span>
+              Prep Hub / {LEARN_CATEGORY_LABELS[track.category]} /{' '}
+              <strong className="text-[#F3F6FF] font-medium ml-1">{track.shortTitle}</strong>
             </Link>
 
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-[#152443] text-[#60A5FA]">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-[#152443] border border-[#243B6B] text-[#60A5FA]">
               {track.levelBadge}
             </span>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-            <div className="flex items-start gap-4 min-w-0">
-              <TrackEmblem iconKey={track.iconKey} size="lg" />
-              <div className="space-y-1.5 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#F8FAFF]">
-                  {track.title}
-                </h1>
-                <p className="text-xs sm:text-sm text-[#8592A8] max-w-2xl leading-relaxed">
-                  {track.subtitle}
-                </p>
-                <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-mono text-[#7C8BA6]">
-                  <span>{modules.length} Modules</span>
-                  <span>·</span>
-                  <span>{track.lessons.length} Topics</span>
-                  {quizCount > 0 && (
-                    <>
-                      <span>·</span>
-                      <span>{quizCount} Checks</span>
-                    </>
-                  )}
-                  {interactiveCount > 0 && (
-                    <>
-                      <span>·</span>
-                      <span className="text-[#60A5FA]">{interactiveCount} Interactive Traces</span>
-                    </>
-                  )}
-                  <span>·</span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatMinutesLabel(track.totalMinutes)}
-                  </span>
-                </div>
+            <div className="space-y-1.5 min-w-0">
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#F8FAFF]">
+                {track.title}
+              </h1>
+              <p className="text-xs sm:text-sm text-[#8592A8] max-w-2xl leading-relaxed">
+                {track.subtitle}
+              </p>
+              <div className="flex flex-wrap items-center gap-2.5 pt-1 text-[11px] font-mono text-[#7C8BA6]">
+                <span>{modules.length} Modules</span>
+                <span>·</span>
+                <span>{track.lessons.length} Topics</span>
+                {quizCount > 0 && (
+                  <>
+                    <span>·</span>
+                    <span>{quizCount} Checks</span>
+                  </>
+                )}
+                {interactiveCount > 0 && (
+                  <>
+                    <span>·</span>
+                    <span className="text-[#60A5FA]">{interactiveCount} Interactive Traces</span>
+                  </>
+                )}
+                <span>·</span>
+                <span>{formatMinutesLabel(track.totalMinutes)}</span>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <Link
                 to={`/app/learn/${track.slug}/${firstPendingLesson.slug}`}
-                className="px-4 py-2 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold inline-flex items-center gap-2 transition-colors shadow-[0_0_20px_rgba(59,130,246,0.22)]"
+                className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-[#3B82F6] text-white text-xs font-semibold transition-colors"
               >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>Start Focus Mode</span>
+                Start Focus Mode
               </Link>
               <Link
                 to="/app/roadmap"
-                className="px-3.5 py-2 rounded-xl border border-[#1B2234] bg-[#0F131D] hover:border-[#2B3754] text-xs font-medium text-[#C3CEE0] hover:text-white inline-flex items-center gap-1.5 transition-colors"
+                className="px-3.5 py-2 rounded-xl border border-[#1B2234] bg-[#0F131D] hover:border-[#2B3754] text-xs font-medium text-[#C3CEE0] hover:text-white transition-colors"
               >
-                <Compass className="w-3.5 h-3.5 text-[#00B8A3]" />
-                <span>Plan in Roadmap</span>
+                Plan in Roadmap
               </Link>
             </div>
           </div>
         </div>
 
-        {/* Overall Progress + Difficulty Breakdown Strip (Planly/Prep-Hub style, zero white lines) */}
+        {/* Overall Progress Card */}
         <div className="rounded-2xl border border-[#192033] bg-[#0F131D] p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-0.5">
@@ -244,31 +229,18 @@ export const TrackSyllabusView: React.FC = () => {
                 return (
                   <span
                     key={tier}
-                    className="px-2.5 py-1 rounded-lg border border-[#171D2D] bg-[#0B0E16] text-[11px] capitalize"
+                    className="px-2.5 py-1 rounded-lg border border-[#171D2D] bg-[#0B0E16] text-[11px] capitalize text-[#CBD5E1]"
                   >
-                    <span
-                      className={
-                        tier === 'foundation'
-                          ? 'text-[#34D399]'
-                          : tier === 'intermediate'
-                          ? 'text-[#FBBF24]'
-                          : 'text-[#F87171]'
-                      }
-                    >
-                      {tier}
-                    </span>{' '}
-                    <span className="text-[#8592A8]">
-                      {d.done}/{d.total}
-                    </span>
+                    {tier} <span className="text-[#8592A8]">{d.done}/{d.total}</span>
                   </span>
                 );
               })}
             </div>
           </div>
 
-          <div className="w-full h-2 rounded-full bg-[#141A29] overflow-hidden">
+          <div className="w-full h-1.5 rounded-full bg-[#141A29] overflow-hidden">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-[#3B82F6] to-[#00B8A3]"
+              className="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#22D3EE]"
               initial={false}
               animate={{ width: `${stats.percent}%` }}
               transition={{ duration: 0.35 }}
@@ -279,16 +251,16 @@ export const TrackSyllabusView: React.FC = () => {
         {/* Syllabus Filter & Control Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-[#6D7B94] absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search sheet topics..."
-                className="pl-8 pr-3 py-1.5 rounded-xl border border-[#192033] bg-[#0F131D] text-xs text-[#F3F6FF] placeholder:text-[#5B6882] focus:outline-none focus:border-[#3B82F6] w-52 sm:w-64"
-              />
-            </div>
+            <input
+              id="learn-syllabus-search"
+              name="learn-syllabus-search"
+              type="text"
+              aria-label="Search sheet topics"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search topics..."
+              className="px-3.5 py-1.5 rounded-xl border border-[#192033] bg-[#0F131D] text-xs text-[#F3F6FF] placeholder:text-[#5B6882] focus:outline-none focus:border-[#3B82F6] w-52 sm:w-64"
+            />
 
             <div className="flex items-center gap-1 p-1 rounded-xl border border-[#181F30] bg-[#0B0E16]">
               {(
@@ -321,7 +293,7 @@ export const TrackSyllabusView: React.FC = () => {
               type="button"
               onClick={() => setShowDifficulty((v) => !v)}
               className={cn(
-                'px-2.5 py-1.5 rounded-xl border text-[11px] transition-colors cursor-pointer',
+                'px-3 py-1.5 rounded-xl border text-[11px] font-medium transition-colors cursor-pointer',
                 showDifficulty
                   ? 'border-[#243B6B] bg-[#152443] text-[#93C5FD]'
                   : 'border-[#192033] bg-[#0F131D] text-[#7C8BA6]'
@@ -332,24 +304,21 @@ export const TrackSyllabusView: React.FC = () => {
             <button
               type="button"
               onClick={handlePickRandom}
-              className="px-2.5 py-1.5 rounded-xl border border-[#192033] bg-[#0F131D] hover:border-[#2B3754] text-[11px] text-[#A8B4CA] hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Pick random topic"
+              className="px-3 py-1.5 rounded-xl border border-[#192033] bg-[#0F131D] hover:border-[#2B3754] text-[11px] font-medium text-[#A8B4CA] hover:text-white transition-colors cursor-pointer"
             >
-              <Shuffle className="w-3.5 h-3.5 text-[#3B82F6]" />
-              <span>Pick Random</span>
+              Pick Random
             </button>
             <button
               type="button"
               onClick={handleToggleAll}
-              className="px-2.5 py-1.5 rounded-xl border border-[#192033] bg-[#0F131D] hover:border-[#2B3754] text-[11px] text-[#A8B4CA] hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-[#192033] bg-[#0F131D] hover:border-[#2B3754] text-[11px] font-medium text-[#A8B4CA] hover:text-white transition-colors cursor-pointer"
             >
-              <ChevronsUpDown className="w-3.5 h-3.5" />
-              <span>{expandedModuleIds.size === modules.length ? 'Collapse All' : 'Expand All'}</span>
+              {expandedModuleIds.size === modules.length ? 'Collapse All' : 'Expand All'}
             </button>
           </div>
         </div>
 
-        {/* Hierarchical Module Accordions */}
+        {/* Hierarchical Module Accordions (Zero Card Icons) */}
         <div className="space-y-3">
           {filteredModules.map((mod) => {
             const isOpen = expandedModuleIds.has(mod.id);
@@ -363,17 +332,14 @@ export const TrackSyllabusView: React.FC = () => {
               >
                 <button
                   type="button"
+                  aria-expanded={isOpen}
                   onClick={() => toggleModule(mod.id)}
                   className="w-full px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-[#131928] transition-colors cursor-pointer text-left"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <motion.div
-                      animate={{ rotate: isOpen ? 180 : 0 }}
-                      transition={{ duration: 0.18 }}
-                      className="text-[#7C8BA6] shrink-0"
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                    </motion.div>
+                    <span className="text-xs font-mono text-[#7C8BA6] w-4 text-center shrink-0">
+                      {isOpen ? '−' : '+'}
+                    </span>
                     <span className="text-sm font-semibold text-[#F8FAFF] truncate">
                       {mod.title}
                     </span>
@@ -385,7 +351,7 @@ export const TrackSyllabusView: React.FC = () => {
                     </span>
                     <div className="hidden sm:block w-20 h-1.5 rounded-full bg-[#141A29] overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#3B82F6] to-[#00B8A3]"
+                        className="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#22D3EE]"
                         style={{ width: `${modPct}%` }}
                       />
                     </div>
@@ -424,15 +390,14 @@ export const TrackSyllabusView: React.FC = () => {
                                   onClick={() =>
                                     setProgress(learnProgressService.toggleLessonCompleted(lesson.id))
                                   }
-                                  className="mt-0.5 sm:mt-0 shrink-0 cursor-pointer text-[#5B6882] hover:text-[#00B8A3] transition-colors"
-                                  aria-label={`Mark ${lesson.title} complete`}
-                                >
-                                  {isDone ? (
-                                    <CheckCircle2 className="w-4 h-4 text-[#00B8A3]" />
-                                  ) : (
-                                    <Circle className="w-4 h-4" />
+                                  className={cn(
+                                    'mt-1 sm:mt-0 w-3.5 h-3.5 rounded-full border shrink-0 cursor-pointer transition-colors',
+                                    isDone
+                                      ? 'bg-[#00B8A3] border-[#00B8A3]'
+                                      : 'border-[#5B6882] hover:border-[#22D3EE]'
                                   )}
-                                </button>
+                                  aria-label={`Mark ${lesson.title} complete`}
+                                />
 
                                 <div className="min-w-0">
                                   <div className="flex flex-wrap items-center gap-2">
@@ -447,23 +412,13 @@ export const TrackSyllabusView: React.FC = () => {
                                     </Link>
 
                                     {showDifficulty && (
-                                      <span
-                                        className={cn(
-                                          'px-2 py-0.5 rounded text-[10px] font-mono capitalize',
-                                          lesson.difficulty === 'foundation'
-                                            ? 'bg-[#0E2822] text-[#34D399]'
-                                            : lesson.difficulty === 'intermediate'
-                                            ? 'bg-[#291E0B] text-[#FBBF24]'
-                                            : 'bg-[#2B1419] text-[#F87171]'
-                                        )}
-                                      >
+                                      <span className="px-2 py-0.5 rounded bg-[#0B0E16] border border-[#1B2234] text-[10px] font-mono capitalize text-[#94A3B8]">
                                         {lesson.difficulty}
                                       </span>
                                     )}
 
                                     {lesson.microCheck && (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#1B1633] text-[#C4B5FD] text-[10px] font-mono">
-                                        <HelpCircle className="w-2.5 h-2.5" />
+                                      <span className="px-1.5 py-0.5 rounded bg-[#152443] text-[#93C5FD] text-[10px] font-mono">
                                         Quiz
                                       </span>
                                     )}
@@ -483,35 +438,28 @@ export const TrackSyllabusView: React.FC = () => {
                                 </div>
                               </div>
 
-                              {/* Multi-Modal Row Action Strip (Prep Hub inspired) */}
                               <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
                                 <Link
                                   to={`/app/learn/${track.slug}/${lesson.slug}`}
-                                  className="px-2.5 py-1.5 rounded-lg border border-[#243B6B] bg-[#152443] hover:bg-[#1C3159] text-[11px] font-medium text-[#E2E8F5] inline-flex items-center gap-1 transition-colors"
-                                  title="Open Lesson in Focus Mode"
+                                  className="px-2.5 py-1.5 rounded-lg border border-[#243B6B] bg-[#152443] hover:bg-[#1C3159] text-[11px] font-medium text-[#E2E8F5] transition-colors"
                                 >
-                                  <BookOpen className="w-3.5 h-3.5 text-[#60A5FA]" />
-                                  <span>Editorial</span>
+                                  Editorial
                                 </Link>
 
                                 {linkedProblem && (
                                   <Link
                                     to={`/app/practice/${linkedProblem.slug}`}
-                                    className="px-2.5 py-1.5 rounded-lg border border-[#193A38] bg-[#0D2120] hover:bg-[#12302E] text-[11px] font-medium text-[#5EEAD4] inline-flex items-center gap-1 transition-colors"
-                                    title={`Solve ${linkedProblem.verniqProblemId}`}
+                                    className="px-2.5 py-1.5 rounded-lg border border-[#22D3EE]/30 bg-[#0C2629] hover:bg-[#11353A] text-[11px] font-medium text-[#22D3EE] transition-colors"
                                   >
-                                    <Code2 className="w-3.5 h-3.5" />
-                                    <span>Solve</span>
-                                    <ChevronRight className="w-3 h-3" />
+                                    Solve
                                   </Link>
                                 )}
 
                                 <Link
                                   to="/app/notespace"
-                                  className="p-1.5 rounded-lg border border-[#181F30] bg-[#0B0E16] hover:border-[#2B3754] text-[#7C8BA6] hover:text-white transition-colors"
-                                  title="Open NoteSpace"
+                                  className="px-2.5 py-1.5 rounded-lg border border-[#181F30] bg-[#0B0E16] hover:border-[#2B3754] text-[11px] font-medium text-[#7C8BA6] hover:text-white transition-colors"
                                 >
-                                  <FileText className="w-3.5 h-3.5" />
+                                  Notes
                                 </Link>
 
                                 <button
@@ -520,14 +468,13 @@ export const TrackSyllabusView: React.FC = () => {
                                     setProgress(learnProgressService.toggleBookmark(lesson.id))
                                   }
                                   className={cn(
-                                    'p-1.5 rounded-lg border transition-colors cursor-pointer',
+                                    'px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition-colors cursor-pointer',
                                     isSaved
-                                      ? 'border-[#F59E0B]/40 bg-[#291E0B] text-[#FBBF24]'
+                                      ? 'border-[#3B82F6]/40 bg-[#152443] text-[#93C5FD]'
                                       : 'border-[#181F30] bg-[#0B0E16] text-[#7C8BA6] hover:text-white hover:border-[#2B3754]'
                                   )}
-                                  title="Bookmark topic"
                                 >
-                                  <Bookmark className="w-3.5 h-3.5" />
+                                  {isSaved ? 'Saved' : 'Save'}
                                 </button>
                               </div>
                             </div>
@@ -544,7 +491,6 @@ export const TrackSyllabusView: React.FC = () => {
 
         {filteredModules.length === 0 && (
           <div className="py-10 text-center rounded-2xl border border-[#192033] bg-[#0F131D] space-y-2">
-            <ShieldCheck className="w-7 h-7 text-[#6D7B94] mx-auto" />
             <p className="text-sm text-[#8592A8]">No topics match your current filter.</p>
             <button
               type="button"
@@ -563,3 +509,4 @@ export const TrackSyllabusView: React.FC = () => {
   );
 };
 
+export default TrackSyllabusView;
