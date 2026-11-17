@@ -1,29 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
-import { DifficultyBadge } from '@/components/learning/DifficultyBadge';
-import { Button } from '@/components/ui/actions/Button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { FALLBACK_PROBLEMS } from '@/lib/curriculumData';
+import { ProgressNavigationTabs } from '@/features/progress/components/ProgressNavigationTabs';
 import type { DifficultyLevel } from '@/types';
-import {
-  Brain,
-  Repeat,
-  Sparkles,
-  CheckCircle2,
-  Clock,
-  Code2,
-  ExternalLink,
-  ChevronLeft,
-  ChevronRight,
-  RefreshCw,
-  Lightbulb,
-  ShieldCheck,
-  RotateCcw,
-  BookOpen,
-  Award,
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Algorithmic Invariant Knowledge Base
@@ -151,36 +133,31 @@ export const RevisionView: React.FC = () => {
         .order('next_review_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching revision queue:', error);
+        console.warn('Error fetching revision queue:', error);
         setRevisionQueue([]);
       } else if (data) {
-        const mapped: RevisionItem[] = data.map((item: any) => {
-          const matchedFallback = FALLBACK_PROBLEMS.find((p) => p.id === item.problem_id);
-          const prob = item.problems || matchedFallback;
-          return {
-            id: item.id,
-            user_id: item.user_id,
-            problem_id: item.problem_id,
-            interval_days: item.interval_days || 1,
-            next_review_at: item.next_review_at,
-            is_reviewed: Boolean(item.is_reviewed),
-            problem: prob
-              ? {
-                  id: prob.id,
-                  title: prob.title,
-                  slug: prob.slug,
-                  difficulty: prob.difficulty,
-                  description_markdown: prob.description_markdown,
-                  constraints_markdown: prob.constraints_markdown,
-                  tags: matchedFallback?.tags || ['Algorithms', 'DSA'],
-                }
-              : undefined,
-          };
-        });
+        const mapped: RevisionItem[] = data.map((row: any) => ({
+          id: row.id,
+          user_id: row.user_id,
+          problem_id: row.problem_id,
+          interval_days: row.interval_days || 1,
+          next_review_at: row.next_review_at,
+          is_reviewed: row.is_reviewed || false,
+          problem: row.problems
+            ? {
+                id: row.problems.id,
+                title: row.problems.title,
+                slug: row.problems.slug,
+                difficulty: row.problems.difficulty || 'medium',
+                description_markdown: row.problems.description_markdown,
+                constraints_markdown: row.problems.constraints_markdown,
+              }
+            : undefined,
+        }));
         setRevisionQueue(mapped);
       }
     } catch (err) {
-      console.error('Failed to load revision queue:', err);
+      console.warn('Failed to load revision queue:', err);
     } finally {
       setLoading(false);
     }
@@ -190,129 +167,101 @@ export const RevisionView: React.FC = () => {
     fetchRevisionQueue();
   }, [fetchRevisionQueue]);
 
-  // Current timestamp for due calculation
-  const now = useMemo(() => new Date(), []);
-  const todayEnd = useMemo(() => {
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-    return end;
-  }, []);
-
-  // Filter cards due today (unreviewed & scheduled on or before today)
+  // Filter due cards (due on or before now)
   const dueCards = useMemo(() => {
+    const now = new Date();
     return revisionQueue.filter((item) => {
-      if (item.is_reviewed) return false;
-      const reviewDate = new Date(item.next_review_at);
-      return reviewDate <= todayEnd;
+      if (!item.next_review_at) return true;
+      const dueDate = new Date(item.next_review_at);
+      return dueDate <= now && !item.is_reviewed;
     });
-  }, [revisionQueue, todayEnd]);
-
-  // Metric: Reviewed Today
-  const reviewedTodayCount = useMemo(() => {
-    const todayDateStr = now.toISOString().split('T')[0];
-    return revisionQueue.filter((item) => {
-      if (!item.is_reviewed) return false;
-      return item.next_review_at.startsWith(todayDateStr);
-    }).length;
-  }, [revisionQueue, now]);
-
-  // Metric: Next Review Milestone
-  const nextMilestone = useMemo(() => {
-    const upcoming = revisionQueue.filter((item) => {
-      if (item.is_reviewed) return false;
-      const reviewDate = new Date(item.next_review_at);
-      return reviewDate > todayEnd;
-    });
-
-    if (upcoming.length === 0) return null;
-
-    const earliest = upcoming[0];
-    const targetDate = new Date(earliest.next_review_at);
-    const diffDays = Math.max(1, Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-    const countOnDate = upcoming.filter((i) => {
-      const d = new Date(i.next_review_at);
-      return d.toDateString() === targetDate.toDateString();
-    }).length;
-
-    return {
-      days: diffDays,
-      count: countOnDate,
-      dateFormatted: targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    };
-  }, [revisionQueue, todayEnd, now]);
-
-  // Metric: Mastered Count (Interval >= 21 or is_reviewed)
-  const masteredCount = useMemo(() => {
-    return revisionQueue.filter((i) => i.interval_days >= 21 || i.is_reviewed).length;
   }, [revisionQueue]);
 
-  // Current Card
-  const currentCard = dueCards[activeCardIndex] || dueCards[0] || null;
+  const currentCard = dueCards[activeCardIndex] || dueCards[0];
 
-  // Handler: Advance Spaced Repetition (Mark Mastered)
+  // Stats calculation
+  const reviewedTodayCount = useMemo(() => {
+    return revisionQueue.filter((item) => item.is_reviewed).length;
+  }, [revisionQueue]);
+
+  const masteredCount = useMemo(() => {
+    return revisionQueue.filter((item) => item.interval_days >= 21).length;
+  }, [revisionQueue]);
+
+  const nextMilestone = useMemo(() => {
+    const futureCards = revisionQueue.filter((item) => {
+      if (!item.next_review_at) return false;
+      return new Date(item.next_review_at) > new Date() && !item.is_reviewed;
+    });
+
+    if (futureCards.length === 0) return null;
+
+    const earliest = futureCards[0];
+    const days = Math.max(
+      1,
+      Math.ceil((new Date(earliest.next_review_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    );
+
+    return {
+      count: futureCards.length,
+      days,
+      dateFormatted: new Date(earliest.next_review_at).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+      }),
+    };
+  }, [revisionQueue]);
+
+  // Handler: Advance interval (1d -> 3d -> 7d -> 21d)
   const handleAdvanceInterval = async () => {
-    if (!currentCard || !user) return;
+    if (!currentCard) return;
+
     try {
-      const currentInterval = currentCard.interval_days;
       let nextInterval = 3;
-      let isReviewedNow = false;
+      if (currentCard.interval_days <= 1) nextInterval = 3;
+      else if (currentCard.interval_days <= 3) nextInterval = 7;
+      else if (currentCard.interval_days <= 7) nextInterval = 21;
+      else nextInterval = 45;
 
-      if (currentInterval === 1) nextInterval = 3;
-      else if (currentInterval === 3) nextInterval = 7;
-      else if (currentInterval === 7) nextInterval = 21;
-      else if (currentInterval >= 21) {
-        nextInterval = 30;
-        isReviewedNow = true;
-      }
+      const nextDate = new Date();
+      nextDate.setDate(nextDate.getDate() + nextInterval);
 
-      const nextReviewDate = new Date();
-      nextReviewDate.setDate(nextReviewDate.getDate() + nextInterval);
-
-      // Optimistic update
       setRevisionQueue((prev) =>
         prev.map((item) =>
           item.id === currentCard.id
             ? {
                 ...item,
                 interval_days: nextInterval,
-                next_review_at: nextReviewDate.toISOString(),
-                is_reviewed: isReviewedNow,
+                next_review_at: nextDate.toISOString(),
+                is_reviewed: true,
               }
             : item
         )
       );
 
       setShowHint(false);
-      if (activeCardIndex >= dueCards.length - 1) {
-        setActiveCardIndex(Math.max(0, dueCards.length - 2));
-      }
-
-      setActionFeedback(
-        `🎉 Mastered! Problem promoted to Stage ${
-          nextInterval >= 21 ? '4 (21 Days - Permanent Mastered)' : nextInterval === 7 ? '3 (7 Days)' : '2 (3 Days)'
-        }.`
-      );
+      setActionFeedback(`Recall verified. Promoted to Stage (${nextInterval} days interval).`);
       setTimeout(() => setActionFeedback(null), 4000);
 
-      // Update in Supabase
       if (isSupabaseConfigured()) {
         await supabase
           .from('user_revision_queue')
           .update({
             interval_days: nextInterval,
-            next_review_at: nextReviewDate.toISOString(),
-            is_reviewed: isReviewedNow,
+            next_review_at: nextDate.toISOString(),
+            is_reviewed: true,
           })
           .eq('id', currentCard.id);
       }
     } catch (err) {
-      console.error('Failed to advance interval:', err);
+      console.error('Failed to update interval:', err);
     }
   };
 
-  // Handler: Reset to 1 Day (Need More Practice)
+  // Handler: Reset interval back to 1 day on recall failure
   const handleResetInterval = async () => {
-    if (!currentCard || !user) return;
+    if (!currentCard) return;
+
     try {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -331,7 +280,7 @@ export const RevisionView: React.FC = () => {
       );
 
       setShowHint(false);
-      setActionFeedback('🔄 Recalibrated to Stage 1. Scheduled for recall reinforcement tomorrow.');
+      setActionFeedback('Recalibrated to Stage 1. Scheduled for reinforcement tomorrow.');
       setTimeout(() => setActionFeedback(null), 4000);
 
       if (isSupabaseConfigured()) {
@@ -354,7 +303,6 @@ export const RevisionView: React.FC = () => {
     if (!user || !isSupabaseConfigured()) return;
     try {
       setIsSyncing(true);
-      // Query all solved problems from user_problem_progress
       const { data: progressRows, error: pErr } = await supabase
         .from('user_problem_progress')
         .select('problem_id, status')
@@ -364,7 +312,6 @@ export const RevisionView: React.FC = () => {
       if (pErr) throw pErr;
 
       if (!progressRows || progressRows.length === 0) {
-        // If user has no solved rows yet in DB, seed a default problem for spaced repetition trial
         const seedProblem = FALLBACK_PROBLEMS[0];
         await supabase.from('user_revision_queue').upsert(
           {
@@ -376,9 +323,8 @@ export const RevisionView: React.FC = () => {
           },
           { onConflict: 'user_id,problem_id' }
         );
-        setActionFeedback('✨ Seeded "Two Sum" into your Ebbinghaus recall deck for practice!');
+        setActionFeedback('Seeded "Two Sum" into your recall queue for practice.');
       } else {
-        // Upsert all solved problems with initial 1-day interval
         for (const row of progressRows) {
           await supabase.from('user_revision_queue').upsert(
             {
@@ -391,7 +337,7 @@ export const RevisionView: React.FC = () => {
             { onConflict: 'user_id,problem_id' }
           );
         }
-        setActionFeedback(`✨ Enrolled ${progressRows.length} solved problems into your spaced repetition queue!`);
+        setActionFeedback(`Enrolled ${progressRows.length} solved problems into your spaced repetition queue.`);
       }
 
       await fetchRevisionQueue();
@@ -404,37 +350,32 @@ export const RevisionView: React.FC = () => {
     }
   };
 
-  // Helper for Ebbinghaus Stage details
   const getStageMeta = (days: number) => {
     if (days <= 1) {
       return {
         stage: 'Stage 1',
-        title: '1 Day • Immediate Recall',
-        desc: 'Memory trace retention test 24h after solve',
-        badgeBg: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+        title: '1-Day Interval',
+        badgeBg: 'bg-[#3B82F6]/10 text-[#60A5FA] border-[#3B82F6]/25',
       };
     }
     if (days <= 3) {
       return {
         stage: 'Stage 2',
-        title: '3 Days • Consolidation',
-        desc: 'Medium-term synaptogenesis retention check',
-        badgeBg: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+        title: '3-Day Interval',
+        badgeBg: 'bg-[#00B8A3]/10 text-[#00B8A3] border-[#00B8A3]/25',
       };
     }
     if (days <= 7) {
       return {
         stage: 'Stage 3',
-        title: '7 Days • Deep Transfer',
-        desc: 'Long-term pattern schema internalization',
-        badgeBg: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+        title: '7-Day Interval',
+        badgeBg: 'bg-[#22D3EE]/10 text-[#22D3EE] border-[#22D3EE]/25',
       };
     }
     return {
       stage: 'Stage 4',
-      title: '21 Days • Mastered Invariant',
-      desc: 'Permanent algorithmic intuition achieved',
-      badgeBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      title: '21+ Days (Mastered)',
+      badgeBg: 'bg-[#10B981]/10 text-[#34D399] border-[#10B981]/25',
     };
   };
 
@@ -445,265 +386,255 @@ export const RevisionView: React.FC = () => {
   return (
     <DashboardLayout
       breadcrumbs={[
-        { label: 'Student Workspace', href: '/app/dashboard' },
-        { label: 'Ebbinghaus Spaced Repetition' },
+        { label: 'CHAKRIVA', href: '/app/home' },
+        { label: 'Progress', href: '/app/progress' },
+        { label: 'Spaced Revision' },
       ]}
     >
-      <div className="space-y-6 max-w-6xl mx-auto pb-12">
-        {/* Banner Alert for Feedback */}
-        {actionFeedback && (
-          <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 text-primary flex items-center justify-between animate-fadeIn">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 shrink-0 text-primary" />
-              <p className="text-sm font-medium">{actionFeedback}</p>
+      <div className="space-y-6 max-w-7xl mx-auto text-left">
+        {/* Executive Header */}
+        <div className="rounded-2xl border border-[#181F30] bg-gradient-to-b from-[#0F1422] to-[#0B0E16] p-6 sm:p-7">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div className="space-y-1.5">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-sans">
+                Spaced Revision Queue
+              </h1>
+              <p className="text-sm text-[#7C8BA6] max-w-2xl leading-relaxed">
+                Active recall and spaced repetition based on the Ebbinghaus forgetting curve to consolidate core algorithmic invariants.
+              </p>
             </div>
+
+            <div className="flex items-center gap-2.5 shrink-0">
+              <button
+                onClick={handleSyncSolvedToRevision}
+                disabled={isSyncing}
+                className="px-3.5 py-2 rounded-xl border border-[#243B6B] bg-[#0F172A]/60 hover:bg-[#152443] text-xs font-medium text-[#93C5FD] transition-colors"
+              >
+                {isSyncing ? 'Syncing...' : 'Sync Solved Problems'}
+              </button>
+              <Link
+                to="/leaderboard"
+                className="px-3.5 py-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-xs font-medium text-white transition-colors"
+              >
+                Campus Leaderboard
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Unified Navigation Tabs */}
+        <ProgressNavigationTabs activeTab="revision" />
+
+        {/* Feedback Alert */}
+        {actionFeedback && (
+          <div className="p-4 rounded-xl bg-[#0F172A] border border-[#243B6B] text-xs text-[#93C5FD] flex items-center justify-between">
+            <span>{actionFeedback}</span>
             <button
               onClick={() => setActionFeedback(null)}
-              className="text-xs text-text-muted hover:text-text-primary underline ml-4"
+              className="text-xs text-[#7C8BA6] hover:text-white underline ml-4"
             >
               Dismiss
             </button>
           </div>
         )}
 
-        {/* TOP METRICS BAR */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-5 rounded-xl border border-white/[0.08] bg-surface shadow-elevation-1 space-y-1">
-            <div className="flex items-center justify-between text-text-muted">
-              <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">Cards Due Today</span>
-              <Brain className="w-4 h-4 text-primary" />
-            </div>
+        {/* Top 4 KPI Metrics (Zero icons, zero uppercase monospace) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-5 rounded-2xl bg-[#0F131D] border border-[#181F30]">
+            <div className="text-xs font-medium text-[#7C8BA6] mb-1.5">Due for Review</div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl md:text-3xl font-bold font-mono text-text-primary">
+              <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 {dueCards.length}
               </span>
-              <span className="text-xs text-text-muted font-mono">in queue</span>
+              <span className="text-xs text-[#7C8BA6]">in queue</span>
             </div>
-            <p className="text-[11px] text-text-muted">Ebbinghaus forgetting curve recall</p>
+            <p className="text-[11px] text-[#556480] mt-3">Ebbinghaus forgetting curve recall</p>
           </div>
 
-          <div className="p-5 rounded-xl border border-white/[0.08] bg-surface shadow-elevation-1 space-y-1">
-            <div className="flex items-center justify-between text-text-muted">
-              <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">Reviewed Today</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            </div>
+          <div className="p-5 rounded-2xl bg-[#0F131D] border border-[#181F30]">
+            <div className="text-xs font-medium text-[#7C8BA6] mb-1.5">Reviewed Today</div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl md:text-3xl font-bold font-mono text-emerald-400">
+              <span className="text-2xl sm:text-3xl font-bold text-[#00B8A3] tracking-tight">
                 {reviewedTodayCount}
               </span>
-              <span className="text-xs text-text-muted font-mono">completed</span>
+              <span className="text-xs text-[#7C8BA6]">completed</span>
             </div>
-            <p className="text-[11px] text-text-muted">Reinforced algorithmic invariants</p>
+            <p className="text-[11px] text-[#556480] mt-3">Reinforced algorithmic invariants</p>
           </div>
 
-          <div className="p-5 rounded-xl border border-white/[0.08] bg-surface shadow-elevation-1 space-y-1">
-            <div className="flex items-center justify-between text-text-muted">
-              <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">Next Milestone</span>
-              <Clock className="w-4 h-4 text-blue-400" />
-            </div>
+          <div className="p-5 rounded-2xl bg-[#0F131D] border border-[#181F30]">
+            <div className="text-xs font-medium text-[#7C8BA6] mb-1.5">Next Milestone</div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl md:text-2xl font-bold font-mono text-text-primary">
+              <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 {nextMilestone ? `${nextMilestone.count} Cards` : 'Queue Fresh'}
               </span>
             </div>
-            <p className="text-[11px] text-text-muted font-mono">
+            <p className="text-[11px] text-[#556480] mt-3">
               {nextMilestone ? `in ${nextMilestone.days} days (${nextMilestone.dateFormatted})` : 'All invariants synchronized'}
             </p>
           </div>
 
-          <div className="p-5 rounded-xl border border-white/[0.08] bg-surface shadow-elevation-1 space-y-1">
-            <div className="flex items-center justify-between text-text-muted">
-              <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">Mastered Invariants</span>
-              <Award className="w-4 h-4 text-amber-400" />
-            </div>
+          <div className="p-5 rounded-2xl bg-[#0F131D] border border-[#181F30]">
+            <div className="text-xs font-medium text-[#7C8BA6] mb-1.5">Mastered Invariants</div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl md:text-3xl font-bold font-mono text-amber-400">
+              <span className="text-2xl sm:text-3xl font-bold text-[#F59E0B] tracking-tight">
                 {masteredCount}
               </span>
-              <span className="text-xs text-text-muted font-mono">permanent</span>
+              <span className="text-xs text-[#7C8BA6]">permanent</span>
             </div>
-            <p className="text-[11px] text-text-muted">Stage 4 (21+ days interval)</p>
+            <p className="text-[11px] text-[#556480] mt-3">Stage 4 (21+ days interval)</p>
           </div>
         </div>
 
         {/* LOADING STATE */}
         {loading && (
-          <div className="p-16 text-center rounded-xl border border-white/[0.08] bg-surface flex flex-col items-center justify-center space-y-3">
-            <RefreshCw className="w-7 h-7 text-primary animate-spin" />
-            <p className="text-sm text-text-secondary">Retrieving Ebbinghaus decay curve telemetry...</p>
+          <div className="p-16 text-center rounded-2xl border border-[#181F30] bg-[#0F131D]">
+            <p className="text-sm text-[#7C8BA6]">Loading revision queue...</p>
           </div>
         )}
 
         {/* RECALL DECK: CARDS DUE TODAY */}
         {!loading && dueCards.length > 0 && currentCard && (
           <div className="space-y-4">
-            {/* Deck Navigation & Progress Header */}
+            {/* Deck Navigation Header */}
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-3">
-                <span className="px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-primary/10 text-primary border border-primary/20">
+                <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[#152443] text-[#93C5FD] border border-[#243B6B]">
                   Card {activeCardIndex + 1} of {dueCards.length}
                 </span>
-                <span className="text-xs text-text-muted">
-                  Ebbinghaus Spaced Repetition Desk
+                <span className="text-xs text-[#7C8BA6]">
+                  Active Invariant Recall Deck
                 </span>
               </div>
 
               {dueCards.length > 1 && (
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => {
                       setShowHint(false);
                       setActiveCardIndex((p) => Math.max(0, p - 1));
                     }}
                     disabled={activeCardIndex === 0}
-                    leftIcon={<ChevronLeft className="w-4 h-4" />}
+                    className="px-3 py-1.5 rounded-lg border border-[#181F30] bg-[#0F131D] hover:bg-[#152443] disabled:opacity-40 text-xs font-medium text-[#C3CEE0] transition-colors"
                   >
-                    Prev
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                    ← Prev
+                  </button>
+                  <button
                     onClick={() => {
                       setShowHint(false);
                       setActiveCardIndex((p) => Math.min(dueCards.length - 1, p + 1));
                     }}
                     disabled={activeCardIndex === dueCards.length - 1}
-                    rightIcon={<ChevronRight className="w-4 h-4" />}
+                    className="px-3 py-1.5 rounded-lg border border-[#181F30] bg-[#0F131D] hover:bg-[#152443] disabled:opacity-40 text-xs font-medium text-[#C3CEE0] transition-colors"
                   >
-                    Next
-                  </Button>
+                    Next →
+                  </button>
                 </div>
               )}
             </div>
 
             {/* Flashcard Surface */}
-            <div className="p-6 md:p-8 rounded-2xl border border-white/[0.08] bg-surface shadow-elevation-2 space-y-6 relative overflow-hidden transition-all">
+            <div className="p-6 md:p-8 rounded-2xl border border-[#181F30] bg-[#0F131D] space-y-6">
               {/* Card Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#181F30] pb-5">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <span
                       className={cn(
-                        'px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider border',
+                        'px-2.5 py-0.5 rounded-md text-xs font-medium border',
                         getStageMeta(currentCard.interval_days).badgeBg
                       )}
                     >
-                      {getStageMeta(currentCard.interval_days).stage} • {currentCard.interval_days} Day Interval
+                      {getStageMeta(currentCard.interval_days).stage} · {currentCard.interval_days} Day Interval
                     </span>
                     {currentCard.problem && (
-                      <DifficultyBadge
-                        difficulty={currentCard.problem.difficulty}
-                        className="text-xs px-2 py-0.5"
-                      />
+                      <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-[#141A29] border border-[#181F30] text-[#E2E8F5] flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            'w-1.5 h-1.5 rounded-full',
+                            currentCard.problem.difficulty === 'easy'
+                              ? 'bg-[#00B8A3]'
+                              : currentCard.problem.difficulty === 'hard'
+                              ? 'bg-[#EF4444]'
+                              : 'bg-[#F59E0B]'
+                          )}
+                        />
+                        {currentCard.problem.difficulty.charAt(0).toUpperCase() + currentCard.problem.difficulty.slice(1)}
+                      </span>
                     )}
-                    <span className="text-[11px] font-mono text-text-muted">
-                      Due: Today
-                    </span>
+                    <span className="text-xs text-[#7C8BA6]">Due today</span>
                   </div>
 
-                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-text-primary">
+                  <h2 className="text-2xl font-bold tracking-tight text-white">
                     {currentCard.problem?.title || 'Algorithmic Problem'}
                   </h2>
                 </div>
 
-                {/* Direct Solve Link */}
                 {currentCard.problem && (
-                  <Link to={`/problems/${currentCard.problem.slug}`}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      leftIcon={<ExternalLink className="w-3.5 h-3.5 text-primary" />}
-                    >
-                      Practice in IDE
-                    </Button>
+                  <Link
+                    to={`/app/practice/${currentCard.problem.slug}`}
+                    className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-xs font-medium text-white transition-colors self-start sm:self-auto"
+                  >
+                    Practice in IDE →
                   </Link>
                 )}
               </div>
 
-              {/* Problem Context & Tags */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-xs text-text-muted font-mono">
-                  <span>Category Tags:</span>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {(currentCard.problem?.tags || ['Algorithms', 'Data Structures']).map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-0.5 rounded bg-surface-elevated border border-white/[0.06] text-text-secondary text-[11px]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+              {/* Problem Excerpt */}
+              {currentCard.problem?.description_markdown && (
+                <div className="p-4 rounded-xl bg-[#0B0E16] border border-[#181F30] text-xs text-[#C3CEE0] leading-relaxed line-clamp-3">
+                  {currentCard.problem.description_markdown.slice(0, 280)}...
                 </div>
+              )}
 
-                {currentCard.problem?.description_markdown && (
-                  <div className="p-4 rounded-xl bg-surface-elevated border border-white/[0.05] text-xs text-text-secondary leading-relaxed line-clamp-3">
-                    {currentCard.problem.description_markdown.slice(0, 280)}...
-                  </div>
-                )}
-              </div>
-
-              {/* INVARIANT HINT DRAWER (Interactive Invariant Recall) */}
+              {/* INVARIANT HINT DRAWER */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => setShowHint((prev) => !prev)}
-                    leftIcon={<Lightbulb className={cn('w-4 h-4', showHint ? 'text-amber-400' : 'text-text-muted')} />}
+                    className="px-3.5 py-2 rounded-xl border border-[#243B6B] bg-[#0F172A]/60 hover:bg-[#152443] text-xs font-medium text-[#93C5FD] transition-colors"
                   >
-                    {showHint ? 'Hide Invariant Hint' : 'Flip Invariant Hint'}
-                  </Button>
-                  <span className="text-xs text-text-muted">
-                    Test your memory before revealing invariants
+                    {showHint ? 'Hide Invariant Hint' : 'Reveal Invariant Hint'}
+                  </button>
+                  <span className="text-xs text-[#7C8BA6]">
+                    Test your memory before checking invariants
                   </span>
                 </div>
 
                 {showHint && (
-                  <div className="p-5 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] space-y-4 animate-fadeIn">
-                    <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs uppercase tracking-wider font-mono">
-                      <ShieldCheck className="w-4 h-4" />
+                  <div className="p-5 rounded-xl border border-[#243B6B] bg-[#0B0E16] space-y-4">
+                    <div className="text-xs font-semibold text-[#93C5FD]">
                       Algorithmic Invariant & Complexity Guarantee
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      <div className="p-3 rounded-lg bg-surface border border-white/[0.06]">
-                        <span className="text-[10px] font-mono text-text-muted uppercase block">
-                          Time Invariant
-                        </span>
-                        <p className="font-mono font-bold text-text-primary mt-0.5">
+                      <div className="p-3 rounded-lg bg-[#0F131D] border border-[#181F30]">
+                        <span className="text-[11px] text-[#7C8BA6] block">Time Complexity</span>
+                        <p className="font-medium text-white mt-0.5">
                           {activeInvariant?.timeComplexity || 'O(n) Linear Time'}
                         </p>
                       </div>
 
-                      <div className="p-3 rounded-lg bg-surface border border-white/[0.06]">
-                        <span className="text-[10px] font-mono text-text-muted uppercase block">
-                          Space Invariant
-                        </span>
-                        <p className="font-mono font-bold text-text-primary mt-0.5">
+                      <div className="p-3 rounded-lg bg-[#0F131D] border border-[#181F30]">
+                        <span className="text-[11px] text-[#7C8BA6] block">Space Complexity</span>
+                        <p className="font-medium text-white mt-0.5">
                           {activeInvariant?.spaceComplexity || 'O(1) Auxiliary Space'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="space-y-2 text-xs">
+                    <div className="space-y-3 text-xs">
                       <div>
-                        <span className="font-mono text-[10px] uppercase text-text-muted block">
-                          Core Mathematical Invariant
-                        </span>
-                        <p className="text-text-primary leading-relaxed mt-1 font-sans">
+                        <span className="text-[11px] text-[#7C8BA6] block">Core Mathematical Invariant</span>
+                        <p className="text-[#E2E8F5] leading-relaxed mt-1">
                           {activeInvariant?.keyInvariant ||
                             'Monotonic boundaries guarantee that subproblems can be eliminated in amortized sub-linear or linear steps without redundant recomputation.'}
                         </p>
                       </div>
 
                       <div>
-                        <span className="font-mono text-[10px] uppercase text-text-muted block">
-                          Algorithmic Pattern Strategy
-                        </span>
-                        <p className="text-text-secondary leading-relaxed mt-1 font-sans">
+                        <span className="text-[11px] text-[#7C8BA6] block">Pattern Strategy</span>
+                        <p className="text-[#94A3B8] leading-relaxed mt-1">
                           {activeInvariant?.strategySummary ||
                             'Formulate constraints as invariant bounds and advance pointers or hash keys accordingly.'}
                         </p>
@@ -714,102 +645,69 @@ export const RevisionView: React.FC = () => {
               </div>
 
               {/* CARD ACTION BUTTONS */}
-              <div className="pt-4 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3">
-                <Button
-                  variant="outline"
+              <div className="pt-4 border-t border-[#181F30] flex flex-col sm:flex-row items-center justify-between gap-3">
+                <button
                   onClick={handleResetInterval}
-                  leftIcon={<RotateCcw className="w-4 h-4 text-amber-400" />}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-xs font-medium text-[#F87171] transition-colors"
                 >
                   Need Review (Reset to 1d)
-                </Button>
+                </button>
 
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <Button
-                    variant="primary"
-                    onClick={handleAdvanceInterval}
-                    leftIcon={<CheckCircle2 className="w-4 h-4 text-emerald-300" />}
-                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white"
-                  >
-                    Mark Mastered (Advance Stage)
-                  </Button>
-                </div>
+                <button
+                  onClick={handleAdvanceInterval}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-xs font-medium text-white transition-colors"
+                >
+                  Mark Mastered (Advance Stage)
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* EMPTY STATE: REVISION QUEUE CLEAR */}
+        {/* EMPTY STATE */}
         {!loading && dueCards.length === 0 && (
-          <div className="p-12 md:p-16 rounded-2xl border border-white/[0.08] bg-surface text-center space-y-6 shadow-elevation-1">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-              <Sparkles className="w-8 h-8" />
-            </div>
-
-            <div className="max-w-md mx-auto space-y-2">
-              <h2 className="text-2xl font-bold tracking-tight text-text-primary">
-                Revision Queue Clear
-              </h2>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                All algorithmic invariants are fresh. The Ebbinghaus decay curve has no decaying memory traces due today.
-              </p>
-            </div>
+          <div className="p-12 md:p-16 rounded-2xl border border-[#181F30] bg-[#0F131D] text-center space-y-4">
+            <h2 className="text-xl font-semibold text-white">
+              Revision Queue is Fresh
+            </h2>
+            <p className="text-xs text-[#7C8BA6] max-w-md mx-auto leading-relaxed">
+              No algorithmic invariants are due for recall review today. Continue solving new problems or review curriculum tracks.
+            </p>
 
             {nextMilestone && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-elevated border border-white/[0.06] text-xs font-mono text-text-muted">
-                <Clock className="w-3.5 h-3.5 text-primary" />
-                <span>
-                  Next recall milestone: <strong className="text-text-primary">{nextMilestone.count} cards</strong> scheduled on {nextMilestone.dateFormatted}
-                </span>
-              </div>
+              <p className="text-xs text-[#93C5FD]">
+                Next recall checkpoint: <strong>{nextMilestone.count} cards</strong> scheduled for {nextMilestone.dateFormatted}.
+              </p>
             )}
 
-            <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
-              <Link to="/roadmaps">
-                <Button
-                  variant="primary"
-                  leftIcon={<BookOpen className="w-4 h-4" />}
-                >
-                  Browse Curriculum Roadmaps
-                </Button>
-              </Link>
-
-              <Link to="/problems">
-                <Button
-                  variant="outline"
-                  leftIcon={<Code2 className="w-4 h-4" />}
-                >
-                  Practice New Problems
-                </Button>
-              </Link>
-
-              <Button
-                variant="ghost"
-                onClick={handleSyncSolvedToRevision}
-                disabled={isSyncing}
-                leftIcon={isSyncing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Repeat className="w-4 h-4 text-primary" />}
-                title="Enroll solved problems from your history into the spaced repetition deck"
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                to="/app/roadmap"
+                className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-xs font-medium text-white transition-colors"
               >
-                {isSyncing ? 'Syncing...' : 'Sync Solved to Revision Deck'}
-              </Button>
+                Browse Study Roadmaps
+              </Link>
+              <Link
+                to="/app/practice"
+                className="px-4 py-2 rounded-xl border border-[#243B6B] bg-[#0F172A]/60 hover:bg-[#152443] text-xs font-medium text-[#93C5FD] transition-colors"
+              >
+                Practice New Problems
+              </Link>
             </div>
           </div>
         )}
 
-        {/* EBBINGHAUS EDUCATIONAL FOOTER */}
-        <div className="p-6 rounded-xl border border-white/[0.06] bg-surface-subtle/50 text-xs text-text-muted space-y-2">
-          <div className="flex items-center gap-2 text-text-primary font-semibold font-mono text-xs">
-            <Brain className="w-4 h-4 text-primary" />
-            How Chakriva Spaced Repetition Works
-          </div>
+        {/* Spaced Repetition Note */}
+        <div className="p-5 rounded-2xl border border-[#181F30] bg-[#0B0E16] text-xs text-[#7C8BA6] space-y-1.5">
+          <div className="text-white font-medium">How Spaced Repetition Works</div>
           <p className="leading-relaxed">
-            Hermann Ebbinghaus demonstrated that human memory decays exponentially without active reinforcement.
-            Whenever you solve a problem on Chakriva, it automatically schedules active recall checkpoints at <strong>1 Day</strong>, <strong>3 Days</strong>, <strong>7 Days</strong>, and <strong>21 Days</strong>.
-            Reviewing invariant hints and practicing in the IDE ensures permanent, panic-free recall in high-stakes technical interviews.
+            Whenever you solve a problem on CHAKRIVA, active recall checkpoints are scheduled across 1-day, 3-day, 7-day, and 21-day intervals.
+            Reviewing key invariants before looking up code reinforces long-term algorithmic pattern recognition.
           </p>
         </div>
       </div>
     </DashboardLayout>
   );
 };
+
 export default RevisionView;

@@ -1,31 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Container } from '@/components/ui/layout/Container';
-import { PageHeader } from '@/components/ui/layout/PageHeader';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/data/Card';
-import { Tabs } from '@/components/ui/navigation/Tabs';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/data/Table';
-import { Badge } from '@/components/ui/data/Badge';
-import { Input } from '@/components/ui/forms/Input';
-import { Button } from '@/components/ui/actions/Button';
+import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { SEEDED_COLLEGES } from '@/lib/colleges';
+import { ProgressNavigationTabs } from '@/features/progress/components/ProgressNavigationTabs';
 import type { LeaderboardEntry, CampusLeagueEntry } from '@/types';
-import {
-  Trophy,
-  Medal,
-  Award,
-  Building2,
-  Search,
-  Flame,
-  CheckCircle2,
-  GraduationCap,
-  Users,
-} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export const LeaderboardView: React.FC = () => {
   const { user, profile } = useAuth();
-  const [activeTab, setActiveTab] = useState('global');
+  const [activeTab, setActiveTab] = useState<'global' | 'college' | 'campuses'>('global');
   const [search, setSearch] = useState('');
   const [engineers, setEngineers] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +63,7 @@ export const LeaderboardView: React.FC = () => {
 
   const globalEngineers = engineers;
 
-  // College-Specific Standings (Only genuine peers enrolled in same college)
+  // College-Specific Standings
   const collegeEngineers = useMemo(() => {
     if (!profile?.college_id && !profile?.college_name) return [];
     const list = globalEngineers.filter(
@@ -108,16 +92,6 @@ export const LeaderboardView: React.FC = () => {
         total_score: col.total_score,
       }));
   }, []);
-
-  const tabs = [
-    { id: 'global', label: 'Global Standings', icon: <Trophy className="w-3.5 h-3.5" /> },
-    {
-      id: 'college',
-      label: `My College (${currentCollegeName.split(' ')[0]})`,
-      icon: <GraduationCap className="w-3.5 h-3.5" />,
-    },
-    { id: 'campuses', label: 'Campus League', icon: <Building2 className="w-3.5 h-3.5" /> },
-  ];
 
   // Filtering
   const filteredGlobal = useMemo(() => {
@@ -151,29 +125,11 @@ export const LeaderboardView: React.FC = () => {
     );
   }, [campusLeague, search]);
 
-  const renderRankBadge = (rank: number) => {
-    if (rank === 1) {
-      return (
-        <span className="inline-flex items-center gap-1 font-mono font-bold text-amber-400">
-          <Medal className="w-4 h-4 text-amber-400" /> #1
-        </span>
-      );
-    }
-    if (rank === 2) {
-      return (
-        <span className="inline-flex items-center gap-1 font-mono font-bold text-slate-300">
-          <Medal className="w-4 h-4 text-slate-300" /> #2
-        </span>
-      );
-    }
-    if (rank === 3) {
-      return (
-        <span className="inline-flex items-center gap-1 font-mono font-bold text-amber-600">
-          <Award className="w-4 h-4 text-amber-600" /> #3
-        </span>
-      );
-    }
-    return <span className="font-mono text-text-muted">#{rank}</span>;
+  const renderRank = (rank: number) => {
+    if (rank === 1) return <span className="font-bold text-[#F59E0B]">#1</span>;
+    if (rank === 2) return <span className="font-bold text-[#CBD5E1]">#2</span>;
+    if (rank === 3) return <span className="font-bold text-[#D97706]">#3</span>;
+    return <span className="text-[#7C8BA6]">#{rank}</span>;
   };
 
   const currentUserGlobalRank = useMemo(() => {
@@ -187,97 +143,153 @@ export const LeaderboardView: React.FC = () => {
   }, [collegeEngineers, user?.id, profile?.username]);
 
   return (
-    <div className="py-8 space-y-8 text-left">
-      <Container size="xl">
-        {/* Standardized Sleek Page Header */}
-        <PageHeader
-          badge="Campus Identity & Rankings"
-          title="Engineering Leaderboards"
-          subtitle="Rankings calculated from verified algorithmic test-case executions, problem solving velocity, and daily streak commitments."
-          actions={
-            <div className="p-3.5 rounded-lg border border-primary/30 bg-[#181C28] flex items-center gap-3.5 shrink-0 shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-mono font-bold text-sm">
+    <DashboardLayout
+      breadcrumbs={[
+        { label: 'CHAKRIVA', href: '/app/home' },
+        { label: 'Progress', href: '/app/progress' },
+        { label: 'Campus Leaderboard' },
+      ]}
+    >
+      <div className="space-y-6 max-w-7xl mx-auto text-left">
+        {/* Executive Header */}
+        <div className="rounded-2xl border border-[#181F30] bg-gradient-to-b from-[#0F1422] to-[#0B0E16] p-6 sm:p-7">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div className="space-y-1.5">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-sans">
+                Campus Leaderboard
+              </h1>
+              <p className="text-sm text-[#7C8BA6] max-w-2xl leading-relaxed">
+                Registered software engineers ranked by verified judge solutions, accuracy score, and daily streak commitments.
+              </p>
+            </div>
+
+            {/* User Standing Card (Clean well, zero icons, zero uppercase monospace) */}
+            <div className="p-4 rounded-xl border border-[#243B6B] bg-[#0B0E16] flex items-center gap-3.5 shrink-0 self-start sm:self-auto">
+              <div className="w-10 h-10 rounded-xl bg-[#152443] text-[#60A5FA] border border-[#243B6B] flex items-center justify-center font-bold text-sm">
                 #{profile?.college_id ? currentUserCollegeRank : currentUserGlobalRank}
               </div>
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-wider text-text-muted">
+                <p className="text-xs text-[#7C8BA6]">
                   {profile?.college_id ? 'Your College Standing' : 'Your Global Standing'}
                 </p>
-                <p className="text-[13px] font-semibold font-sans text-text-primary">
+                <p className="text-sm font-semibold text-white">
                   {profile?.college_id
                     ? `Rank #${currentUserCollegeRank} in ${currentCollegeName.split(' ')[0]}`
                     : `Rank #${currentUserGlobalRank} Worldwide`}
                 </p>
-                <p className="text-[11px] text-text-secondary font-mono">
-                  {profile?.score || 0} pts • {profile?.problems_solved_count || 0} Solved
+                <p className="text-xs text-[#93C5FD]">
+                  {profile?.score || 0} pts · {profile?.problems_solved_count || 0} Solved
                 </p>
               </div>
             </div>
-          }
-        />
+          </div>
+        </div>
 
-        {/* Tab Selection & Search Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
-          <div className="w-full sm:w-72">
-            <Input
-              placeholder={activeTab === 'campuses' ? 'Search college or state...' : 'Search engineer or college...'}
+        {/* Unified Navigation Tabs */}
+        <ProgressNavigationTabs activeTab="leaderboard" />
+
+        {/* Subtabs & Search Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('global')}
+              className={cn(
+                'px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                activeTab === 'global'
+                  ? 'bg-[#152443] text-[#93C5FD] border border-[#243B6B]'
+                  : 'text-[#7C8BA6] hover:text-white hover:bg-[#131A2B] border border-transparent'
+              )}
+            >
+              Global Standings
+            </button>
+            <button
+              onClick={() => setActiveTab('college')}
+              className={cn(
+                'px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                activeTab === 'college'
+                  ? 'bg-[#152443] text-[#93C5FD] border border-[#243B6B]'
+                  : 'text-[#7C8BA6] hover:text-white hover:bg-[#131A2B] border border-transparent'
+              )}
+            >
+              My College ({currentCollegeName.split(' ')[0]})
+            </button>
+            <button
+              onClick={() => setActiveTab('campuses')}
+              className={cn(
+                'px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                activeTab === 'campuses'
+                  ? 'bg-[#152443] text-[#93C5FD] border border-[#243B6B]'
+                  : 'text-[#7C8BA6] hover:text-white hover:bg-[#131A2B] border border-transparent'
+              )}
+            >
+              Campus League
+            </button>
+          </div>
+
+          <div className="w-full sm:w-64">
+            <input
+              type="text"
+              placeholder={activeTab === 'campuses' ? 'Search campus...' : 'Search engineer...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              leftIcon={<Search className="w-4 h-4 text-text-muted" />}
+              className="w-full px-3 py-1.5 rounded-xl border border-[#181F30] bg-[#0F131D] text-xs text-white placeholder-[#556480] focus:outline-none focus:border-[#3B82F6]"
             />
           </div>
         </div>
 
         {/* TAB 1: Global Standings */}
         {activeTab === 'global' && (
-          <Card className="border-border shadow-elevation-1">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base">Global Engineer Standings</CardTitle>
-                  <CardDescription className="text-xs">
-                    All registered software engineers ranked by algorithmic problem score and verified AC submissions.
-                  </CardDescription>
-                </div>
-                <Badge variant="neutral">{filteredGlobal.length} Engineers</Badge>
+          <div className="rounded-2xl border border-[#181F30] bg-[#0F131D] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#181F30] flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-white">Global Engineer Standings</h3>
+                <p className="text-xs text-[#7C8BA6] mt-0.5">
+                  All registered software engineers ranked by algorithmic score and verified judge submissions.
+                </p>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loading ? (
-                <div className="py-12 text-center text-xs font-mono text-text-muted">
-                  Loading verified engineer rankings...
-                </div>
-              ) : filteredGlobal.length === 0 ? (
-                <div className="py-12 text-center text-xs font-mono text-text-muted">
-                  No registered engineers found.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">Rank</TableHead>
-                      <TableHead>Software Engineer</TableHead>
-                      <TableHead>Affiliated Institution</TableHead>
-                      <TableHead className="text-right">Solved</TableHead>
-                      <TableHead className="text-right">Streak</TableHead>
-                      <TableHead className="text-right">Score</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <span className="px-2.5 py-1 rounded-md text-xs bg-[#152443] text-[#93C5FD] border border-[#243B6B]">
+                {filteredGlobal.length} Engineers
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="py-12 text-center text-xs text-[#7C8BA6]">
+                Loading verified engineer rankings...
+              </div>
+            ) : filteredGlobal.length === 0 ? (
+              <div className="py-12 text-center text-xs text-[#7C8BA6]">
+                No registered engineers found.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#0B0E16] text-[#7C8BA6] border-b border-[#181F30]">
+                    <tr>
+                      <th className="py-3 px-4 w-16">Rank</th>
+                      <th className="py-3 px-4">Software Engineer</th>
+                      <th className="py-3 px-4">Affiliated Institution</th>
+                      <th className="py-3 px-4 text-right">Solved</th>
+                      <th className="py-3 px-4 text-right">Streak</th>
+                      <th className="py-3 px-4 text-right">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#181F30]">
                     {filteredGlobal.map((eng) => {
                       const isMe = eng.id === user?.id || eng.username === profile?.username;
                       return (
-                        <TableRow
+                        <tr
                           key={eng.id}
-                          className={isMe ? 'bg-primary/10 border-l-2 border-primary' : undefined}
+                          className={cn(
+                            'hover:bg-[#131A2B]/60 transition-colors',
+                            isMe ? 'bg-[#152443]/40' : undefined
+                          )}
                         >
-                          <TableCell className="font-semibold font-mono">
-                            {renderRankBadge(eng.rank)}
-                          </TableCell>
-                          <TableCell>
+                          <td className="py-3 px-4 font-medium">
+                            {renderRank(eng.rank)}
+                          </td>
+                          <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-7 h-7 rounded-full bg-surface-elevated border border-border text-primary font-mono text-xs flex items-center justify-center font-bold">
+                              <div className="w-7 h-7 rounded-full bg-[#152443] border border-[#243B6B] text-[#93C5FD] text-xs flex items-center justify-center font-bold">
                                 {eng.full_name
                                   .split(' ')
                                   .map((n) => n[0])
@@ -286,111 +298,96 @@ export const LeaderboardView: React.FC = () => {
                                   .toUpperCase()}
                               </div>
                               <div className="min-w-0">
-                                <span className="font-semibold text-text-primary block truncate">
-                                  {eng.full_name} {isMe && <Badge variant="primary" className="ml-1 text-[10px]">You</Badge>}
+                                <span className="font-medium text-white block truncate">
+                                  {eng.full_name}
+                                  {isMe && (
+                                    <span className="ml-2 px-1.5 py-0.2 rounded text-[10px] bg-[#2563EB] text-white">
+                                      You
+                                    </span>
+                                  )}
                                 </span>
-                                <span className="text-[11px] font-mono text-text-muted block truncate">
+                                <span className="text-[11px] text-[#7C8BA6] block truncate">
                                   @{eng.username}
                                 </span>
                               </div>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-text-secondary text-xs flex items-center gap-1.5 truncate">
-                              <GraduationCap className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                              {eng.college_name || 'Independent Engineer'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right font-mono font-medium">
-                            <span className="inline-flex items-center gap-1 text-emerald-500">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              {eng.problems_solved_count}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {eng.current_streak ? (
-                              <span className="inline-flex items-center gap-1 text-amber-500">
-                                <Flame className="w-3.5 h-3.5" />
-                                {eng.current_streak}d
-                              </span>
-                            ) : (
-                              <span className="text-text-muted">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right font-mono font-bold text-text-primary">
+                          </td>
+                          <td className="py-3 px-4 text-[#C3CEE0] truncate max-w-xs">
+                            {eng.college_name || 'Independent Engineer'}
+                          </td>
+                          <td className="py-3 px-4 text-right text-[#00B8A3] font-medium">
+                            {eng.problems_solved_count}
+                          </td>
+                          <td className="py-3 px-4 text-right text-[#F59E0B]">
+                            {eng.current_streak ? `${eng.current_streak}d` : '—'}
+                          </td>
+                          <td className="py-3 px-4 text-right font-bold text-white">
                             {eng.score.toLocaleString()} pts
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       );
                     })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         )}
 
         {/* TAB 2: College Standings */}
         {activeTab === 'college' && (
-          <Card className="border-border shadow-elevation-1">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base">
-                    Campus Leaderboard: {currentCollegeName}
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Intracampus rankings among fellow engineers at your enrolled institution.
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="primary">{filteredCollege.length} Active Peers</Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      window.location.href = '/app/settings';
-                    }}
-                  >
-                    Change College
-                  </Button>
-                </div>
+          <div className="rounded-2xl border border-[#181F30] bg-[#0F131D] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#181F30] flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-white">
+                  Campus Leaderboard: {currentCollegeName}
+                </h3>
+                <p className="text-xs text-[#7C8BA6] mt-0.5">
+                  Intracampus rankings among fellow engineers at your enrolled institution.
+                </p>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loading ? (
-                <div className="py-12 text-center text-xs font-mono text-text-muted">
-                  Loading campus peers...
-                </div>
-              ) : filteredCollege.length === 0 ? (
-                <div className="py-12 text-center text-xs font-mono text-text-muted">
-                  No other engineers from {currentCollegeName} registered yet.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">Campus Rank</TableHead>
-                      <TableHead>Peer Engineer</TableHead>
-                      <TableHead className="text-right">Problems Solved</TableHead>
-                      <TableHead className="text-right">Active Streak</TableHead>
-                      <TableHead className="text-right">Score</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <span className="px-2.5 py-1 rounded-md text-xs bg-[#152443] text-[#93C5FD] border border-[#243B6B]">
+                {filteredCollege.length} Active Peers
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="py-12 text-center text-xs text-[#7C8BA6]">
+                Loading campus peers...
+              </div>
+            ) : filteredCollege.length === 0 ? (
+              <div className="py-12 text-center text-xs text-[#7C8BA6]">
+                No other engineers from {currentCollegeName} registered yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#0B0E16] text-[#7C8BA6] border-b border-[#181F30]">
+                    <tr>
+                      <th className="py-3 px-4 w-16">Rank</th>
+                      <th className="py-3 px-4">Peer Engineer</th>
+                      <th className="py-3 px-4 text-right">Solved</th>
+                      <th className="py-3 px-4 text-right">Streak</th>
+                      <th className="py-3 px-4 text-right">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#181F30]">
                     {filteredCollege.map((eng) => {
                       const isMe = eng.id === user?.id || eng.username === profile?.username;
                       return (
-                        <TableRow
+                        <tr
                           key={eng.id}
-                          className={isMe ? 'bg-primary/10 border-l-2 border-primary' : undefined}
+                          className={cn(
+                            'hover:bg-[#131A2B]/60 transition-colors',
+                            isMe ? 'bg-[#152443]/40' : undefined
+                          )}
                         >
-                          <TableCell className="font-semibold font-mono">
-                            {renderRankBadge(eng.rank)}
-                          </TableCell>
-                          <TableCell>
+                          <td className="py-3 px-4 font-medium">
+                            {renderRank(eng.rank)}
+                          </td>
+                          <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-7 h-7 rounded-full bg-surface-elevated border border-border text-primary font-mono text-xs flex items-center justify-center font-bold">
+                              <div className="w-7 h-7 rounded-full bg-[#152443] border border-[#243B6B] text-[#93C5FD] text-xs flex items-center justify-center font-bold">
                                 {eng.full_name
                                   .split(' ')
                                   .map((n) => n[0])
@@ -399,111 +396,107 @@ export const LeaderboardView: React.FC = () => {
                                   .toUpperCase()}
                               </div>
                               <div className="min-w-0">
-                                <span className="font-semibold text-text-primary block truncate">
-                                  {eng.full_name} {isMe && <Badge variant="primary" className="ml-1 text-[10px]">You</Badge>}
+                                <span className="font-medium text-white block truncate">
+                                  {eng.full_name}
+                                  {isMe && (
+                                    <span className="ml-2 px-1.5 py-0.2 rounded text-[10px] bg-[#2563EB] text-white">
+                                      You
+                                    </span>
+                                  )}
                                 </span>
-                                <span className="text-[11px] font-mono text-text-muted block truncate">
+                                <span className="text-[11px] text-[#7C8BA6] block truncate">
                                   @{eng.username}
                                 </span>
                               </div>
                             </div>
-                          </TableCell>
-                          <TableCell className="text-right font-mono font-medium">
-                            <span className="inline-flex items-center gap-1 text-emerald-500">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              {eng.problems_solved_count}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {eng.current_streak ? (
-                              <span className="inline-flex items-center gap-1 text-amber-500">
-                                <Flame className="w-3.5 h-3.5" />
-                                {eng.current_streak}d
-                              </span>
-                            ) : (
-                              <span className="text-text-muted">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right font-mono font-bold text-text-primary">
+                          </td>
+                          <td className="py-3 px-4 text-right text-[#00B8A3] font-medium">
+                            {eng.problems_solved_count}
+                          </td>
+                          <td className="py-3 px-4 text-right text-[#F59E0B]">
+                            {eng.current_streak ? `${eng.current_streak}d` : '—'}
+                          </td>
+                          <td className="py-3 px-4 text-right font-bold text-white">
                             {eng.score.toLocaleString()} pts
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       );
                     })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         )}
 
         {/* TAB 3: Campus League Standings */}
         {activeTab === 'campuses' && (
-          <Card className="border-border shadow-elevation-1">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base">All-India Campus League</CardTitle>
-                  <CardDescription className="text-xs">
-                    Institutional rankings aggregated across all enrolled student engineers.
-                  </CardDescription>
-                </div>
-                <Badge variant="neutral">{filteredCampuses.length} Campuses</Badge>
+          <div className="rounded-2xl border border-[#181F30] bg-[#0F131D] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#181F30] flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-white">All-India Campus League</h3>
+                <p className="text-xs text-[#7C8BA6] mt-0.5">
+                  Institutional rankings aggregated across enrolled student engineers.
+                </p>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16">League Rank</TableHead>
-                    <TableHead>Institution</TableHead>
-                    <TableHead>State / Region</TableHead>
-                    <TableHead className="text-right">Active Students</TableHead>
-                    <TableHead className="text-right">Total Score</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <span className="px-2.5 py-1 rounded-md text-xs bg-[#152443] text-[#93C5FD] border border-[#243B6B]">
+                {filteredCampuses.length} Campuses
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#0B0E16] text-[#7C8BA6] border-b border-[#181F30]">
+                  <tr>
+                    <th className="py-3 px-4 w-16">Rank</th>
+                    <th className="py-3 px-4">Institution</th>
+                    <th className="py-3 px-4">Region</th>
+                    <th className="py-3 px-4 text-right">Students</th>
+                    <th className="py-3 px-4 text-right">Total Score</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#181F30]">
                   {filteredCampuses.map((col) => {
                     const isMyCollege = col.name === currentCollegeName;
                     return (
-                      <TableRow
+                      <tr
                         key={col.id}
-                        className={isMyCollege ? 'bg-primary/10 border-l-2 border-primary' : undefined}
+                        className={cn(
+                          'hover:bg-[#131A2B]/60 transition-colors',
+                          isMyCollege ? 'bg-[#152443]/40' : undefined
+                        )}
                       >
-                        <TableCell className="font-semibold font-mono">
-                          {renderRankBadge(col.rank)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2.5">
-                            <Building2 className="w-4 h-4 text-primary shrink-0" />
-                            <span className="font-semibold text-text-primary">
-                              {col.name} {isMyCollege && <Badge variant="primary" className="ml-1 text-[10px]">Your Campus</Badge>}
+                        <td className="py-3 px-4 font-medium">
+                          {renderRank(col.rank)}
+                        </td>
+                        <td className="py-3 px-4 font-medium text-white">
+                          {col.name}
+                          {isMyCollege && (
+                            <span className="ml-2 px-1.5 py-0.2 rounded text-[10px] bg-[#2563EB] text-white">
+                              Your Campus
                             </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-text-secondary text-xs">
-                            {col.state || 'National'}, {col.country || 'India'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-xs">
-                          <span className="inline-flex items-center gap-1 text-text-muted">
-                            <Users className="w-3 h-3" />
-                            {col.student_count}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right font-mono font-bold text-text-primary">
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-[#7C8BA6]">
+                          {col.state || 'National'}, {col.country || 'India'}
+                        </td>
+                        <td className="py-3 px-4 text-right text-[#C3CEE0]">
+                          {col.student_count}
+                        </td>
+                        <td className="py-3 px-4 text-right font-bold text-white">
                           {col.total_score.toLocaleString()} pts
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     );
                   })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
-      </Container>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
+
+export default LeaderboardView;

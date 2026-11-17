@@ -569,6 +569,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
         tags: ['Strings', 'Hash Maps'],
         time: '~30 min',
       },
+      {
+        step: 4,
+        title: 'Top K Frequent Elements',
+        slug: 'top-k-frequent-elements',
+        difficulty: 'medium' as const,
+        tags: ['Heap', 'Hash Maps'],
+        time: '~30 min',
+      },
+      {
+        step: 5,
+        title: 'Container With Most Water',
+        slug: 'container-with-most-water',
+        difficulty: 'medium' as const,
+        tags: ['Two Pointers', 'Greedy'],
+        time: '~25 min',
+      },
     ],
     []
   );
@@ -576,7 +592,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
   // Evidence-based Coding Insight matching reference image
   const chakrivaInsight = useMemo(
     () => ({
-      badge: 'PATTERN TRACKER',
+      badge: 'Pattern Tracker',
       title: 'Calibration in progress',
       text: 'Submit solutions to establish your diagnostic baseline. We isolate recurring edge-case failures and runtime trade-offs.',
       actionLabel: 'Consult Mentor →',
@@ -589,13 +605,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
 
   const displayedRecentSubmissions = useMemo(() => {
     if (!selectedHeatmapDate) {
-      return telemetry.recentSubmissions.slice(0, 5);
+      return telemetry.recentSubmissions.slice(0, 3);
     }
-    return telemetry.allSubmissions.filter((sub) => {
-      if (!sub.created_at) return false;
-      const d = new Date(sub.created_at);
-      return !isNaN(d.getTime()) && formatLocalDate(d) === selectedHeatmapDate;
-    });
+    return telemetry.allSubmissions
+      .filter((sub) => {
+        if (!sub.created_at) return false;
+        const d = new Date(sub.created_at);
+        return !isNaN(d.getTime()) && formatLocalDate(d) === selectedHeatmapDate;
+      })
+      .slice(0, 3);
   }, [selectedHeatmapDate, telemetry.recentSubmissions, telemetry.allSubmissions]);
 
   // User mode: New account (no roadmap created yet) vs Active account
@@ -680,13 +698,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
 
               <div className="flex items-center gap-3 relative z-10 shrink-0 flex-wrap">
                 <Link to="/app/roadmap">
-                  <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#1D68FE] hover:bg-blue-600 text-white font-semibold text-xs font-mono transition-all shadow-[0_0_20px_rgba(29,104,254,0.4)]">
+                  <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
                     <span>Create my roadmap</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </Link>
                 <Link to="/problems">
-                  <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#080D1A] hover:bg-white/[0.06] text-zinc-300 border border-white/10 font-medium text-xs font-mono transition-all">
+                  <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#080D1A] hover:bg-white/[0.06] text-zinc-300 border border-white/10 font-medium text-xs transition-all">
                     <span>Browse problems</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
@@ -707,8 +725,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                   {/* Left Text & 4 Pillars */}
                   <div className="space-y-4 flex-1">
                     <div>
-                      <span className="text-cyan-400 font-bold text-xs tracking-wider uppercase">
-                        CURATED ROADMAP
+                      <span className="text-cyan-400 font-semibold text-xs">
+                        Curated Roadmap
                       </span>
                       <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-1">
                         Create your personalized roadmap
@@ -751,7 +769,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
 
                     <div className="pt-2">
                       <Link to="/app/roadmap">
-                        <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#1D68FE] hover:bg-blue-600 text-white font-semibold text-xs font-mono transition-all shadow-[0_0_20px_rgba(29,104,254,0.35)]">
+                        <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(37,99,235,0.35)]">
                           <span>Create my roadmap</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
@@ -931,7 +949,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                           </div>
                         </div>
                         <Link to={`/problems/${p.slug}`}>
-                          <button className="px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#0B101B] hover:bg-blue-600/20 text-cyan-400 hover:text-white border border-cyan-500/30 flex items-center gap-1 shrink-0 transition-all">
+                          <button className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-[#0B101B] hover:bg-blue-600/20 text-cyan-400 hover:text-white border border-cyan-500/30 flex items-center gap-1 shrink-0 transition-all">
                             <span>Solve</span>
                             <span>→</span>
                           </button>
@@ -1092,8 +1110,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-white tracking-tight">Diagnostic Mentor</h4>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-400 border border-cyan-500/30">
-                        STANDBY
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-400 border border-cyan-500/30">
+                        Standby
                       </span>
                     </div>
                     <Link to="/app/chakriva">
@@ -1111,7 +1129,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                   </div>
 
                   <Link to="/app/chakriva" className="block pt-1">
-                    <button className="w-full py-2 px-3 rounded-xl text-xs font-mono font-medium bg-[#08131E] hover:bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center justify-center gap-2 transition-all">
+                    <button className="w-full py-2 px-3 rounded-xl text-xs font-medium bg-[#08131E] hover:bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center justify-center gap-2 transition-all">
                       <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
                       <span>Consult Mentor →</span>
                     </button>
@@ -1189,14 +1207,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
               {/* Right: Browse Problems + CodeSpace */}
               <div className="flex items-center gap-3 shrink-0 flex-wrap">
                 <Link to="/problems">
-                  <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#1D68FE] hover:bg-blue-600 text-white font-semibold text-xs font-mono transition-all shadow-[0_0_15px_rgba(29,104,254,0.3)]">
+                  <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)]">
                     <span>Browse problems</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </Link>
 
                 <Link to="/ide">
-                  <button className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#0A0E17] hover:bg-white/[0.06] text-zinc-300 border border-white/10 font-medium text-xs font-mono transition-all">
+                  <button className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#0A0E17] hover:bg-white/[0.06] text-zinc-300 border border-white/10 font-medium text-xs transition-all">
                     <Code2 className="w-3.5 h-3.5 text-cyan-400" />
                     <span>CodeSpace</span>
                   </button>
@@ -1205,19 +1223,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
             </div>
 
             {/* ======================================================================= */}
-            {/* 2. TOP BENTO GRID (8 cols Left / 4 cols Right)                          */}
+            {/* 2. MAIN BENTO GRID (8 cols Left / 4 cols Right - Unified 0-Gap Layout)  */}
             {/* ======================================================================= */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
               {/* ===================================================================== */}
-              {/* LEFT COLUMN (8 cols): YOUR LEARNING PATH + RECOMMENDED PROBLEMS        */}
+              {/* LEFT COLUMN (8 cols): LEARNING PATH + RECOMMENDED + ACTIVITY HEATMAP   */}
               {/* ===================================================================== */}
               <div className="lg:col-span-8 space-y-5">
-                {/* CARD 1: YOUR LEARNING PATH */}
+                {/* CARD 1: Learning Path */}
                 <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-4 text-left">
-                  {/* Top Label: YOUR LEARNING PATH + On Track + Options */}
+                  {/* Top Label: Learning Path + On Track + Options */}
                   <div className="flex items-center justify-between">
-                    <div className="text-cyan-400 font-bold text-xs tracking-wider uppercase">
-                      <span>YOUR LEARNING PATH</span>
+                    <div className="text-xs font-semibold text-cyan-400">
+                      <span>Learning Path</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
@@ -1280,7 +1298,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                       </div>
 
                       <Link to="/app/roadmap">
-                        <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1D68FE] hover:bg-blue-600 text-white font-medium text-xs font-mono transition-all shadow-[0_0_15px_rgba(29,104,254,0.3)]">
+                        <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)]">
                           <span>Continue today's plan</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
@@ -1321,7 +1339,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                     </div>
                     <Link
                       to="/problems"
-                      className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors shrink-0"
+                      className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors shrink-0 font-medium"
                     >
                       <span>View all problems</span>
                       <span>→</span>
@@ -1378,7 +1396,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                           </div>
                         </div>
                         <Link to={`/problems/${p.slug}`}>
-                          <button className="px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#0B101B] hover:bg-blue-600/20 text-cyan-400 hover:text-white border border-cyan-500/30 flex items-center gap-1 shrink-0 transition-all">
+                          <button className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-[#0B101B] hover:bg-blue-600/20 text-cyan-400 hover:text-white border border-cyan-500/30 flex items-center gap-1 shrink-0 transition-all">
                             <span>Solve</span>
                             <span>→</span>
                           </button>
@@ -1387,13 +1405,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                     ))}
                   </div>
                 </div>
+
+                {/* CARD 3: Activity Heatmap (Full 8-col width, eliminating vertical dead space) */}
+                <SubmissionsHeatmapCard
+                  activityMap={telemetry.activityMap}
+                  acceptedMap={telemetry.acceptedActivityMap}
+                  totalSubmissions={totalSubmissions}
+                  totalActiveDays={telemetry.activeDays}
+                  maxStreak={maxStreak}
+                  selectedDate={selectedHeatmapDate}
+                  onSelectDate={setSelectedHeatmapDate}
+                />
               </div>
 
               {/* ===================================================================== */}
               {/* RIGHT COLUMN (4 cols): YOUR PROGRESS + CHAKRIVA INSIGHT + SHEETS       */}
               {/* ===================================================================== */}
               <div className="lg:col-span-4 space-y-5">
-                {/* CARD 3: Your progress */}
+                {/* CARD 4: Your progress */}
                 <AcceptanceSolvedCard
                   solvedCount={solvedCount > 0 ? solvedCount : 24}
                   totalProblems={bankTotals.total}
@@ -1409,12 +1438,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                   loading={telemetry.loading}
                 />
 
-                {/* CARD 4: Diagnostic Mentor */}
+                {/* CARD 5: Diagnostic Mentor */}
                 <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-3.5 relative overflow-hidden text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-white tracking-tight">Diagnostic Mentor</h4>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950/50 text-cyan-400 border border-cyan-500/30">
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-cyan-950/50 text-cyan-400 border border-cyan-500/30">
                         {chakrivaInsight.badge}
                       </span>
                     </div>
@@ -1433,20 +1462,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                   </div>
 
                   <Link to={chakrivaInsight.actionHref} className="block pt-1">
-                    <button className="w-full py-2 px-3 rounded-xl text-xs font-mono font-medium bg-[#08131E] hover:bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center justify-center gap-2 transition-all">
+                    <button className="w-full py-2 px-3 rounded-xl text-xs font-medium bg-[#08131E] hover:bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center justify-center gap-2 transition-all">
                       <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
                       <span>{chakrivaInsight.actionLabel}</span>
                     </button>
                   </Link>
                 </div>
 
-                {/* CARD 5: Curated Sheets */}
+                {/* CARD 6: Curated Sheets */}
                 <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-3.5 text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                     <h4 className="text-sm font-bold text-white tracking-tight">Curated Sheets</h4>
                     <Link
                       to="/app/sheets"
-                      className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
+                      className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors font-medium"
                     >
                       <span>All Sheets</span>
                       <span>→</span>
@@ -1478,53 +1507,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                     ))}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* ======================================================================= */}
-            {/* 3. LOWER SECTION: Activity Heatmap & Recent Submissions (50/50 Grid)     */}
-            {/* ======================================================================= */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-              {/* CARD 6: Activity */}
-              <SubmissionsHeatmapCard
-                activityMap={telemetry.activityMap}
-                acceptedMap={telemetry.acceptedActivityMap}
-                totalSubmissions={totalSubmissions}
-                totalActiveDays={telemetry.activeDays}
-                maxStreak={maxStreak}
-                selectedDate={selectedHeatmapDate}
-                onSelectDate={setSelectedHeatmapDate}
-              />
+                {/* CARD 7: Recent Submissions (In right column, compact layout matching height) */}
+                <div className="p-4 sm:p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-3 text-left">
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
+                    <h3 className="text-sm font-bold text-white tracking-tight">Recent submissions</h3>
+                    <Link
+                      to="/app/progress"
+                      className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors font-medium"
+                    >
+                      <span>View all</span>
+                      <span>→</span>
+                    </Link>
+                  </div>
 
-              {/* CARD 7: Recent submissions */}
-              <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-4 w-full h-full flex flex-col justify-between text-left">
-                {/* Header */}
-                <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                  <h3 className="text-sm font-bold text-white tracking-tight">Recent submissions</h3>
-                  <Link
-                    to="/app/progress"
-                    className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
-                  >
-                    <span>View all</span>
-                    <span>→</span>
-                  </Link>
-                </div>
-
-                {/* Submissions List OR Empty State matching reference image */}
-                {displayedRecentSubmissions.length > 0 ? (
-                  <div className="space-y-2 flex-1">
-                    {displayedRecentSubmissions.map((sub, idx) => {
-                      const accepted = isAccepted(sub.verdict);
-                      return (
-                        <div
-                          key={sub.id || idx}
-                          className="p-3 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 hover:bg-[#131A2B] transition-colors flex items-center justify-between gap-3 text-xs"
-                        >
-                          <div className="min-w-0 space-y-0.5">
-                            <div className="flex items-center gap-2">
+                  {/* Submissions List OR Empty State */}
+                  {displayedRecentSubmissions.length > 0 ? (
+                    <div className="space-y-2">
+                      {displayedRecentSubmissions.slice(0, 3).map((sub, idx) => {
+                        const accepted = isAccepted(sub.verdict);
+                        return (
+                          <div
+                            key={sub.id || idx}
+                            className="p-2.5 rounded-xl border border-white/[0.05] bg-[#0D121F]/80 hover:bg-[#131A2B] transition-colors flex items-center justify-between gap-2.5 text-xs"
+                          >
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
                               <span
                                 className={cn(
-                                  'px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold',
+                                  'px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0',
                                   accepted
                                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
                                     : 'bg-rose-500/10 text-rose-400 border border-rose-500/25'
@@ -1534,51 +1545,51 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                               </span>
                               <Link
                                 to={`/problems/${sub.problemSlug || sub.problem_id}`}
-                                className="font-semibold text-white hover:text-cyan-300 transition-colors truncate"
+                                className="font-medium text-white hover:text-cyan-300 transition-colors truncate"
                               >
                                 {sub.problemTitle || 'Algorithm Problem'}
                               </Link>
                             </div>
-                            <div className="text-[11px] font-mono text-zinc-400 flex items-center gap-2">
-                              {sub.language && <span>{sub.language}</span>}
-                              {sub.language && <span>•</span>}
-                              <span>{formatTimeAgo(sub.created_at)}</span>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[11px] text-zinc-400 font-mono">
+                                {formatTimeAgo(sub.created_at)}
+                              </span>
+                              {sub.problemSlug && (
+                                <Link to={`/problems/${sub.problemSlug}`} className="shrink-0">
+                                  <button className="px-2 py-0.5 rounded-lg text-xs font-medium bg-[#0E121B] hover:bg-white/[0.08] text-zinc-300 border border-white/[0.08] flex items-center gap-1 transition-colors">
+                                    <span>Solve</span>
+                                    <ArrowRight className="w-3 h-3 text-cyan-400" />
+                                  </button>
+                                </Link>
+                              )}
                             </div>
                           </div>
-
-                          {sub.problemSlug && (
-                            <Link to={`/problems/${sub.problemSlug}`}>
-                              <button className="px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium bg-[#0E121B] hover:bg-white/[0.08] text-zinc-300 border border-white/[0.08] flex items-center gap-1 shrink-0 transition-colors">
-                                <span>Solve</span>
-                                <ArrowRight className="w-3 h-3 text-cyan-400" />
-                              </button>
-                            </Link>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="py-6 px-4 flex flex-col items-center justify-center text-center space-y-3 flex-1">
-                    <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-zinc-400">
-                      <FileText className="w-6 h-6 stroke-[1.5]" />
+                        );
+                      })}
                     </div>
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-semibold text-white">
-                        Your recent submissions will appear here.
-                      </h4>
-                      <p className="text-xs text-zinc-400 max-w-sm">
-                        Solve problems to see your submissions, results, and insights.
-                      </p>
+                  ) : (
+                    <div className="py-6 px-4 flex flex-col items-center justify-center text-center space-y-3">
+                      <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-zinc-400">
+                        <FileText className="w-6 h-6 stroke-[1.5]" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-semibold text-white">
+                          No recent submissions yet
+                        </h4>
+                        <p className="text-xs text-zinc-400 max-w-sm">
+                          Solve problems to see your submissions, results, and insights.
+                        </p>
+                      </div>
+                      <Link to="/problems" className="pt-1">
+                        <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all">
+                          <span>Solve your first problem</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </Link>
                     </div>
-                    <Link to="/problems" className="pt-1">
-                      <button className="px-4 py-2 rounded-lg bg-[#1D68FE] hover:bg-blue-600 text-white font-medium text-xs font-mono flex items-center gap-1.5 shadow-[0_0_15px_rgba(29,104,254,0.3)] transition-all">
-                        <span>Solve your first problem</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </Link>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
