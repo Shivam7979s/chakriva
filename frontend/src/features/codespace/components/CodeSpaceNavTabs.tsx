@@ -45,22 +45,22 @@ export const CodeSpaceNavTabs: React.FC<CodeSpaceNavTabsProps> = ({
             to={tab.href}
             className={cn(
               'relative inline-flex items-center gap-1.5 rounded-lg font-medium transition-colors whitespace-nowrap',
-              compact ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs',
-              isActive ? 'text-[#F8FAFF]' : 'text-[#7C8BA6] hover:text-[#D5E1F7]'
+              compact ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-xs',
+              isActive ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
             )}
           >
             {isActive && (
               <motion.span
                 layoutId="codespaceWorkspacePill"
                 transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                className="absolute inset-0 rounded-lg bg-[#152443] border border-[#3B82F6]/35"
+                className="absolute inset-0 rounded-lg bg-[#152443] border border-blue-500/40 shadow-sm"
               />
             )}
             <Icon
               className={cn(
                 'relative z-10',
                 compact ? 'w-3 h-3' : 'w-3.5 h-3.5',
-                isActive ? 'text-[#60A5FA]' : 'text-[#5B6882]'
+                isActive ? 'text-blue-400' : 'text-zinc-500'
               )}
             />
             <span className="relative z-10">{tab.label}</span>

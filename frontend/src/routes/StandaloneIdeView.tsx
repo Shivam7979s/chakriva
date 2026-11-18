@@ -576,7 +576,7 @@ export const StandaloneIdeView: React.FC = () => {
   return (
     <div
       className={cn(
-        'flex flex-col bg-[#08090C] text-[#F3F6FF] transition-all duration-150',
+        'flex flex-col bg-[#08090C] text-zinc-100 transition-all duration-150',
         isFullscreen
           ? 'fixed inset-0 z-modal'
           : 'min-h-[calc(100vh-3.5rem)] border-t border-[#171D2D]'
@@ -585,7 +585,7 @@ export const StandaloneIdeView: React.FC = () => {
       {/* 1. UNIFIED WORKSPACE BAR & MULTI-TAB STRIP */}
       <div className="bg-[#0B0E16] border-b border-[#171D2D] px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2.5 shrink-0 select-none">
         {/* Left: Workspace Switcher + Tab Strip */}
-        <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-3 min-w-0 overflow-x-auto no-scrollbar">
           <CodeSpaceNavTabs activeTab="studio" compact />
 
           <div className="h-5 w-px bg-[#171D2D] shrink-0 hidden sm:block" />
@@ -607,8 +607,8 @@ export const StandaloneIdeView: React.FC = () => {
                   className={cn(
                     'h-8 px-2.5 rounded-lg flex items-center gap-2 cursor-pointer transition-colors text-xs font-mono shrink-0 border',
                     isActive
-                      ? 'bg-[#152443] text-[#F8FAFF] border-[#3B82F6]/35 font-semibold'
-                      : 'bg-[#0F131D] text-[#7C8BA6] border-[#181F30] hover:bg-[#141A29] hover:text-[#D5E1F7]'
+                      ? 'bg-[#152443] text-white border-blue-500/40 shadow-sm font-medium'
+                      : 'bg-[#0F131D] text-zinc-400 border-[#181F30] hover:bg-[#141A29] hover:text-zinc-200'
                   )}
                 >
                   <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', tabLang.dotClass)} />
@@ -623,7 +623,7 @@ export const StandaloneIdeView: React.FC = () => {
                         if (e.key === 'Escape') setRenamingTabId(null);
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-24 bg-[#080B12] border border-[#3B82F6]/60 rounded px-1.5 py-0.5 text-[11px] text-[#F8FAFF] focus:outline-none"
+                      className="w-24 bg-[#080B12] border border-blue-500/60 rounded px-1.5 py-0.5 text-xs text-white focus:outline-none"
                     />
                   ) : (
                     <span className="max-w-[130px] truncate">{tab.title}</span>
@@ -638,7 +638,7 @@ export const StandaloneIdeView: React.FC = () => {
                         setRenameDraft(tab.title);
                       }}
                       title="Rename tab"
-                      className="p-0.5 rounded text-[#7C8BA6] hover:text-[#F8FAFF] transition-colors cursor-pointer"
+                      className="p-0.5 rounded text-zinc-400 hover:text-white transition-colors cursor-pointer"
                     >
                       <Pencil className="w-2.5 h-2.5" />
                     </button>
@@ -648,7 +648,7 @@ export const StandaloneIdeView: React.FC = () => {
                     <button
                       type="button"
                       onClick={(e) => handleCloseTab(tab.id, e)}
-                      className="p-0.5 rounded hover:bg-[#1E335E] text-[#64748B] hover:text-[#F8FAFF] transition-colors cursor-pointer"
+                      className="p-0.5 rounded hover:bg-[#1E335E] text-zinc-500 hover:text-white transition-colors cursor-pointer"
                       title="Close tab"
                     >
                       <X className="w-3 h-3" />
@@ -662,81 +662,82 @@ export const StandaloneIdeView: React.FC = () => {
             <button
               type="button"
               onClick={() => handleAddTab()}
-              className="w-8 h-8 rounded-lg border border-[#181F30] hover:border-[#243B6B] bg-[#0F131D] hover:bg-[#152443] text-[#7C8BA6] hover:text-[#F8FAFF] flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+              className="w-8 h-8 rounded-lg border border-[#181F30] hover:border-blue-500/40 bg-[#0F131D] hover:bg-[#152443] text-zinc-400 hover:text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer"
               title="New scratchpad tab"
+              aria-label="New scratchpad tab"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
-
-            {/* Quick Starter Blueprint Menu */}
-            <div className="relative shrink-0" ref={templateMenuRef}>
-              <button
-                type="button"
-                onClick={() => setTemplateMenuOpen(!templateMenuOpen)}
-                className="h-8 px-2.5 rounded-lg border border-[#181F30] hover:border-[#243B6B] bg-[#0F131D] hover:bg-[#141A29] text-[11px] font-mono text-[#94A1B8] hover:text-[#00B8A3] inline-flex items-center gap-1 transition-colors cursor-pointer"
-                title="Insert starter blueprint tab"
-              >
-                <Sparkles className="w-3 h-3 text-[#00B8A3]" />
-                <span className="hidden md:inline">Blueprints</span>
-              </button>
-
-              <AnimatePresence>
-                {templateMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 4 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute left-0 top-10 z-40 w-72 rounded-xl border border-[#212B42] bg-[#0F131D] shadow-2xl p-1.5 space-y-1 text-left"
-                  >
-                    <div className="px-2.5 py-1 text-xs font-medium text-[#64748B]">
-                      Open Starter Blueprint
-                    </div>
-                    {QUICK_STARTER_TEMPLATES.map((tpl) => {
-                      const spec = getLanguageSpec(tpl.language);
-                      return (
-                        <button
-                          key={tpl.id}
-                          type="button"
-                          onClick={() =>
-                            handleAddTab({
-                              title: `${tpl.id}.${spec.ext}`,
-                              language: tpl.language,
-                              code: tpl.code,
-                              stdin: tpl.stdin,
-                            })
-                          }
-                          className="w-full rounded-lg px-2.5 py-2 hover:bg-[#152443] transition-colors text-left cursor-pointer"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-medium text-[#F8FAFF]">{tpl.title}</span>
-                            <span className="text-[10px] font-mono text-[#60A5FA]">
-                              {spec.shortLabel}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-[#7C8BA6] mt-0.5 line-clamp-1">
-                            {tpl.description}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
           </div>
         </div>
 
-        {/* Right: Language + Save Telemetry + Toolbar + Run CTA */}
+        {/* Right: Blueprints + Language + Save Telemetry + Toolbar + Run CTA */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap">
+          {/* Quick Starter Blueprint Menu (Integrated with Toolbar Controls) */}
+          <div className="relative shrink-0" ref={templateMenuRef}>
+            <button
+              type="button"
+              onClick={() => setTemplateMenuOpen(!templateMenuOpen)}
+              className="h-8 px-2.5 rounded-lg border border-[#181F30] hover:border-blue-500/40 bg-[#0F131D] hover:bg-[#141A29] text-xs font-mono text-zinc-300 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Insert starter blueprint tab"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Blueprints</span>
+            </button>
+
+            <AnimatePresence>
+              {templateMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-10 z-40 w-72 rounded-xl border border-[#212B42] bg-[#0F131D] shadow-2xl p-1.5 space-y-1 text-left"
+                >
+                  <div className="px-2.5 py-1 text-xs font-medium text-zinc-400">
+                    Open Starter Blueprint
+                  </div>
+                  {QUICK_STARTER_TEMPLATES.map((tpl) => {
+                    const spec = getLanguageSpec(tpl.language);
+                    return (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() =>
+                          handleAddTab({
+                            title: `${tpl.id}.${spec.ext}`,
+                            language: tpl.language,
+                            code: tpl.code,
+                            stdin: tpl.stdin,
+                          })
+                        }
+                        className="w-full rounded-lg px-2.5 py-2 hover:bg-[#152443] transition-colors text-left cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-white">{tpl.title}</span>
+                          <span className="text-xs font-mono text-blue-400">
+                            {spec.shortLabel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">
+                          {tpl.description}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <select
             aria-label="Target runtime language"
             value={activeTab.language}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className="h-8 px-2.5 rounded-lg bg-[#0F131D] border border-[#1B2234] text-xs font-mono text-[#E2E8F5] focus:outline-none focus:border-[#3B82F6]/60 cursor-pointer"
+            className="h-8 px-2.5 rounded-lg bg-[#0F131D] border border-[#181F30] text-xs font-mono text-zinc-200 focus:outline-none focus:border-blue-500/60 cursor-pointer"
           >
             {Object.values(CODESPACE_LANGUAGES).map((val) => (
-              <option key={val.id} value={val.id} className="bg-[#0F131D] text-[#E2E8F5]">
+              <option key={val.id} value={val.id} className="bg-[#0F131D] text-zinc-200">
                 {val.label}
               </option>
             ))}
@@ -744,24 +745,24 @@ export const StandaloneIdeView: React.FC = () => {
 
           <div
             id="autosave-status"
-            className="flex items-center gap-1.5 text-[11px] font-mono px-2 select-none"
+            className="flex items-center gap-1.5 text-xs font-mono px-2 select-none"
             aria-live="polite"
           >
             {saveStatus === 'saving' && (
-              <span className="flex items-center gap-1 text-[#8E9BB3]">
-                <RefreshCw className="w-3 h-3 animate-spin text-[#60A5FA]" />
+              <span className="flex items-center gap-1 text-zinc-400">
+                <RefreshCw className="w-3 h-3 animate-spin text-blue-400" />
                 <span>Saving...</span>
               </span>
             )}
             {saveStatus === 'saved' && (
-              <span className="flex items-center gap-1 text-[#00B8A3]">
+              <span className="flex items-center gap-1 text-emerald-400">
                 <Check className="w-3 h-3" />
                 <span>Saved</span>
               </span>
             )}
             {saveStatus === 'unsaved' && (
-              <span className="flex items-center gap-1 text-[#94A1B8]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
+              <span className="flex items-center gap-1 text-zinc-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                 <span>Unsaved</span>
               </span>
             )}
@@ -769,7 +770,7 @@ export const StandaloneIdeView: React.FC = () => {
               <button
                 type="button"
                 onClick={retrySave}
-                className="flex items-center gap-1 text-[#F43F5E] hover:underline cursor-pointer"
+                className="flex items-center gap-1 text-rose-400 hover:underline cursor-pointer"
                 title="Save failed. Click to retry."
               >
                 <AlertTriangle className="w-3 h-3" />
@@ -781,8 +782,9 @@ export const StandaloneIdeView: React.FC = () => {
           <button
             type="button"
             onClick={handleResetCode}
-            className="p-1.5 rounded-lg text-[#7C8BA6] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#181F30] flex items-center justify-center transition-colors cursor-pointer"
             title="Reset to boilerplate"
+            aria-label="Reset to boilerplate"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -790,8 +792,9 @@ export const StandaloneIdeView: React.FC = () => {
           <button
             type="button"
             onClick={handleFormatCode}
-            className="p-1.5 rounded-lg text-[#7C8BA6] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#181F30] flex items-center justify-center transition-colors cursor-pointer"
             title="Format indentation"
+            aria-label="Format indentation"
           >
             <Code2 className="w-4 h-4" />
           </button>
@@ -799,20 +802,21 @@ export const StandaloneIdeView: React.FC = () => {
           <button
             type="button"
             onClick={handleCopyCode}
-            className="p-1.5 rounded-lg text-[#7C8BA6] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#181F30] flex items-center justify-center transition-colors cursor-pointer"
             title="Copy source buffer"
+            aria-label="Copy source buffer"
           >
-            {copiedCode ? <Check className="w-4 h-4 text-[#00B8A3]" /> : <Copy className="w-4 h-4" />}
+            {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
           </button>
 
           <button
             type="button"
             onClick={handleSaveToVault}
             disabled={isSavingVault}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#1B2234] bg-[#0F131D] hover:bg-[#152443] hover:border-[#243B6B] text-[11px] font-medium text-[#C3CEE0] hover:text-[#F8FAFF] transition-colors cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-[#181F30] bg-[#0F131D] hover:bg-[#152443] hover:border-blue-500/40 text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
             title="Save or update snippet in CodeSpace Vault"
           >
-            <Bookmark className="w-3.5 h-3.5 text-[#60A5FA]" />
+            <Bookmark className="w-3.5 h-3.5 text-blue-400" />
             <span className="hidden sm:inline">
               {isSavingVault ? 'Syncing...' : loadedCodespaceId ? 'Update Vault' : 'Save to Vault'}
             </span>
@@ -821,8 +825,9 @@ export const StandaloneIdeView: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-1.5 rounded-lg text-[#7C8BA6] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#181F30] flex items-center justify-center transition-colors cursor-pointer"
             title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            aria-label={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
@@ -831,7 +836,7 @@ export const StandaloneIdeView: React.FC = () => {
             onClick={handleRunCode}
             disabled={isExecuting}
             size="sm"
-            className="bg-[#2563EB] hover:bg-[#3B82F6] text-[#F8FAFF] px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 border border-[#3B82F6]/40"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 h-8 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 border border-blue-400/30 shadow-sm cursor-pointer"
             title="Compile & Run Code (Ctrl + Enter)"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
@@ -844,14 +849,14 @@ export const StandaloneIdeView: React.FC = () => {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
         {/* LEFT: MONACO CODE EDITOR */}
         <div className="lg:col-span-8 flex flex-col border-b lg:border-b-0 lg:border-r border-[#171D2D] bg-[#080B12] overflow-hidden min-h-[380px]">
-          <div className="px-4 py-1.5 bg-[#0B0E16] border-b border-[#171D2D] flex items-center justify-between text-[11px] font-mono text-[#64748B]">
+          <div className="px-4 py-1.5 bg-[#0B0E16] border-b border-[#171D2D] flex items-center justify-between text-xs font-mono text-zinc-400">
             <div className="flex items-center gap-2">
-              <FileCode2 className="w-3.5 h-3.5 text-[#60A5FA]" />
-              <span className="text-[#C3CEE0]">{activeTab.title}</span>
-              <span className="text-[#475569]">•</span>
-              <span>{activeLangSpec.runtimeLabel}</span>
+              <FileCode2 className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-zinc-200">{activeTab.title}</span>
+              <span className="text-zinc-600">•</span>
+              <span className="text-zinc-400">{activeLangSpec.runtimeLabel}</span>
             </div>
-            <span className="hidden sm:inline text-[#475569]">Ctrl + Enter to run</span>
+            <span className="hidden sm:inline text-zinc-500">Ctrl + Enter to run</span>
           </div>
           <div className="flex-1 flex overflow-hidden">
             <MonacoCodeEditor
@@ -869,8 +874,8 @@ export const StandaloneIdeView: React.FC = () => {
           {/* STDIN INPUT */}
           <div className="h-44 sm:h-52 flex flex-col p-3.5 bg-[#0B0E16] shrink-0">
             <div className="flex items-center justify-between pb-2">
-              <span className="text-xs font-semibold text-[#8E9BB3] flex items-center gap-1.5">
-                <Terminal className="w-3.5 h-3.5 text-[#60A5FA]" />
+              <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                <Terminal className="w-3.5 h-3.5 text-blue-400" />
                 <span>Standard Input (stdin)</span>
               </span>
 
@@ -878,11 +883,12 @@ export const StandaloneIdeView: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCopyInput}
-                  className="p-1 rounded-md text-[#64748B] hover:text-[#F8FAFF] hover:bg-[#171F30] transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition-colors cursor-pointer"
                   title="Copy Stdin"
+                  aria-label="Copy Stdin"
                 >
                   {copiedInput ? (
-                    <Check className="w-3.5 h-3.5 text-[#00B8A3]" />
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
                   ) : (
                     <Copy className="w-3.5 h-3.5" />
                   )}
@@ -890,8 +896,9 @@ export const StandaloneIdeView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => updateActiveTabStdin('')}
-                  className="p-1 rounded-md text-[#64748B] hover:text-[#F43F5E] hover:bg-[#241017] transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-md text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center transition-colors cursor-pointer"
                   title="Clear Stdin"
+                  aria-label="Clear Stdin"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -902,7 +909,8 @@ export const StandaloneIdeView: React.FC = () => {
               value={activeTab.stdin}
               onChange={(e) => updateActiveTabStdin(e.target.value)}
               placeholder="Provide standard input stream here..."
-              className="flex-1 w-full bg-[#080B12] border border-[#181F30] focus:border-[#3B82F6]/60 text-[#E2E8F5] placeholder-[#475569] font-mono text-xs p-3 rounded-xl focus:outline-none resize-none leading-relaxed transition-colors"
+              aria-label="Standard input stream"
+              className="flex-1 w-full bg-[#080B12] border border-[#181F30] focus:border-blue-500/60 text-zinc-200 placeholder-zinc-500 font-mono text-xs p-3.5 rounded-xl focus:outline-none resize-none leading-relaxed transition-colors"
             />
           </div>
 
@@ -910,63 +918,63 @@ export const StandaloneIdeView: React.FC = () => {
           <div className="flex-1 flex flex-col p-3.5 bg-[#0F131D] overflow-hidden min-h-[220px]">
             <div className="flex items-center justify-between pb-2.5 shrink-0 gap-2 flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-[#8E9BB3] flex items-center gap-1.5">
-                  <Code2 className="w-3.5 h-3.5 text-[#00B8A3]" />
+                <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                  <Code2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Console Output</span>
                 </span>
 
                 {isExecuting ? (
-                  <span className="text-[10px] font-mono font-semibold text-[#60A5FA] bg-[#152443] border border-[#243B6B] px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-xs font-mono font-medium text-blue-400 bg-blue-500/10 border border-blue-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     <span>Running Sandbox</span>
                   </span>
                 ) : executionResult.status === 'success' ? (
-                  <span className="text-[10px] font-mono font-semibold text-[#00B8A3] bg-[#0B2421] border border-[#15423D] px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-xs font-mono font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
                     <span>Exit 0</span>
                   </span>
                 ) : executionResult.status === 'ce' ? (
-                  <span className="text-[10px] font-mono font-semibold text-[#FBBF24] bg-[#241A08] border border-[#422F0F] px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-xs font-mono font-medium text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
                     <span>Compile Error</span>
                   </span>
                 ) : executionResult.status === 're' ? (
-                  <span className="text-[10px] font-mono font-semibold text-[#F43F5E] bg-[#241017] border border-[#4C1D2A] px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-xs font-mono font-medium text-rose-400 bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
-                    <span>Runtime / Dispatch Error</span>
+                    <span>Runtime Error</span>
                   </span>
                 ) : null}
               </div>
 
               {executionResult.runtimeMs > 0 && (
-                <div className="flex items-center gap-3 text-[11px] font-mono text-[#7C8BA6] tabular-nums">
+                <div className="flex items-center gap-3 text-xs font-mono text-zinc-400 tabular-nums">
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-[#FBBF24]" />
-                    <strong className="text-[#F8FAFF]">{executionResult.runtimeMs}</strong> ms
+                    <Clock className="w-3 h-3 text-amber-400" />
+                    <strong className="text-zinc-200">{executionResult.runtimeMs}</strong> ms
                   </span>
                   <span className="flex items-center gap-1">
-                    <HardDrive className="w-3 h-3 text-[#60A5FA]" />
-                    <strong className="text-[#F8FAFF]">{executionResult.memoryKb}</strong> KB
+                    <HardDrive className="w-3 h-3 text-blue-400" />
+                    <strong className="text-zinc-200">{executionResult.memoryKb}</strong> KB
                   </span>
                 </div>
               )}
             </div>
 
-            <div className="flex-1 bg-[#080B12] border border-[#181F30] rounded-xl p-3 font-mono text-xs text-[#E2E8F5] overflow-y-auto leading-relaxed whitespace-pre-wrap select-text">
+            <div className="flex-1 bg-[#080B12] border border-[#181F30] rounded-xl p-3.5 font-mono text-xs text-zinc-200 overflow-y-auto leading-relaxed whitespace-pre-wrap select-text">
               {executionResult.status === 'idle' && !isExecuting ? (
-                <div className="h-full flex flex-col items-center justify-center text-center text-[#5B6882] space-y-1.5">
-                  <Terminal className="w-5 h-5 text-[#3F4A61]" />
-                  <p className="text-xs font-medium text-[#8E9BB3]">Ready to Execute</p>
-                  <p className="text-[11px] text-[#5B6882]">
-                    Press <span className="text-[#93C5FD]">Run Code</span> or{' '}
-                    <kbd className="px-1.5 py-0.5 rounded bg-[#0F131D] border border-[#1B2234] text-[10px]">
+                <div className="h-full flex flex-col items-center justify-center text-center text-zinc-400 space-y-1.5">
+                  <Terminal className="w-5 h-5 text-zinc-500" />
+                  <p className="text-xs font-medium text-zinc-200">Ready to Execute</p>
+                  <p className="text-xs text-zinc-400">
+                    Press <span className="text-blue-400 font-medium">Run Code</span> or{' '}
+                    <kbd className="px-1.5 py-0.5 rounded bg-[#0F131D] border border-[#1B2234] text-xs font-mono text-zinc-300">
                       Ctrl+Enter
                     </kbd>{' '}
                     to evaluate.
                   </p>
                 </div>
               ) : (
-                <div className="text-[#E2E8F5]">{executionResult.stdout}</div>
+                <div className="text-zinc-200">{executionResult.stdout}</div>
               )}
             </div>
           </div>
@@ -974,21 +982,21 @@ export const StandaloneIdeView: React.FC = () => {
       </div>
 
       {/* 3. STUDIO STATUS FOOTER BAR */}
-      <div className="h-7 bg-[#08090C] border-t border-[#171D2D] px-4 text-[11px] text-[#64748B] font-mono flex items-center justify-between shrink-0 select-none">
-        <div className="flex items-center gap-3 tabular-nums">
+      <div className="min-h-[36px] h-9 bg-[#08090C] border-t border-[#171D2D] px-4 text-xs text-zinc-400 font-mono flex items-center justify-between shrink-0 select-none">
+        <div className="flex items-center gap-3 tabular-nums text-xs">
           <span>UTF-8</span>
-          <span className="text-[#2D384F]">•</span>
+          <span className="text-zinc-600">•</span>
           <span>Spaces: 4</span>
-          <span className="text-[#2D384F]">•</span>
+          <span className="text-zinc-600">•</span>
           <span>
-            Ln <strong className="text-[#C3CEE0]">{cursorPos.line}</strong>, Col{' '}
-            <strong className="text-[#C3CEE0]">{cursorPos.col}</strong>
+            Ln <strong className="text-zinc-200">{cursorPos.line}</strong>, Col{' '}
+            <strong className="text-zinc-200">{cursorPos.col}</strong>
           </span>
-          <span className="text-[#2D384F]">•</span>
+          <span className="text-zinc-600">•</span>
           <span>{lineCount} lines</span>
         </div>
 
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-2">
           <input
             type="file"
             ref={fileInputRef}
@@ -1000,30 +1008,30 @@ export const StandaloneIdeView: React.FC = () => {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="hover:text-[#F8FAFF] transition-colors flex items-center gap-1 cursor-pointer"
+            className="h-7 px-2.5 rounded-md text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Open local source file"
           >
-            <FolderOpen className="w-3 h-3" />
+            <FolderOpen className="w-3.5 h-3.5" />
             <span>Open</span>
           </button>
 
           <button
             type="button"
             onClick={handleDownloadCode}
-            className="hover:text-[#F8FAFF] transition-colors flex items-center gap-1 cursor-pointer"
+            className="h-7 px-2.5 rounded-md text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Download source file"
           >
-            <Download className="w-3 h-3" />
+            <Download className="w-3.5 h-3.5" />
             <span>Download</span>
           </button>
 
           <button
             type="button"
             onClick={handleShare}
-            className="hover:text-[#F8FAFF] transition-colors flex items-center gap-1 cursor-pointer"
+            className="h-7 px-2.5 rounded-md text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Share studio URL"
           >
-            <Share2 className="w-3 h-3" />
+            <Share2 className="w-3.5 h-3.5" />
             <span>Share</span>
           </button>
         </div>
