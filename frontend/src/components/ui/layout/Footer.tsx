@@ -10,9 +10,11 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand & Identity */}
           <div className="lg:col-span-2 space-y-3.5">
             <div className="flex items-center gap-2 font-mono font-bold text-text-primary text-base">
-              <div className="w-6 h-6 rounded-lg bg-primary/10 border border-primary/30 text-primary flex items-center justify-center text-xs">
-                <span>&gt;_</span>
-              </div>
+              <img
+                src="/chakriva-logo.svg"
+                alt="CHAKRIVA Logo"
+                className="w-6 h-6 object-contain shrink-0"
+              />
               <span>CHAKRIVA</span>
             </div>
             <p className="text-[12px] text-text-muted leading-relaxed max-w-sm">

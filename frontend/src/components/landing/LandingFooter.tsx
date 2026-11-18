@@ -10,9 +10,11 @@ export const LandingFooter: React.FC = () => {
           {/* Brand Col */}
           <div className="sm:col-span-2 md:col-span-2 space-y-3.5">
             <div className="flex items-center gap-2.5 font-mono font-bold text-white text-base">
-              <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400 flex items-center justify-center text-xs">
-                <span>&gt;_</span>
-              </div>
+              <img
+                src="/chakriva-logo.svg"
+                alt="CHAKRIVA Logo"
+                className="w-7 h-7 object-contain shrink-0"
+              />
               <span className="tracking-wider">CHAKRIVA</span>
             </div>
             <p className="text-[12px] text-neutral-400 leading-relaxed font-sans max-w-sm">

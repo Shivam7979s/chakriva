@@ -191,9 +191,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="flex items-center gap-2.5 font-mono font-bold text-white group"
               aria-label="CHAKRIVA Home"
             >
-              <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center font-mono font-bold text-xs shadow-[0_0_12px_rgba(59,130,246,0.2)] group-hover:scale-105 transition-transform">
-                <span>&gt;_</span>
-              </div>
+              <img
+                src="/chakriva-logo.svg"
+                alt="CHAKRIVA Logo"
+                className="w-7 h-7 object-contain group-hover:scale-105 transition-transform shrink-0"
+              />
               {!isCollapsed && (
                 <div className="flex items-center gap-1.5">
                   <span className="tracking-wider text-sm font-bold text-white">CHAKRIVA</span>

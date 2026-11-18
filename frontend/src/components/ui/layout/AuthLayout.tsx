@@ -28,11 +28,11 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
             className="flex items-center gap-2.5 group focus:outline-none"
             aria-label="CHAKRIVA Home"
           >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#1E293B] via-[#94A3B8]/50 to-[#F8FAFC] flex items-center justify-center p-[1px] transition-transform duration-300 group-hover:scale-105">
-              <div className="w-full h-full bg-[#050608] rounded-full flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-[#F8FAFC] group-hover:scale-125 transition-transform" />
-              </div>
-            </div>
+            <img
+              src="/chakriva-logo.svg"
+              alt="CHAKRIVA Logo"
+              className="w-6 h-6 object-contain transition-transform duration-300 group-hover:scale-105 shrink-0"
+            />
             <span className="text-[13px] tracking-[0.18em] uppercase font-semibold text-[#F8FAFC]">
               CHAKRIVA
             </span>

@@ -51,9 +51,11 @@ export const Header: React.FC = () => {
         {/* Brand */}
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2.5 font-bold tracking-tight text-text-primary">
-            <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/30 text-primary flex items-center justify-center font-mono font-bold text-xs shadow-sm">
-              <span>&gt;_</span>
-            </div>
+            <img
+              src="/chakriva-logo.svg"
+              alt="CHAKRIVA Logo"
+              className="w-7 h-7 object-contain shrink-0"
+            />
             <span className="text-base tracking-wider font-mono font-bold">CHAKRIVA</span>
           </Link>
 

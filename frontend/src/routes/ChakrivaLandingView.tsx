@@ -27,11 +27,11 @@ import {
 /* -------------------------------------------------------------------------- */
 
 export const ChakrivaLogoMark: React.FC<{ className?: string }> = ({ className = 'w-6 h-6' }) => (
-  <div className={`${className} rounded-full bg-gradient-to-tr from-[#1E293B] via-[#94A3B8]/50 to-[#F8FAFC] flex items-center justify-center p-[1px] transition-transform duration-300 group-hover:scale-105 flex-shrink-0`}>
-    <div className="w-full h-full bg-[#050608] rounded-full flex items-center justify-center">
-      <div className="w-2 h-2 rounded-full bg-[#F8FAFC] group-hover:scale-125 transition-transform" />
-    </div>
-  </div>
+  <img
+    src="/chakriva-logo.svg"
+    alt="CHAKRIVA"
+    className={`${className} object-contain transition-transform duration-300 group-hover:scale-105 flex-shrink-0`}
+  />
 );
 
 

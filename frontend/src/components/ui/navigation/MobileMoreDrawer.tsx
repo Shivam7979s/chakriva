@@ -79,11 +79,11 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({ isOpen, onCl
         {/* Header */}
         <div className="px-5 py-3 border-b border-white/[0.08] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#1E293B] via-[#94A3B8]/50 to-[#F8FAFC] flex items-center justify-center p-[1px]">
-              <div className="w-full h-full bg-[#050608] rounded-full flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-[#F8FAFC]" />
-              </div>
-            </div>
+            <img
+              src="/chakriva-logo.svg"
+              alt="CHAKRIVA Logo"
+              className="w-6 h-6 object-contain shrink-0"
+            />
             <span className="text-xs font-mono font-bold tracking-widest text-white uppercase">
               CHAKRIVA NAVIGATION
             </span>
