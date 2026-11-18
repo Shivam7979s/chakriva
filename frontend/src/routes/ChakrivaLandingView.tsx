@@ -62,6 +62,7 @@ export const ChakrivaLandingView: React.FC = () => {
     { name: 'Problems', href: '/problems' },
     { name: 'Roadmap', href: '/roadmaps' },
     { name: 'Sheets', href: '/sheets' },
+    { name: 'About', href: '/about' },
     { name: 'Learn', href: '/learn' },
     { name: 'Chakriva AI', href: '/ai' },
     { name: 'Contests', href: '/contests' },
@@ -175,6 +176,10 @@ export const ChakrivaLandingView: React.FC = () => {
   ];
 
   const faqs = [
+    {
+      q: 'Who is the founder of Chakriva?',
+      a: 'Chakriva was founded and architected by Shivam Singh. Shivam created Chakriva to eliminate fragmented coding interview preparation by unifying adaptive capacity roadmaps, an isolated multi-language code judge, and retention decay revision into one intelligent platform. Connect directly with Shivam on LinkedIn, X (@ShivamS51270320), and Instagram.',
+    },
     {
       q: 'How does the Adaptive Roadmap reschedule when I miss a day?',
       a: "Unlike static sheets that mark you as 'behind schedule,' Chakriva's capacity engine redistributes incomplete tasks across your upcoming high-availability days (e.g. your weekend buffer). It recalibrates daily velocity so you stay on track for your target company deadline without burnout.",
@@ -1549,6 +1554,54 @@ export const ChakrivaLandingView: React.FC = () => {
         </section>
 
         {/* ================================================================== */}
+        {/* SECTION 14.5 — FOUNDER SPOTLIGHT & LEADERSHIP (Entity Authority)    */}
+        {/* ================================================================== */}
+        <section className="max-w-4xl mx-auto px-6 py-12 md:py-16 w-full border-t border-white/10" id="founder">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+            <div className="relative shrink-0">
+              <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-[#22D3EE] to-[#0B2551] p-0.5 shadow-xl">
+                <img
+                  src="/riva-avatar.png"
+                  alt="Shivam Singh — Founder & Lead Architect of Chakriva"
+                  className="w-full h-full object-cover rounded-[14px] bg-[#0B0F19]"
+                />
+              </div>
+              <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-[#0B0F19] border border-[#22D3EE] text-[9px] font-mono text-[#22D3EE]">
+                Founder
+              </span>
+            </div>
+            <div className="space-y-3 flex-1 min-w-0">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-[#A4F4FD]">
+                Platform Architecture &amp; Leadership
+              </div>
+              <h3 className="text-xl md:text-2xl font-bold text-white">
+                Architected by Shivam Singh
+              </h3>
+              <p className="text-xs text-white/60 leading-relaxed max-w-xl">
+                Shivam founded Chakriva to replace scattered spreadsheets and unguided problem grinding with an engineered, adaptive preparation system. Built on cognitive retention science, canonical 200-test invariant suites, and isolated compiler sandboxing.
+              </p>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-1 text-xs font-mono">
+                <Link to="/about" className="text-[#A4F4FD] hover:underline font-semibold">
+                  Read Full About Dossier &rarr;
+                </Link>
+                <span className="text-white/20">&bull;</span>
+                <a href="https://www.linkedin.com/in/shivam-singh-367388327/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white transition-colors">
+                  LinkedIn
+                </a>
+                <span className="text-white/20">&bull;</span>
+                <a href="https://x.com/ShivamS51270320" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white transition-colors">
+                  X / Twitter
+                </a>
+                <span className="text-white/20">&bull;</span>
+                <a href="https://www.instagram.com/shivam_singh_rajput791/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white transition-colors">
+                  Instagram
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================== */}
         {/* SECTION 15 — FINAL CALL-TO-ACTION                                 */}
         {/* ================================================================== */}
         <section className="max-w-6xl mx-auto px-6 py-20 md:py-32 w-full">
@@ -1620,6 +1673,9 @@ export const ChakrivaLandingView: React.FC = () => {
                 </Link>
                 <Link to="/ai" className="hover:text-white transition-colors">
                   Chakriva AI Mentor
+                </Link>
+                <Link to="/about" className="hover:text-[#A4F4FD] transition-colors font-medium">
+                  About &amp; Founder
                 </Link>
                 <Link to="/contests" className="hover:text-white transition-colors">
                   Timed Contests

@@ -12,6 +12,14 @@
     <priority>1.0</priority>
   </url>
 
+  <!-- About Leadership & Platform Architecture -->
+  <url>
+    <loc>https://verniq.vercel.app/about</loc>
+    <lastmod>2026-11-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
   <!-- Interactive Curriculum Roadmaps Hub -->
   <url>
     <loc>https://verniq.vercel.app/roadmaps</loc>

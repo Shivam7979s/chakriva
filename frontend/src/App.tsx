@@ -42,6 +42,7 @@ const TrackSyllabusView = lazy(() => import('@/features/learn/components/TrackSy
 const LessonWorkspaceView = lazy(() => import('@/features/learn/components/LessonWorkspaceView').then((m) => ({ default: m.LessonWorkspaceView })));
 const WorkspaceSubView = lazy(() => import('@/routes/WorkspaceSubView').then((m) => ({ default: m.WorkspaceSubView })));
 const ProblemAuthoringView = lazy(() => import('@/routes/ProblemAuthoringView').then((m) => ({ default: m.ProblemAuthoringView })));
+const AboutView = lazy(() => import('@/routes/AboutView').then((m) => ({ default: m.AboutView })));
 const PrivacyPolicyView = lazy(() => import('@/routes/PrivacyPolicyView').then((m) => ({ default: m.PrivacyPolicyView })));
 const TermsOfServiceView = lazy(() => import('@/routes/TermsOfServiceView').then((m) => ({ default: m.TermsOfServiceView })));
 const CookiePolicyView = lazy(() => import('@/routes/CookiePolicyView').then((m) => ({ default: m.CookiePolicyView })));
@@ -78,6 +79,14 @@ export const App: React.FC = () => {
             element={
               <PublicLayout>
                 <ArchitectureView />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <PublicLayout>
+                <AboutView />
               </PublicLayout>
             }
           />
