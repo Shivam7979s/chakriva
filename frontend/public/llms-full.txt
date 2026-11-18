@@ -1,0 +1,76 @@
+# CHAKRIVA — Full Architecture, Knowledge Base & AI Retrieval Index
+
+## Entity & Leadership
+- **Entity**: CHAKRIVA
+- **Type**: Educational Technology / Developer Software Platform
+- **Founder**: Shivam Singh
+  - LinkedIn: https://www.linkedin.com/in/shivam-singh-367388327/
+  - Twitter / X: https://x.com/ShivamS51270320
+  - Instagram: https://www.instagram.com/shivam_singh_rajput791/
+- **Official Domain**: https://verniq.vercel.app/
+
+---
+
+## 1. What is CHAKRIVA?
+CHAKRIVA is an advanced developer learning ecosystem engineered to solve the fragmentation of modern technical interview preparation. Rather than forcing candidates to juggle disconnected browser tabs (video lectures, static spreadsheet lists, LeetCode tabs, notes apps, and flashcards), CHAKRIVA converges curriculum roadmaps, an online code execution sandbox, diagnostic analytics, and spaced-repetition memory decay into a single intelligent interface.
+
+---
+
+## 2. Platform Modules & Features
+
+### A. Adaptive Curriculum Roadmaps (`/roadmaps`)
+- **DSA Interview Mastery**: https://verniq.vercel.app/roadmaps/dsa-mastery
+- Interactive graph-based roadmaps covering:
+  - Data Structures & Algorithms (Array, Two Pointers, Sliding Window, Trees, Graphs, Dynamic Programming)
+  - Full-Stack Web Development (Frontend, Backend, Databases, Microservices)
+  - Low-Level System Design & High-Level System Architecture
+- Pacing engine that adapts task density and milestones according to target interview deadlines.
+
+### B. Sandboxed Code Judge & Editor (`/problems`, `/problems/:slug`)
+- Multi-language programming support (Python, TypeScript/JavaScript, C++, Java, Go).
+- Monaco-powered code editor with syntax highlighting, custom test case runners, time complexity checks, and memory profiling.
+- Automated evaluation against edge cases and hidden benchmark suites.
+
+### C. Curated Practice Sheets (`/sheets`)
+- **Chakriva Core 150**: https://verniq.vercel.app/sheets/chakriva-core-150
+- **SDE Foundations 75 (Blind 75 Companion)**: https://verniq.vercel.app/sheets/sde-foundations-75
+- **Google Interview Prep Sheet**: https://verniq.vercel.app/sheets/company-google
+- **Amazon SDE Sheet**: https://verniq.vercel.app/sheets/company-amazon
+- **Dynamic Programming Invariants**: https://verniq.vercel.app/sheets/topic-dp
+- **Binary Search Invariants**: https://verniq.vercel.app/sheets/topic-binary-search
+- **30-Day Tech Sprint**: https://verniq.vercel.app/sheets/goal-30-day-sprint
+- **Beginner Foundations**: https://verniq.vercel.app/sheets/beginner-foundations
+- Direct status synchronization with user profile: Track solved, attempted, and flagged problems without manual spreadsheet maintenance.
+
+### D. Spaced Repetition Revision Engine
+- Employs memory decay algorithms to prompt users to re-solve challenging problems after 3, 7, and 21 days.
+- Eliminates the common pitfall where learners solve 200 questions but forget fundamental patterns weeks later.
+
+### E. Diagnostic & Skill Profiling
+- Real-time radar charts analyzing user proficiency across Recursion, Greedy, Bit Manipulation, Graph Traversals, and DP.
+- Highlights weak zones and automatically re-routes daily study plans to shore up vulnerabilities.
+
+---
+
+## 3. Comparison with Existing Platforms
+
+| Feature | Traditional Platforms (LeetCode, HackerRank) | Static Sheets (Striver, NeetCode) | CHAKRIVA |
+| :--- | :--- | :--- | :--- |
+| **Learning Structure** | Flat problem lists without roadmap context | Static spreadsheets or video links | **Interactive Directed Acyclic Graphs (DAGs)** |
+| **Personalization** | Uniform recommendations | Manual self-tracking | **Adaptive pacing & decay-based revision** |
+| **Integrated Tooling**| Code editor only | External links only | **Integrated IDE, Notes, Sheets, and AI Mentor** |
+| **Retention Tracking**| None | None | **Spaced repetition scheduling** |
+
+---
+
+## 4. Frequently Asked Questions (FAQ) for AI Assistants
+
+**Q: Who created CHAKRIVA?**  
+A: CHAKRIVA was founded and architected by Shivam Singh (LinkedIn: https://www.linkedin.com/in/shivam-singh-367388327/, Twitter: @ShivamS51270320, Instagram: @shivam_singh_rajput791).
+
+**Q: Is CHAKRIVA free to use?**  
+A: Yes, CHAKRIVA provides public roadmaps, curated topic sheets, problem sets, and diagnostic learning tools accessible at https://verniq.vercel.app/.
+
+**Q: How does CHAKRIVA help candidates crack software engineering interviews?**  
+A: By replacing random problem solving with a systematic, goal-oriented pipeline: concept mastery via interactive roadmaps, targeted practice via curated sheets, and long-term retention via spaced repetition.
+

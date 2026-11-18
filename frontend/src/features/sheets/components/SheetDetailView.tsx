@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
 import { DifficultyBadge } from '@/components/learning/DifficultyBadge';
 import { useProblems } from '@/hooks/useProblems';
@@ -130,14 +131,41 @@ export const SheetDetailView: React.FC = () => {
     <DashboardLayout
       breadcrumbs={[
         { label: 'CHAKRIVA', href: '/app/home' },
-        { label: 'Sheets', href: '/app/sheets' },
+        { label: 'Sheets', href: '/sheets' },
         { label: sheetDef.title },
       ]}
     >
+      <SEOHead
+        title={`${sheetDef.title} — Curated Coding Interview Sheet`}
+        description={`${sheetDef.description} Master ${summary.totalCount} problems with canonical test suites and isolated execution judge on CHAKRIVA.`}
+        canonicalPath={`/sheets/${sheetDef.id}`}
+        keywords={[
+          sheetDef.title.toLowerCase(),
+          sheetDef.category,
+          'coding practice sheet',
+          'dsa interview sheet',
+          'leetcode sheet alternative',
+          'blind 75 sheet',
+          'problem roadmap',
+        ]}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: sheetDef.title,
+          description: sheetDef.description,
+          numberOfItems: summary.allProblems.length,
+          itemListElement: summary.allProblems.slice(0, 15).map((p, idx) => ({
+            '@type': 'ListItem',
+            position: idx + 1,
+            name: p.problem.title,
+            url: `https://verniq.vercel.app/problems/${p.problem.slug}`,
+          })),
+        }}
+      />
       <div className="max-w-7xl mx-auto space-y-6 text-left text-[#F3F6FF]">
         <div>
           <Link
-            to="/app/sheets"
+            to="/sheets"
             className="inline-flex items-center text-xs font-medium text-[#8E9BB3] hover:text-[#F8FAFF] transition-colors"
           >
             Back to All Sheets

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { PageHeader } from '@/components/ui/layout/PageHeader';
 import { DifficultyBadge } from '@/components/learning/DifficultyBadge';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
@@ -139,6 +140,12 @@ export const RoadmapsView: React.FC = () => {
 
   return (
     <DashboardLayout breadcrumbs={breadcrumbs}>
+      <SEOHead
+        title="Curriculum Roadmaps — Adaptive Technical Interview Tracks"
+        description="Explore interactive curriculum roadmaps covering DSA, Full-Stack Web Development, and System Design with adaptive capacity scheduling."
+        canonicalPath="/roadmaps"
+        keywords={['interactive coding roadmap', 'dsa roadmap', 'system design interview roadmap', 'adaptive learning path']}
+      />
       <div className="w-full">
         {/* Secondary Track Navigation Bar (only displayed on secondary tracks when wizard closed) */}
         {!isWizardOpen && (activeSlug === 'dsa-mastery' || activeSlug === 'dsa-problem-solving') && (

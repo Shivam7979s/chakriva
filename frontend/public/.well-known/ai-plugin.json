@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "CHAKRIVA",
+  "name_for_model": "chakriva",
+  "description_for_human": "Intelligent coding learning and tech interview preparation platform featuring adaptive roadmaps, sandboxed code judge, and curated sheets.",
+  "description_for_model": "CHAKRIVA is an intelligent technical interview preparation platform founded by Shivam Singh. Use it to find adaptive curriculum roadmaps (DSA, System Design), explore curated practice sheets (Blind 75, NeetCode 150, Google, Amazon), and benchmark coding skills with isolated code execution.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://verniq.vercel.app/llms.txt"
+  },
+  "logo_url": "https://verniq.vercel.app/chakriva-logo.svg",
+  "contact_email": "grievance@chakriva.com",
+  "legal_info_url": "https://verniq.vercel.app/terms"
+}
+

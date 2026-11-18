@@ -1,4 +1,5 @@
 import React from 'react';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { LegalLayout, type TocItem } from '@/components/legal/LegalLayout';
 import {
   ShieldCheck,
@@ -24,7 +25,13 @@ const PRIVACY_TOC: TocItem[] = [
 
 export const PrivacyPolicyView: React.FC = () => {
   return (
-    <LegalLayout
+    <>
+      <SEOHead
+        title="Privacy Policy & DPDP Data Governance"
+        description="Comprehensive data governance and privacy practices for CHAKRIVA compliant with India's Digital Personal Data Protection (DPDP) Act, 2023."
+        canonicalPath="/privacy"
+      />
+      <LegalLayout
       title="Privacy Policy"
       subtitle="Comprehensive data governance and privacy practices compliant with India's Digital Personal Data Protection (DPDP) Act, 2023 and the Information Technology Act, 2000."
       badge="DPDP Act 2023 Compliant"
@@ -363,7 +370,8 @@ export const PrivacyPolicyView: React.FC = () => {
         </div>
       </section>
     </LegalLayout>
-  );
+  </>
+);
 };
 
 export default PrivacyPolicyView;

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
 import { DifficultyBadge } from '@/components/learning/DifficultyBadge';
 import { useProblems } from '@/hooks/useProblems';
@@ -533,6 +534,20 @@ export const ProblemsView: React.FC = () => {
 
   const content = (
     <div className="w-full max-w-[1780px] mx-auto flex flex-col flex-1 min-h-0 lg:h-full space-y-2.5 lg:overflow-hidden">
+      <SEOHead
+        title="Algorithmic Problem Catalog (3,392+ Challenges)"
+        description="Practice curated algorithmic challenges with an isolated code execution judge, canonical 200-test edge suites, and spaced repetition decay tracking."
+        canonicalPath={isAppRoute ? '/app/practice' : '/problems'}
+        noIndex={isAppRoute}
+        keywords={[
+          'leetcode practice problems',
+          'coding challenges online',
+          'dsa problem bank',
+          'code judge online',
+          'algorithms practice',
+          'canonical test suites'
+        ]}
+      />
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none !important;

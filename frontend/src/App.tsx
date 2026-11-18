@@ -1,61 +1,65 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/ui/layout/AppShell';
 import { PublicLayout } from '@/components/ui/layout/PublicLayout';
 import { AuthLayout } from '@/components/ui/layout/AuthLayout';
 import { AppLayout } from '@/components/ui/layout/AppLayout';
-import { FoundationView } from '@/routes/FoundationView';
-import { LandingView } from '@/routes/LandingView';
-import { CodeSpaceView } from '@/routes/CodeSpaceView';
-import { NoteSpaceView } from '@/routes/NoteSpaceView';
-import { ArchitectureView } from '@/routes/ArchitectureView';
-import { RoadmapsView } from '@/routes/RoadmapsView';
-import { ProblemsView } from '@/routes/ProblemsView';
-import { CoursesView } from '@/routes/CoursesView';
-import { LeaderboardView } from '@/routes/LeaderboardView';
-import { ProfileSettingsView } from '@/routes/ProfileSettingsView';
-import { ProfileView } from '@/routes/ProfileView';
-import { ProblemWorkspace } from '@/components/workspace/ProblemWorkspace';
-import { StandaloneIdeView } from '@/routes/StandaloneIdeView';
-import { LoginView } from '@/routes/LoginView';
-import { RegisterView } from '@/routes/RegisterView';
-import { ForgotPasswordView } from '@/routes/ForgotPasswordView';
-import { DashboardView } from '@/routes/DashboardView';
-import { DiagnosticView } from '@/routes/DiagnosticView';
-import { SprintPlanView } from '@/routes/SprintPlanView';
-import { StudyPlanView } from '@/routes/StudyPlanView';
-import { RevisionView } from '@/routes/RevisionView';
-import { SheetsView } from '@/routes/SheetsView';
-import { SheetDetailView } from '@/features/sheets/components/SheetDetailView';
-import { ChakrivaAiView } from '@/routes/ChakrivaAiView';
-import { ContestsView } from '@/routes/ContestsView';
-import { ContestDetailView } from '@/features/contests/components/ContestDetailView';
-import { ProgressView } from '@/routes/ProgressView';
-import { LearnView } from '@/routes/LearnView';
-import { TrackSyllabusView } from '@/features/learn/components/TrackSyllabusView';
-import { LessonWorkspaceView } from '@/features/learn/components/LessonWorkspaceView';
-import { WorkspaceSubView } from '@/routes/WorkspaceSubView';
-import { NotFoundView } from '@/routes/NotFoundView';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminRoute } from '@/components/auth/AdminRoute';
-import { ProblemAuthoringView } from '@/routes/ProblemAuthoringView';
-import { AuraLandingView } from '@/routes/AuraLandingView';
 import { ChakrivaLandingView } from '@/routes/ChakrivaLandingView';
-import { PrivacyPolicyView } from '@/routes/PrivacyPolicyView';
-import { TermsOfServiceView } from '@/routes/TermsOfServiceView';
-import { CookiePolicyView } from '@/routes/CookiePolicyView';
-import { RefundPolicyView } from '@/routes/RefundPolicyView';
 
-const LegacySheetDetailRedirect: React.FC = () => {
-  const { sheetId } = useParams<{ sheetId: string }>();
-  return <Navigate to={sheetId ? `/app/sheets/${sheetId}` : '/app/sheets'} replace />;
-};
+// Route-level code splitting for Core Web Vitals and lightning PageSpeed
+const FoundationView = lazy(() => import('@/routes/FoundationView').then((m) => ({ default: m.FoundationView })));
+const LandingView = lazy(() => import('@/routes/LandingView').then((m) => ({ default: m.LandingView })));
+const AuraLandingView = lazy(() => import('@/routes/AuraLandingView').then((m) => ({ default: m.AuraLandingView })));
+const CodeSpaceView = lazy(() => import('@/routes/CodeSpaceView').then((m) => ({ default: m.CodeSpaceView })));
+const NoteSpaceView = lazy(() => import('@/routes/NoteSpaceView').then((m) => ({ default: m.NoteSpaceView })));
+const ArchitectureView = lazy(() => import('@/routes/ArchitectureView').then((m) => ({ default: m.ArchitectureView })));
+const RoadmapsView = lazy(() => import('@/routes/RoadmapsView').then((m) => ({ default: m.RoadmapsView })));
+const ProblemsView = lazy(() => import('@/routes/ProblemsView').then((m) => ({ default: m.ProblemsView })));
+const ProblemWorkspace = lazy(() => import('@/components/workspace/ProblemWorkspace').then((m) => ({ default: m.ProblemWorkspace })));
+const CoursesView = lazy(() => import('@/routes/CoursesView').then((m) => ({ default: m.CoursesView })));
+const LeaderboardView = lazy(() => import('@/routes/LeaderboardView').then((m) => ({ default: m.LeaderboardView })));
+const ProfileSettingsView = lazy(() => import('@/routes/ProfileSettingsView').then((m) => ({ default: m.ProfileSettingsView })));
+const ProfileView = lazy(() => import('@/routes/ProfileView').then((m) => ({ default: m.ProfileView })));
+const StandaloneIdeView = lazy(() => import('@/routes/StandaloneIdeView').then((m) => ({ default: m.StandaloneIdeView })));
+const LoginView = lazy(() => import('@/routes/LoginView').then((m) => ({ default: m.LoginView })));
+const RegisterView = lazy(() => import('@/routes/RegisterView').then((m) => ({ default: m.RegisterView })));
+const ForgotPasswordView = lazy(() => import('@/routes/ForgotPasswordView').then((m) => ({ default: m.ForgotPasswordView })));
+const DashboardView = lazy(() => import('@/routes/DashboardView').then((m) => ({ default: m.DashboardView })));
+const DiagnosticView = lazy(() => import('@/routes/DiagnosticView').then((m) => ({ default: m.DiagnosticView })));
+const SprintPlanView = lazy(() => import('@/routes/SprintPlanView').then((m) => ({ default: m.SprintPlanView })));
+const StudyPlanView = lazy(() => import('@/routes/StudyPlanView').then((m) => ({ default: m.StudyPlanView })));
+const RevisionView = lazy(() => import('@/routes/RevisionView').then((m) => ({ default: m.RevisionView })));
+const SheetsView = lazy(() => import('@/routes/SheetsView').then((m) => ({ default: m.SheetsView })));
+const SheetDetailView = lazy(() => import('@/features/sheets/components/SheetDetailView').then((m) => ({ default: m.SheetDetailView })));
+const ChakrivaAiView = lazy(() => import('@/routes/ChakrivaAiView').then((m) => ({ default: m.ChakrivaAiView })));
+const ContestsView = lazy(() => import('@/routes/ContestsView').then((m) => ({ default: m.ContestsView })));
+const ContestDetailView = lazy(() => import('@/features/contests/components/ContestDetailView').then((m) => ({ default: m.ContestDetailView })));
+const ProgressView = lazy(() => import('@/routes/ProgressView').then((m) => ({ default: m.ProgressView })));
+const LearnView = lazy(() => import('@/routes/LearnView').then((m) => ({ default: m.LearnView })));
+const TrackSyllabusView = lazy(() => import('@/features/learn/components/TrackSyllabusView').then((m) => ({ default: m.TrackSyllabusView })));
+const LessonWorkspaceView = lazy(() => import('@/features/learn/components/LessonWorkspaceView').then((m) => ({ default: m.LessonWorkspaceView })));
+const WorkspaceSubView = lazy(() => import('@/routes/WorkspaceSubView').then((m) => ({ default: m.WorkspaceSubView })));
+const ProblemAuthoringView = lazy(() => import('@/routes/ProblemAuthoringView').then((m) => ({ default: m.ProblemAuthoringView })));
+const PrivacyPolicyView = lazy(() => import('@/routes/PrivacyPolicyView').then((m) => ({ default: m.PrivacyPolicyView })));
+const TermsOfServiceView = lazy(() => import('@/routes/TermsOfServiceView').then((m) => ({ default: m.TermsOfServiceView })));
+const CookiePolicyView = lazy(() => import('@/routes/CookiePolicyView').then((m) => ({ default: m.CookiePolicyView })));
+const RefundPolicyView = lazy(() => import('@/routes/RefundPolicyView').then((m) => ({ default: m.RefundPolicyView })));
+const NotFoundView = lazy(() => import('@/routes/NotFoundView').then((m) => ({ default: m.NotFoundView })));
+
+const PageLoader: React.FC = () => (
+  <div className="min-h-screen bg-[#08090B] flex items-center justify-center">
+    <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+  </div>
+);
 
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AppShell>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           {/* Chakriva Platform Landing View */}
           <Route path="/" element={<ChakrivaLandingView />} />
           <Route path="/chakriva" element={<ChakrivaLandingView />} />
@@ -313,21 +317,14 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          {/* Public Curated Sheets & Programmatic SEO Hubs */}
           <Route
             path="/sheets"
-            element={
-              <ProtectedRoute>
-                <Navigate to="/app/sheets" replace />
-              </ProtectedRoute>
-            }
+            element={<SheetsView />}
           />
           <Route
             path="/sheets/:sheetId"
-            element={
-              <ProtectedRoute>
-                <LegacySheetDetailRedirect />
-              </ProtectedRoute>
-            }
+            element={<SheetDetailView />}
           />
 
           {/* =======================================================
@@ -620,9 +617,10 @@ export const App: React.FC = () => {
             }
           />
         </Routes>
-      </AppShell>
-    </BrowserRouter>
-  );
+      </Suspense>
+    </AppShell>
+  </BrowserRouter>
+);
 };
 
 export default App;

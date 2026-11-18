@@ -1,4 +1,5 @@
 import React from 'react';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { LegalLayout, type TocItem } from '@/components/legal/LegalLayout';
 import {
   ShieldAlert,
@@ -24,7 +25,13 @@ const TERMS_TOC: TocItem[] = [
 
 export const TermsOfServiceView: React.FC = () => {
   return (
-    <LegalLayout
+    <>
+      <SEOHead
+        title="Terms of Service & Code Execution AUP"
+        description="Legally binding terms governing CHAKRIVA platform access, isolated compiler sandbox utilization, intellectual property ownership, and acceptable conduct."
+        canonicalPath="/terms"
+      />
+      <LegalLayout
       title="Terms of Service"
       subtitle="Legally binding terms governing platform access, isolated compiler sandbox utilization, intellectual property ownership, and acceptable conduct."
       badge="Code Execution Governance"
@@ -294,7 +301,8 @@ export const TermsOfServiceView: React.FC = () => {
         </div>
       </section>
     </LegalLayout>
-  );
+  </>
+);
 };
 
 export default TermsOfServiceView;

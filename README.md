@@ -1,14 +1,29 @@
-# VERNIQ
+# CHAKRIVA
 
-> **Production-grade engineering learning and career platform.**
+[![Live Platform](https://img.shields.io/badge/Live%20Demo-verniq.vercel.app-00d2ff?style=for-the-badge&logo=vercel)](https://verniq.vercel.app/)
+[![Founder](https://img.shields.io/badge/Architected%20by-Shivam%20Singh-0B2551?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/shivam-singh-367388327/)
+[![Twitter Follow](https://img.shields.io/badge/X-@ShivamS51270320-black?style=for-the-badge&logo=x)](https://x.com/ShivamS51270320)
+[![Instagram](https://img.shields.io/badge/Instagram-shivam__singh__rajput791-E4405F?style=for-the-badge&logo=instagram)](https://www.instagram.com/shivam_singh_rajput791/)
 
-VERNIQ is designed to bridge the gap between theoretical computer science education, practical software engineering competence, and technical interview readiness. It combines structured curriculum roadmaps, rigorous algorithmic practice, an isolated online code judge, progressive revision schedules, and AI-assisted mentoring within an architecturally sound, high-precision environment.
+> **Intelligent coding-learning and tech interview preparation platform featuring adaptive curriculum roadmaps, an isolated code judge, curated sheets, and deep learner insights.**
+
+CHAKRIVA (founded and architected by [Shivam Singh](https://www.linkedin.com/in/shivam-singh-367388327/)) is designed to bridge the gap between theoretical computer science education, practical software engineering competence, and technical interview readiness. It replaces static, fragmented spreadsheets with dynamic Directed Acyclic Graphs (DAGs), an integrated execution sandbox, canonical test suites, and spaced-repetition memory decay scheduling.
+
+---
+
+## Key Capabilities
+
+- **Adaptive Curriculum Roadmaps**: Real-time capacity balancing that dynamically redistributes study workloads when you miss a day ([Explore Roadmaps](https://verniq.vercel.app/roadmaps)).
+- **Isolated Code Judge Engine**: Multi-language execution sandbox (Java 21, C++20, Python 3.12) evaluating submissions against 80–200 canonical edge cases ([Problem Catalog](https://verniq.vercel.app/problems)).
+- **Curated Interview Sheets**: Interactive, synchronizing sheets including the Flagship 150, SDE Foundations 75 (Blind 75 Alternative), and Google/Amazon company packs ([Browse Sheets](https://verniq.vercel.app/sheets)).
+- **Memory Decay Revision Engine**: Spaced-repetition scheduler prompting retention reviews at optimal cognitive intervals to prevent concept decay.
+- **AI Mentorship**: Diagnostic, invariant-based hints preventing hallucination and guiding learners through algorithmic boundaries without revealing code spoilers.
 
 ---
 
 ## Product Philosophy
 
-VERNIQ is **not** a copy of existing platforms (such as TakeUForward, LeetCode, or Coursera). It possesses its own distinctive visual identity, proprietary pedagogy, and engineering-first principles:
+CHAKRIVA is built on strict engineering-first principles:
 
 1. **Information hierarchy before decoration**: Every pixel and byte serves learning comprehension.
 2. **Function before visual effects**: No generic SaaS fluff, unnecessary gradients, or gimmick animations.
@@ -19,7 +34,7 @@ VERNIQ is **not** a copy of existing platforms (such as TakeUForward, LeetCode, 
 
 ## Repository Structure
 
-VERNIQ is structured as a modular monorepo:
+VERNIQ / CHAKRIVA is structured as a modular monorepo:
 
 ```
 verniq/
@@ -43,7 +58,7 @@ verniq/
 
 ## Phase 0 Foundation Deliverables
 
-Phase 0 establishes the engineering and product baseline before implementing feature logic:
+Phase 0 established the engineering and product baseline:
 
 - [x] **0.1 Product Architecture**: High-level topology, security boundaries, and scalability plan ([docs/architecture/system-architecture.md](docs/architecture/system-architecture.md)).
 - [x] **0.2 Information Architecture**: Route hierarchy across Public, Authenticated, and Admin spaces ([docs/architecture/information-architecture.md](docs/architecture/information-architecture.md)).
@@ -85,3 +100,4 @@ npm run dev
 ```
 
 Visit `http://localhost:5173` to explore the design foundation, token verification, and component system preview.
+Live production build: [https://verniq.vercel.app/](https://verniq.vercel.app/)

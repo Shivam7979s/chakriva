@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { SEOHead } from '../components/seo/SEOHead';
 import { ChakrivaLiquidSilkCanvas } from '../components/landing/ChakrivaLiquidSilkCanvas';
 import {
   ChevronRight,
@@ -198,6 +199,35 @@ export const ChakrivaLandingView: React.FC = () => {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#0c0c0c] text-white selection:bg-brand/30">
+      <SEOHead
+        title="CHAKRIVA — Intelligent Coding Learning & Tech Interview Platform"
+        description="CHAKRIVA by Shivam Singh — Intelligent coding-learning and interview-preparation platform featuring adaptive roadmaps, curated sheets, isolated code judge, and deep learner insights."
+        canonicalPath="/"
+        keywords={[
+          'coding interview preparation',
+          'adaptive coding roadmaps',
+          'leetcode alternative',
+          'dsa sheets',
+          'blind 75 tracker',
+          'system design roadmap',
+          'code judge',
+          'shivam singh',
+          'chakriva',
+          'tech interview prep'
+        ]}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          'mainEntity': faqs.map((f) => ({
+            '@type': 'Question',
+            'name': f.q,
+            'acceptedAnswer': {
+              '@type': 'Answer',
+              'text': f.a,
+            },
+          })),
+        }}
+      />
       {/* Root SVG Noise Filter for Headings */}
       <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
         <filter id="c3-noise">
@@ -1675,10 +1705,19 @@ export const ChakrivaLandingView: React.FC = () => {
           </div>
 
           <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <ChakrivaLogoMark className="w-4 h-4" />
-              <span className="font-semibold text-white/80">CHAKRIVA</span>
-              <span>&copy; {new Date().getFullYear()} Chakriva Labs Private Limited. All rights reserved.</span>
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 text-center sm:text-left">
+              <div className="flex items-center gap-2">
+                <ChakrivaLogoMark className="w-4 h-4" />
+                <span className="font-semibold text-white/80">CHAKRIVA</span>
+              </div>
+              <span className="hidden sm:inline text-white/20">&bull;</span>
+              <span>Founded by <a href="https://www.linkedin.com/in/shivam-singh-367388327/" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#A4F4FD] transition-colors font-medium">Shivam Singh</a></span>
+              <span className="hidden sm:inline text-white/20">&bull;</span>
+              <div className="flex items-center gap-2 text-[11px]">
+                <a href="https://x.com/ShivamS51270320" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">X (@ShivamS51270320)</a>
+                <span>&bull;</span>
+                <a href="https://www.instagram.com/shivam_singh_rajput791/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Instagram</a>
+              </div>
             </div>
             <div className="flex items-center gap-4 text-[11px] text-white/40 font-mono">
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
@@ -1687,7 +1726,7 @@ export const ChakrivaLandingView: React.FC = () => {
               <span>&bull;</span>
               <Link to="/cookies" className="hover:text-white transition-colors">Cookies</Link>
               <span>&bull;</span>
-              <Link to="/refunds" className="hover:text-white transition-colors">Refunds</Link>
+              <Link to="/refund" className="hover:text-white transition-colors">Refunds</Link>
             </div>
           </div>
         </footer>

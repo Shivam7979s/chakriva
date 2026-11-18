@@ -1,0 +1,23 @@
+{
+  "name": "CHAKRIVA — Intelligent Coding Learning & Tech Interview Platform",
+  "short_name": "CHAKRIVA",
+  "description": "Adaptive roadmaps, isolated code judge, curated practice sheets, and deep learner insights.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0F17",
+  "theme_color": "#0B0F17",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/chakriva-logo-lite.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ]
+}
+

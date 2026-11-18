@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
 import { useProblems } from '@/hooks/useProblems';
 import { useUserProgress } from '@/hooks/useUserProgress';
@@ -104,6 +105,19 @@ export const SheetsView: React.FC = () => {
         { label: 'Sheets' },
       ]}
     >
+      <SEOHead
+        title="Curated Coding Interview Sheets — Blind 75, NeetCode & Company Invariants"
+        description="Structured problem sets and company-specific invariant sheets mapped to automated test suites and progress telemetry."
+        canonicalPath="/sheets"
+        keywords={[
+          'blind 75 sheet',
+          'neetcode 150 tracker',
+          'striver sde sheet',
+          'faang interview sheets',
+          'dsa problem list',
+          'coding practice sheets'
+        ]}
+      />
       <div className="max-w-7xl mx-auto space-y-6 text-left text-[#F3F6FF]">
         {/* Top Workspace Header Card (Matches CodeSpace / Home / Roadmap Palette, Zero Icons) */}
         <section className="rounded-2xl border border-[#181F30] bg-gradient-to-b from-[#0F1422] to-[#0B0E16] p-5 sm:p-6">

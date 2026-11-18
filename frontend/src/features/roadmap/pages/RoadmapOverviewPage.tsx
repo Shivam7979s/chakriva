@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { Container } from '@/components/ui/layout/Container';
 import { RoadmapHeader } from '../components/RoadmapHeader';
 import { ContinueLearningBanner } from '../components/ContinueLearningBanner';
@@ -95,6 +96,29 @@ export const RoadmapOverviewPage: React.FC<RoadmapOverviewPageProps> = ({
 
   return (
     <div className="py-8 space-y-8 text-left bg-background min-h-screen text-text-primary">
+      <SEOHead
+        title={`${roadmap.title} — Technical Interview Curriculum`}
+        description={`${roadmap.description} Covers ${roadmap.totalSprints} sprints and structured algorithmic invariants.`}
+        canonicalPath={`/roadmaps/${slug}`}
+        keywords={[
+          roadmap.title.toLowerCase(),
+          'dsa roadmap',
+          'coding roadmap',
+          'tech interview curriculum',
+          'algorithmic problem solving roadmap',
+        ]}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Course',
+          name: roadmap.title,
+          description: roadmap.description,
+          provider: {
+            '@type': 'Organization',
+            name: 'CHAKRIVA',
+            sameAs: 'https://verniq.vercel.app/',
+          },
+        }}
+      />
       <Container size="xl">
         <div className="space-y-6">
           {/* Roadmap Header Banner with High-Level Progress */}
