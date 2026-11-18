@@ -245,7 +245,7 @@ class AnthropicAuthoringProvider(BaseAIAuthoringProvider):
 class GeminiAuthoringProvider(BaseAIAuthoringProvider):
     """Google Gemini authoring provider."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-1.5-pro"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-3.8-flash"):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         self.model = model
         self.fallback = MockDeterministicAuthoringProvider()

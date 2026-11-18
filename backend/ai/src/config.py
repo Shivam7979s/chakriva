@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     openrouter_api_key: Optional[str] = None
     ai_model: Optional[str] = None
     ai_base_url: Optional[str] = None
-    ai_timeout_seconds: float = 30.0
+    ai_timeout_seconds: float = 45.0
 
     # Supabase authentication
     supabase_url: Optional[str] = None
@@ -72,7 +72,7 @@ class Settings(BaseSettings):
         elif provider == "groq":
             return "qwen/qwen3.8-27b"
         elif provider == "gemini":
-            return "gemini-1.5-flash"
+            return "gemini-3.8-flash"
         elif provider == "openrouter":
             return "anthropic/claude-3.5-sonnet"
         elif provider == "ollama":

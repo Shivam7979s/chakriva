@@ -26,6 +26,11 @@ services:
     environment:
       - APP_ENV=development
       - SUPABASE_URL=http://host.docker.internal:54321
+      - AI_PROVIDER=${AI_PROVIDER:-gemini}
+      - AI_MODEL=${AI_MODEL:-gemini-3.8-flash}
+      - AI_API_KEY=${AI_API_KEY:-AQ.Ab8RN6L0_UXPIIMqm6uyuJx2ksKugqaXEgCOr5-DhokM4U0DYQ}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-AQ.Ab8RN6L0_UXPIIMqm6uyuJx2ksKugqaXEgCOr5-DhokM4U0DYQ}
+      - AI_BASE_URL=${AI_BASE_URL:-https://generativelanguage.googleapis.com/v1beta/openai/}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

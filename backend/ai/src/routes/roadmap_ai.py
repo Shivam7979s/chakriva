@@ -297,7 +297,7 @@ async def interpret_roadmap_goal(
     ]
 
     try:
-        res = await provider.generate_response(messages, max_tokens=1000, temperature=0.3)
+        res = await provider.generate_response(messages, max_tokens=2500, temperature=0.3)
         if not res.success or not res.reply:
             logger.warning("AI provider failed inference: %s. Falling back to deterministic planner.", res.error)
             deterministic_resp = build_deterministic_interpretation(req)
