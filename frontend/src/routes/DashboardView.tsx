@@ -1108,12 +1108,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 {/* CARD 5: Diagnostic Mentor */}
                 <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-3.5 relative overflow-hidden text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-white tracking-tight">Diagnostic Mentor</h4>
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-400 border border-cyan-500/30">
-                        Standby
-                      </span>
-                    </div>
+                    <h4 className="text-sm font-bold text-white tracking-tight">Diagnostic Mentor</h4>
                     <Link to="/app/chakriva">
                       <ChevronRight className="w-4 h-4 text-zinc-400 hover:text-white transition-colors" />
                     </Link>
@@ -1232,25 +1227,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
               <div className="lg:col-span-8 space-y-5">
                 {/* CARD 1: Learning Path */}
                 <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-4 text-left">
-                  {/* Top Label: Learning Path + On Track + Options */}
+                  {/* Top Label: Learning Path + Options */}
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-semibold text-cyan-400">
                       <span>Learning Path</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        On Track
-                      </span>
-                      <Link
-                        to="/app/roadmap"
-                        className="text-zinc-400 hover:text-white transition-colors p-1 rounded-md hover:bg-white/[0.04]"
-                        title="View full roadmap"
-                        aria-label="View full roadmap"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </Link>
-                    </div>
+                    <Link
+                      to="/app/roadmap"
+                      className="text-zinc-400 hover:text-white transition-colors p-1 rounded-md hover:bg-white/[0.04]"
+                      title="View full roadmap"
+                      aria-label="View full roadmap"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </Link>
                   </div>
 
                   {/* Main Title & Metadata */}
@@ -1442,12 +1431,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                 {/* CARD 5: Diagnostic Mentor */}
                 <div className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0E17] shadow-sm space-y-3.5 relative overflow-hidden text-left">
                   <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-white tracking-tight">Diagnostic Mentor</h4>
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-cyan-950/50 text-cyan-400 border border-cyan-500/30">
-                        {chakrivaInsight.badge}
-                      </span>
-                    </div>
+                    <h4 className="text-sm font-bold text-white tracking-tight">Diagnostic Mentor</h4>
                     <Link to={chakrivaInsight.actionHref}>
                       <ChevronRight className="w-4 h-4 text-zinc-400 hover:text-white transition-colors" />
                     </Link>
