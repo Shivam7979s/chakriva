@@ -396,7 +396,7 @@ export const RoadmapLandingView: React.FC<RoadmapLandingViewProps> = ({
                   <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#171D2D] border-b border-[#171D2D]">
                     {/* OVERALL PROGRESS */}
                     <div className="p-5 sm:px-6 space-y-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#7C869E]">
+                      <div className="text-xs font-medium text-text-secondary">
                         Overall progress
                       </div>
                       <div className="flex items-center gap-6">
@@ -463,7 +463,7 @@ export const RoadmapLandingView: React.FC<RoadmapLandingViewProps> = ({
                     {/* SPRINT PROGRESS */}
                     <div className="p-5 sm:px-6 space-y-4">
                       <div className="flex items-center justify-between">
-                        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#7C869E]">
+                        <div className="text-xs font-medium text-text-secondary">
                           Sprint progress
                         </div>
                         <div className="flex items-center gap-2 text-xs text-[#94A3B8]">
@@ -547,7 +547,7 @@ export const RoadmapLandingView: React.FC<RoadmapLandingViewProps> = ({
                     {/* TODAY'S TASK */}
                     <div className="p-5 sm:px-6 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-[#7C869E]">
+                        <span className="text-xs font-medium text-text-secondary">
                           Today&apos;s task
                         </span>
                         <span className="text-xs font-mono text-[#7C869E] tabular-nums">
@@ -610,7 +610,7 @@ export const RoadmapLandingView: React.FC<RoadmapLandingViewProps> = ({
 
                     {/* TODAY'S PROGRESS */}
                     <div className="p-5 sm:px-6 space-y-3 bg-[#0C101A]/40">
-                      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#7C869E]">
+                      <div className="text-xs font-medium text-text-secondary">
                         Today&apos;s progress
                       </div>
                       <div className="space-y-2 text-xs">

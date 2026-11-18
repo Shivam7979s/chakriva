@@ -689,7 +689,7 @@ export const StandaloneIdeView: React.FC = () => {
                     transition={{ duration: 0.15 }}
                     className="absolute left-0 top-10 z-40 w-72 rounded-xl border border-[#212B42] bg-[#0F131D] shadow-2xl p-1.5 space-y-1 text-left"
                   >
-                    <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[#64748B]">
+                    <div className="px-2.5 py-1 text-xs font-medium text-[#64748B]">
                       Open Starter Blueprint
                     </div>
                     {QUICK_STARTER_TEMPLATES.map((tpl) => {
@@ -869,7 +869,7 @@ export const StandaloneIdeView: React.FC = () => {
           {/* STDIN INPUT */}
           <div className="h-44 sm:h-52 flex flex-col p-3.5 bg-[#0B0E16] shrink-0">
             <div className="flex items-center justify-between pb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-[#8E9BB3] font-semibold flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-[#8E9BB3] flex items-center gap-1.5">
                 <Terminal className="w-3.5 h-3.5 text-[#60A5FA]" />
                 <span>Standard Input (stdin)</span>
               </span>
@@ -910,7 +910,7 @@ export const StandaloneIdeView: React.FC = () => {
           <div className="flex-1 flex flex-col p-3.5 bg-[#0F131D] overflow-hidden min-h-[220px]">
             <div className="flex items-center justify-between pb-2.5 shrink-0 gap-2 flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[#8E9BB3] font-semibold flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-[#8E9BB3] flex items-center gap-1.5">
                   <Code2 className="w-3.5 h-3.5 text-[#00B8A3]" />
                   <span>Console Output</span>
                 </span>

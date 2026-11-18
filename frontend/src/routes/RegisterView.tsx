@@ -173,7 +173,7 @@ export const RegisterView: React.FC = () => {
           {/* Email Address */}
           <div className="space-y-1.5 text-left">
             <label htmlFor="reg-email" className="text-xs font-medium text-white/80">
-              Email address <span className="text-[#00d2ff]">*</span>
+              Email address <span className="text-blue-400">*</span>
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -185,7 +185,7 @@ export const RegisterView: React.FC = () => {
                 placeholder="name@domain.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-[#00d2ff] focus:ring-1 focus:ring-[#00d2ff]/30 text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 text-sm text-white placeholder-white/30 outline-none transition-all"
               />
             </div>
           </div>
@@ -194,7 +194,7 @@ export const RegisterView: React.FC = () => {
           <div className="space-y-1.5 text-left">
             <div className="flex items-center justify-between">
               <label htmlFor="reg-username" className="text-xs font-medium text-white/80">
-                Username <span className="text-[#00d2ff]">*</span>
+                Username <span className="text-blue-400">*</span>
               </label>
               <span className="text-[10px] text-white/40 font-mono">3–20 characters</span>
             </div>
@@ -208,7 +208,7 @@ export const RegisterView: React.FC = () => {
                 placeholder="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-[#00d2ff] focus:ring-1 focus:ring-[#00d2ff]/30 text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 text-sm text-white placeholder-white/30 outline-none transition-all"
               />
             </div>
           </div>
@@ -217,7 +217,7 @@ export const RegisterView: React.FC = () => {
           <div className="space-y-1.5 text-left">
             <div className="flex items-center justify-between">
               <label htmlFor="reg-password" className="text-xs font-medium text-white/80">
-                Password <span className="text-[#00d2ff]">*</span>
+                Password <span className="text-blue-400">*</span>
               </label>
               <span className="text-[10px] text-white/40 font-mono">At least 8 characters</span>
             </div>
@@ -231,7 +231,7 @@ export const RegisterView: React.FC = () => {
                 placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-11 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-[#00d2ff] focus:ring-1 focus:ring-[#00d2ff]/30 text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full pl-10 pr-11 py-2.5 rounded-xl bg-[#0d131f] border border-white/10 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 text-sm text-white placeholder-white/30 outline-none transition-all"
               />
               <button
                 type="button"
@@ -249,8 +249,8 @@ export const RegisterView: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
-            className="w-full py-3 justify-center text-sm font-semibold text-black bg-gradient-to-r from-white via-[#e0f2fe] to-[#00d2ff] hover:opacity-95 hover:shadow-[0_0_25px_rgba(0,210,255,0.3)] transition-all rounded-xl mt-3 active:scale-[0.99]"
-            rightIcon={<ArrowRight className="w-4 h-4 text-black" />}
+            className="w-full py-3 justify-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_25px_rgba(37,99,235,0.35)] transition-all rounded-xl mt-3 active:scale-[0.99]"
+            rightIcon={<ArrowRight className="w-4 h-4 text-white" />}
             isLoading={loading}
           >
             Create account
@@ -261,7 +261,7 @@ export const RegisterView: React.FC = () => {
         <div className="pt-5 mt-5 border-t border-white/10 text-center">
           <p className="text-xs text-white/50">
             Already have an account?{' '}
-            <Link to="/login" className="text-[#00d2ff] font-medium hover:underline ml-1">
+            <Link to="/login" className="text-blue-400 font-medium hover:underline ml-1">
               Sign in →
             </Link>
           </p>

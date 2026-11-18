@@ -617,8 +617,8 @@ export const StudyPlanView: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider bg-primary/15 text-primary border border-primary/20">
-                    Phase 4 Engine
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/15 text-primary border border-primary/20">
+                    Adaptive Plan
                   </span>
                   <span className="text-xs text-text-muted">Adaptive Schedule Generator</span>
                 </div>
@@ -773,7 +773,7 @@ export const StudyPlanView: React.FC = () => {
 
                   {/* Daily Bandwidth */}
                   <div className="space-y-3">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-text-muted block">
+                    <label className="text-xs font-medium text-text-secondary block">
                       Daily Bandwidth Budget
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -803,7 +803,7 @@ export const StudyPlanView: React.FC = () => {
 
                   {/* Target Horizon Duration */}
                   <div className="space-y-3">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-text-muted block">
+                    <label className="text-xs font-medium text-text-secondary block">
                       Target Horizon Duration
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -925,14 +925,14 @@ export const StudyPlanView: React.FC = () => {
                   {/* Summary Box */}
                   <div className="p-4 rounded-xl border border-white/[0.08] bg-surface-elevated flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
                     <div className="space-y-1">
-                      <span className="text-text-muted font-mono uppercase text-[10px]">Plan Summary</span>
+                      <span className="text-text-muted text-xs font-medium">Plan Summary</span>
                       <p className="font-semibold text-text-primary">
                         {GOAL_OPTIONS.find((g) => g.id === selectedGoal)?.title} Track • {dailyMinutes} mins/day •{' '}
                         {timelineDays} Days Timeline
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className="text-text-muted font-mono uppercase text-[10px]">Estimated Allocation</span>
+                      <span className="text-text-muted text-xs font-medium">Estimated Allocation</span>
                       <p className="font-semibold text-emerald-400">
                         ~{Math.round(dailyMinutes / 30) * timelineDays} Problems Total
                       </p>
@@ -972,7 +972,7 @@ export const StudyPlanView: React.FC = () => {
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <span
                       className={cn(
-                        'px-2.5 py-0.5 rounded text-xs font-mono font-semibold uppercase tracking-wider border',
+                        'px-2.5 py-0.5 rounded text-xs font-semibold border',
                         activeGoalConfig.accentBg,
                         activeGoalConfig.accentBorder,
                         activeGoalConfig.accentText
@@ -1034,7 +1034,7 @@ export const StudyPlanView: React.FC = () => {
               {/* Progress Summary Metrics Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-white/[0.06]">
                 <div className="p-3 rounded-lg bg-surface-elevated border border-white/[0.06]">
-                  <span className="text-[10px] font-mono uppercase text-text-muted block">Completion Rate</span>
+                  <span className="text-xs font-medium text-text-muted block">Completion Rate</span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-xl font-bold font-mono text-emerald-400">{progressStats.percentage}%</span>
                     <span className="text-xs text-text-muted font-mono">
@@ -1044,7 +1044,7 @@ export const StudyPlanView: React.FC = () => {
                 </div>
 
                 <div className="p-3 rounded-lg bg-surface-elevated border border-white/[0.06]">
-                  <span className="text-[10px] font-mono uppercase text-text-muted block">Due Today</span>
+                  <span className="text-xs font-medium text-text-muted block">Due Today</span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-xl font-bold font-mono text-text-primary">{progressStats.dueToday}</span>
                     <span className="text-xs text-text-muted font-mono">scheduled</span>
@@ -1052,7 +1052,7 @@ export const StudyPlanView: React.FC = () => {
                 </div>
 
                 <div className="p-3 rounded-lg bg-surface-elevated border border-white/[0.06]">
-                  <span className="text-[10px] font-mono uppercase text-text-muted block">Overdue Tasks</span>
+                  <span className="text-xs font-medium text-text-muted block">Overdue Tasks</span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span
                       className={cn(
@@ -1067,7 +1067,7 @@ export const StudyPlanView: React.FC = () => {
                 </div>
 
                 <div className="p-3 rounded-lg bg-surface-elevated border border-white/[0.06]">
-                  <span className="text-[10px] font-mono uppercase text-text-muted block">Pending Total</span>
+                  <span className="text-xs font-medium text-text-muted block">Pending Total</span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-xl font-bold font-mono text-blue-400">{progressStats.pending}</span>
                     <span className="text-xs text-text-muted font-mono">remaining</span>
@@ -1146,12 +1146,12 @@ export const StudyPlanView: React.FC = () => {
                       {/* Day Header */}
                       <div className="border-b border-white/[0.06] pb-2 mb-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-mono font-semibold uppercase text-text-muted">
+                          <span className="text-xs font-semibold text-text-muted">
                             {day.dayName}
                           </span>
                           {day.isToday && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-primary text-text-inverse">
-                              TODAY
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary text-text-inverse">
+                              Today
                             </span>
                           )}
                           {allDone && (
@@ -1331,13 +1331,13 @@ export const StudyPlanView: React.FC = () => {
                               Scheduled: {task.scheduled_date}
                             </span>
                             {isDueToday && (
-                              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-blue-500/20 text-blue-400 font-semibold">
-                                DUE TODAY
+                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-400 font-semibold">
+                                Due Today
                               </span>
                             )}
                             {isOverdue && (
-                              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-amber-500/20 text-amber-400 font-semibold">
-                                OVERDUE
+                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400 font-semibold">
+                                Overdue
                               </span>
                             )}
                           </div>

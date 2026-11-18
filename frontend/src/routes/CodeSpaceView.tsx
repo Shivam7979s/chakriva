@@ -818,7 +818,7 @@ export const CodeSpaceView: React.FC = () => {
 
               <form onSubmit={handleSubmitModal} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-mono uppercase tracking-wider text-[#94A1B8] mb-1.5">
+                  <label className="block text-xs font-medium text-white/80 mb-1.5">
                     Snippet Title *
                   </label>
                   <input
@@ -833,7 +833,7 @@ export const CodeSpaceView: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-mono uppercase tracking-wider text-[#94A1B8] mb-1.5">
+                    <label className="block text-xs font-medium text-white/80 mb-1.5">
                       Runtime Language
                     </label>
                     <select
@@ -850,7 +850,7 @@ export const CodeSpaceView: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono uppercase tracking-wider text-[#94A1B8] mb-1.5">
+                    <label className="block text-xs font-medium text-white/80 mb-1.5">
                       Tags (Comma Separated)
                     </label>
                     <input
@@ -864,7 +864,7 @@ export const CodeSpaceView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-mono uppercase tracking-wider text-[#94A1B8] mb-1.5">
+                  <label className="block text-xs font-medium text-white/80 mb-1.5">
                     Code Buffer
                   </label>
                   <textarea
@@ -876,7 +876,7 @@ export const CodeSpaceView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-mono uppercase tracking-wider text-[#94A1B8] mb-1.5">
+                  <label className="block text-xs font-medium text-white/80 mb-1.5">
                     Optional Stdin Test Stream
                   </label>
                   <input

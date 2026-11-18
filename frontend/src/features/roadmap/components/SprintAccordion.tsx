@@ -94,6 +94,10 @@ export const SprintAccordion: React.FC<SprintAccordionProps> = ({
               <button
                 type="button"
                 aria-label={isExpanded ? 'Collapse Sprint' : 'Expand Sprint'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsExpanded(!isExpanded);
+                }}
                 className="text-text-muted hover:text-text-primary transition-colors"
               >
                 {isExpanded ? (
@@ -102,7 +106,7 @@ export const SprintAccordion: React.FC<SprintAccordionProps> = ({
                   <ChevronRight className="w-4 h-4" />
                 )}
               </button>
-              <span className="text-xs font-mono font-bold tracking-wider uppercase text-text-secondary">
+              <span className="text-xs font-semibold text-text-secondary">
                 Sprint {sprint.position}
               </span>
             </div>

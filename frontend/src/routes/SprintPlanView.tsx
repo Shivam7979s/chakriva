@@ -379,12 +379,12 @@ export const SprintPlanView: React.FC = () => {
                       {/* Day Card Header */}
                       <div className="border-b border-white/[0.06] pb-2 mb-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-mono font-semibold uppercase text-text-muted">
+                          <span className="text-xs font-semibold text-text-muted">
                             {day.dayName}
                           </span>
                           {day.isToday && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-[#3B82F6] text-white">
-                              TODAY
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary text-white">
+                              Today
                             </span>
                           )}
                           {allDone && (

@@ -1242,13 +1242,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialTab = 'over
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         On Track
                       </span>
-                      <button
-                        type="button"
-                        className="text-zinc-400 hover:text-white transition-colors"
-                        title="Roadmap options"
+                      <Link
+                        to="/app/roadmap"
+                        className="text-zinc-400 hover:text-white transition-colors p-1 rounded-md hover:bg-white/[0.04]"
+                        title="View full roadmap"
+                        aria-label="View full roadmap"
                       >
                         <MoreVertical className="w-4 h-4" />
-                      </button>
+                      </Link>
                     </div>
                   </div>
 

@@ -502,7 +502,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
               {selectedCase && (
                 <div className="space-y-2">
                   <div>
-                    <label className="text-[11px] font-sans font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                    <label className="text-xs font-medium text-neutral-400 block mb-1">
                       Input Parameters
                     </label>
                     <pre className="p-2.5 rounded bg-[#12151E] border border-white/[0.08] text-neutral-200 overflow-x-auto whitespace-pre-wrap leading-relaxed">
@@ -511,7 +511,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-sans font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                    <label className="text-xs font-medium text-neutral-400 block mb-1">
                       Expected Return Value
                     </label>
                     <pre className="p-2.5 rounded bg-[#12151E] border border-white/[0.08] text-[#00B8A3] overflow-x-auto whitespace-pre-wrap leading-relaxed font-semibold">
@@ -522,7 +522,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                   {selectedCase.actualOutput !== undefined && (
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="text-[11px] font-sans font-semibold text-neutral-400 uppercase tracking-wider">
+                        <label className="text-xs font-medium text-neutral-400">
                           Actual Output
                         </label>
                         {selectedCase.verdict && (
@@ -559,7 +559,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
           {activeTab === 'custom_input' && (
             <div className="h-full flex flex-col space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-sans font-semibold text-neutral-400 uppercase tracking-wider">
+                <span className="text-xs font-medium text-neutral-400">
                   Interactive Custom Testcase Vector
                 </span>
                 <span className="text-[11px] text-neutral-500">Passed directly to stdin</span>
@@ -688,7 +688,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                           {/* Input */}
                           {firstFailedTest.input ? (
                             <div>
-                              <label className="text-[11px] font-sans font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                              <label className="text-xs font-medium text-neutral-400 block mb-1">
                                 Input
                               </label>
                               <pre className="p-2.5 rounded bg-[#0E1117] border border-white/[0.08] text-neutral-200 overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-36">
@@ -705,7 +705,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                           {firstFailedTest.actual_output && (
                             <div>
                               <div className="flex items-center justify-between mb-1">
-                                <label className="text-[11px] font-sans font-semibold text-[#FF375F] uppercase tracking-wider">
+                                <label className="text-xs font-medium text-[#FF375F]">
                                   Your Output
                                 </label>
                                 {firstFailedTest.normalized && (
@@ -723,7 +723,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                           {/* Expected Output */}
                           {firstFailedTest.expected_output !== undefined && firstFailedTest.expected_output !== null && (
                             <div>
-                              <label className="text-[11px] font-sans font-semibold text-[#00B8A3] uppercase tracking-wider block mb-1">
+                              <label className="text-xs font-medium text-[#00B8A3] block mb-1">
                                 Expected Output
                               </label>
                               <pre className="p-2.5 rounded bg-[#0E1117] border border-[#00B8A3]/30 text-[#00B8A3] overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-36 font-semibold">
@@ -735,7 +735,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                           {/* Error Diagnostic (if RE / TLE) */}
                           {firstFailedTest.error_message && (
                             <div>
-                              <label className="text-[11px] font-sans font-semibold text-[#F97316] uppercase tracking-wider block mb-1">
+                              <label className="text-xs font-medium text-[#F97316] block mb-1">
                                 Error Diagnostic
                               </label>
                               <pre className="p-2.5 rounded bg-[#0E1117] border border-[#F97316]/30 text-[#F97316] overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-36">
@@ -852,7 +852,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                   {/* Compilation Output (if CE) */}
                   {compileOutput && (
                     <div>
-                      <label className="text-[11px] font-sans font-semibold text-[#F97316] uppercase tracking-wider block mb-1">
+                      <label className="text-xs font-medium text-[#F97316] block mb-1">
                         Compilation Output
                       </label>
                       <pre className="p-2.5 rounded bg-[#181C28] border border-[#F97316]/30 text-[#F97316] overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono">
@@ -864,7 +864,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                   {/* Stderr Output (if RE / TLE) */}
                   {stderrLogs && (
                     <div>
-                      <label className="text-[11px] font-sans font-semibold text-[#FF375F] uppercase tracking-wider block mb-1">
+                      <label className="text-xs font-medium text-[#FF375F] block mb-1">
                         Error Diagnostic Logs
                       </label>
                       <pre className="p-2.5 rounded bg-[#181C28] border border-[#FF375F]/30 text-[#FF375F] overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono">
@@ -876,7 +876,7 @@ export const TestCaseConsole: React.FC<TestCaseConsoleProps> = ({
                   {/* Stdout Output */}
                   {stdoutLogs && (
                     <div>
-                      <label className="text-[11px] font-sans font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                      <label className="text-xs font-medium text-neutral-400 block mb-1">
                         Standard Output
                       </label>
                       <pre className="p-2.5 rounded bg-[#12151E] border border-white/[0.08] text-neutral-300 overflow-x-auto whitespace-pre-wrap leading-relaxed">

@@ -650,7 +650,7 @@ export const ProblemWorkspace: React.FC = () => {
             {isDraft && (
               <div className="p-3.5 rounded-lg border border-amber-500/30 bg-amber-950/20 text-xs font-mono space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
+                  <span className="font-semibold text-amber-400 flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
                     Catalog Index Record — Draft / Content Review
                   </span>
@@ -745,7 +745,7 @@ export const ProblemWorkspace: React.FC = () => {
             {/* Sample Examples */}
             {sampleTestCases.length > 0 ? (
               <div className="space-y-4">
-                <h3 className="text-xs font-sans font-semibold uppercase tracking-wider text-[#94A3B8]">
+                <h3 className="text-xs font-sans font-semibold text-[#94A3B8]">
                   Verified Test Vectors & Examples
                 </h3>
                 {sampleTestCases.map((tc, idx) => (
@@ -772,7 +772,7 @@ export const ProblemWorkspace: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                <h3 className="text-xs font-sans font-semibold uppercase tracking-wider text-[#94A3B8]">
+                <h3 className="text-xs font-sans font-semibold text-[#94A3B8]">
                   Test Vectors & Examples
                 </h3>
                 <div className="p-3.5 rounded-lg border border-[#1C2230] bg-[#111521] text-xs font-mono text-[#94A3B8]">
@@ -784,7 +784,7 @@ export const ProblemWorkspace: React.FC = () => {
             {/* Constraints */}
             {problem.constraints_markdown && (
               <div className="space-y-2">
-                <h3 className="text-xs font-sans font-semibold uppercase tracking-wider text-[#94A3B8]">
+                <h3 className="text-xs font-sans font-semibold text-[#94A3B8]">
                   Constraints & Mathematical Bounds
                 </h3>
                 <div className="text-xs font-mono text-[#94A3B8] bg-[#111521] p-3 rounded-lg border border-[#1C2230]">
@@ -855,7 +855,7 @@ export const ProblemWorkspace: React.FC = () => {
         {leftTab === 'submissions' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-sans font-semibold uppercase tracking-wider text-[#94A3B8]">
+              <h3 className="text-xs font-sans font-semibold text-[#94A3B8]">
                 Official Submission History
               </h3>
               <button
@@ -1239,7 +1239,7 @@ export const ProblemWorkspace: React.FC = () => {
               {isPlanMenuOpen && (
                 <div className="absolute right-0 top-9 w-80 rounded-xl border border-[#1F2937] bg-[#0F131D] shadow-2xl z-50 p-3 space-y-2 text-left">
                   <div className="flex items-center justify-between text-[11px] text-[#94A3B8] pb-1.5 border-b border-[#1F2937]">
-                    <span className="font-medium uppercase tracking-wider">Today&apos;s plan</span>
+                    <span className="font-medium text-white/90">Today&apos;s plan</span>
                     <Link
                       to="/app/roadmap/adaptive"
                       onClick={() => setIsPlanMenuOpen(false)}

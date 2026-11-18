@@ -556,7 +556,7 @@ export const NoteSpaceView: React.FC = () => {
                               )}
                             </Link>
                           ) : (
-                            <span className="text-[10px] font-mono uppercase tracking-wider text-[#A78BFA] bg-[#1A162B] border border-[#2D244C] px-2 py-0.5 rounded-md">
+                            <span className="text-xs font-medium text-[#A78BFA] bg-[#1A162B] border border-[#2D244C] px-2 py-0.5 rounded-md">
                               Pattern Lemma
                             </span>
                           )}
@@ -712,7 +712,7 @@ export const NoteSpaceView: React.FC = () => {
               <form onSubmit={handleSaveNote} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-mono uppercase tracking-wider text-[#94A1B8] mb-1.5">
+                    <label className="block text-xs font-medium text-white/80 mb-1.5">
                       Note Title *
                     </label>
                     <input
@@ -726,7 +726,7 @@ export const NoteSpaceView: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono uppercase tracking-wider text-[#94A1B8] mb-1.5">
+                    <label className="block text-xs font-medium text-white/80 mb-1.5">
                       Linked Problem (Optional)
                     </label>
                     <select
@@ -746,7 +746,7 @@ export const NoteSpaceView: React.FC = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-[11px] font-mono uppercase tracking-wider text-[#94A1B8]">
+                    <label className="block text-xs font-medium text-white/80">
                       Markdown Proof / Content
                     </label>
                     <div className="flex items-center gap-1 bg-[#0B0E16] p-0.5 rounded-lg border border-[#1B2234]">

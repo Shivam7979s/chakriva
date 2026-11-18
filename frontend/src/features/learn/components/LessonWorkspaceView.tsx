@@ -226,7 +226,7 @@ export const LessonWorkspaceView: React.FC = () => {
           {/* Col 1 (3 cols): Module Outline */}
           <aside className="lg:col-span-3 rounded-2xl border border-[#181F30] bg-[#0B0E16] p-4 space-y-3.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-[#7C8BA6]">
+              <span className="text-xs font-medium text-[#7C8BA6]">
                 Syllabus Outline
               </span>
               <span className="text-[11px] font-mono text-[#00B8A3]">{trackStats.percent}%</span>
@@ -291,7 +291,7 @@ export const LessonWorkspaceView: React.FC = () => {
 
             {track.prerequisites.length > 0 && (
               <div className="pt-3 border-t border-[#171D2D] space-y-2">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-[#6D7B94]">
+                <div className="text-xs font-medium text-[#6D7B94]">
                   Prerequisites
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -350,7 +350,7 @@ export const LessonWorkspaceView: React.FC = () => {
                 {/* Key Invariant & Mental Model Callout */}
                 <div className="grid grid-cols-1 gap-3">
                   <div className="rounded-xl border border-[#1E2E4A] bg-[#0B1222] p-4 space-y-1.5">
-                    <div className="text-[11px] font-mono uppercase tracking-wider text-[#60A5FA] flex items-center gap-1.5">
+                    <div className="text-xs font-medium text-[#60A5FA] flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" />
                       Core Engineering Invariant
                     </div>
@@ -360,7 +360,7 @@ export const LessonWorkspaceView: React.FC = () => {
                   </div>
 
                   <div className="rounded-xl border border-[#182B2B] bg-[#0B1617] p-4 space-y-1.5">
-                    <div className="text-[11px] font-mono uppercase tracking-wider text-[#00B8A3]">
+                    <div className="text-xs font-medium text-[#00B8A3]">
                       Intuition / Mental Model
                     </div>
                     <p className="text-xs sm:text-sm text-[#CBE7E3] leading-relaxed">
@@ -456,7 +456,7 @@ export const LessonWorkspaceView: React.FC = () => {
                 {/* Interview Pitfalls */}
                 {lesson.pitfalls && lesson.pitfalls.length > 0 && (
                   <div className="rounded-xl border border-[#3B2A12] bg-[#171209] p-4 space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#FBBF24]">
+                    <div className="flex items-center gap-2 text-xs font-medium text-[#FBBF24]">
                       <AlertTriangle className="w-3.5 h-3.5" />
                       <span>Common Interview Pitfalls</span>
                     </div>
@@ -473,7 +473,7 @@ export const LessonWorkspaceView: React.FC = () => {
                 {/* Quick Comprehension Micro-Check */}
                 {lesson.microCheck && (
                   <div className="rounded-2xl border border-[#192033] bg-[#0B0E16] p-4 sm:p-5 space-y-3">
-                    <div className="text-[11px] font-mono uppercase tracking-wider text-[#A78BFA]">
+                    <div className="text-xs font-medium text-[#A78BFA]">
                       Quick Comprehension Check
                     </div>
                     <div className="text-sm font-medium text-[#F3F6FF]">
@@ -563,7 +563,7 @@ export const LessonWorkspaceView: React.FC = () => {
             {/* Apply in Practice Card */}
             <div className="rounded-2xl border border-[#181F30] bg-[#0B0E16] p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[#7C8BA6] flex items-center gap-1.5">
+                <span className="text-xs font-medium text-[#7C8BA6] flex items-center gap-1.5">
                   <Code2 className="w-3.5 h-3.5 text-[#3B82F6]" />
                   <span>Apply in Practice</span>
                 </span>
