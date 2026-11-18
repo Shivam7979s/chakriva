@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { ArrowRight } from 'lucide-react';
 import { DashboardLayout } from '@/components/ui/layout/DashboardLayout';
 import {
   LEARN_TRACKS,
@@ -99,8 +100,16 @@ export const LearnView: React.FC = () => {
         { label: 'Prep Hub' },
       ]}
     >
-      <div className="max-w-7xl mx-auto text-left text-[#F3F6FF]">
-        <h1 className="sr-only">Prep Hub — CHAKRIVA Structured Learning Catalog</h1>
+      <div className="max-w-7xl mx-auto text-left text-white">
+        {/* Visible Page Header (H1) */}
+        <div className="mb-6 space-y-1">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+            Prep Hub
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-400">
+            Structured curriculum, algorithmic problem patterns, and core CS fundamentals.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
           {/* LEFT / MAIN CATALOG COLUMN */}
@@ -108,7 +117,7 @@ export const LearnView: React.FC = () => {
             <div
               role="tablist"
               aria-label="Prep Hub Categories"
-              className="flex items-center gap-1.5 border-b border-[#171D2D] pb-2.5 overflow-x-auto no-scrollbar"
+              className="flex items-center gap-1.5 border-b border-white/[0.08] pb-2.5 overflow-x-auto no-scrollbar"
             >
               {PREP_HUB_TABS.map((tab) => {
                 const isActive = activeCategory === tab.id;
@@ -122,15 +131,15 @@ export const LearnView: React.FC = () => {
                     className={cn(
                       'relative px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors cursor-pointer shrink-0',
                       isActive
-                        ? 'text-[#F8FAFF]'
-                        : 'text-[#7C8BA6] hover:text-[#D5E1F7]'
+                        ? 'text-[#00d2ff] font-semibold'
+                        : 'text-zinc-400 hover:text-white'
                     )}
                   >
                     {isActive && (
                       <motion.span
                         layoutId="prepHubCategoryPill"
                         transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                        className="absolute inset-0 rounded-xl bg-[#152443] border border-[#3B82F6]/35"
+                        className="absolute inset-0 rounded-xl bg-[#002B36] border border-[#00d2ff]/30 shadow-[0_0_12px_rgba(0,210,255,0.15)]"
                       />
                     )}
                     <span className="relative z-10">{tab.label}</span>
@@ -139,7 +148,7 @@ export const LearnView: React.FC = () => {
               })}
             </div>
 
-            {/* Category Tab Panel (Matches CHAKRIVA Palette, Zero Card Icons) */}
+            {/* Category Tab Panel */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeCategory}
@@ -161,11 +170,11 @@ export const LearnView: React.FC = () => {
                   return (
                     <section key={group.label} className="space-y-3">
                       <div className="flex flex-wrap items-center gap-2.5">
-                        <h2 className="text-sm sm:text-base font-semibold text-[#E2E8F5] tracking-tight">
+                        <h2 className="text-sm sm:text-base font-semibold text-white tracking-tight">
                           {group.label}
                         </h2>
                         {group.badge && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-[#152443] text-[#60A5FA] border border-[#243B6B]">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-blue-950/60 text-blue-300 border border-blue-500/30">
                             {group.badge}
                           </span>
                         )}
@@ -186,28 +195,29 @@ export const LearnView: React.FC = () => {
                               className={cn(
                                 'group rounded-2xl border p-4 sm:p-5 flex flex-col justify-between gap-4 transition-all duration-150',
                                 inActivePlan
-                                  ? 'border-[#253A63] bg-gradient-to-b from-[#101728] to-[#0B0E16] hover:border-[#3B82F6]/50'
-                                  : 'border-[#181F30] bg-[#0F131D] hover:bg-[#131928] hover:border-[#29344E]'
+                                  ? 'border-blue-500/30 bg-gradient-to-b from-[#101728] to-[#0A0E17] hover:border-blue-500/50'
+                                  : 'border-white/[0.08] bg-[#0A0E17] hover:bg-[#101522] hover:border-white/20'
                               )}
                             >
                               <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0 space-y-1">
-                                  <h3 className="text-sm sm:text-base font-semibold text-[#F8FAFF] group-hover:text-[#93C5FD] transition-colors leading-snug">
+                                <div className="min-w-0 space-y-1.5">
+                                  <h3 className="text-sm sm:text-base font-semibold text-white group-hover:text-cyan-300 transition-colors leading-snug">
                                     {track.title}
                                   </h3>
                                   {inActivePlan && (
-                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#0C2629] text-[#22D3EE]">
+                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-950/60 text-cyan-300 border border-cyan-500/30">
                                       Active Roadmap Subject
                                     </span>
                                   )}
                                 </div>
 
-                                <span className="px-3 py-1 rounded-full border border-[#212B42] bg-[#0B0E16] group-hover:bg-[#152443] group-hover:border-[#3B82F6]/45 text-[11px] font-medium text-[#C3CEE0] group-hover:text-white transition-colors shrink-0">
-                                  Explore
+                                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-all shrink-0">
+                                  <span>Explore</span>
+                                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                                 </span>
                               </div>
 
-                              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-mono text-[#7C8BA6] pt-2.5 border-t border-[#171D2D]">
+                              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-mono text-zinc-400 pt-2.5 border-t border-white/[0.06]">
                                 <span>{modules.length} Modules</span>
                                 <span>·</span>
                                 <span>{track.lessons.length} Topics</span>
@@ -218,7 +228,7 @@ export const LearnView: React.FC = () => {
                                   </>
                                 )}
                                 <span>·</span>
-                                <span className="text-[#94A1B8]">
+                                <span className="text-zinc-300">
                                   {formatMinutesLabel(track.totalMinutes)}
                                 </span>
                               </div>
@@ -233,22 +243,24 @@ export const LearnView: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* RIGHT UTILITY RAIL (Zero Card Icons) */}
+          {/* RIGHT UTILITY RAIL */}
           <aside className="xl:col-span-4 space-y-4">
-            <div className="rounded-2xl border border-[#181F30] bg-[#0B0E16] p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-[#F8FAFF]">Daily Planner</h2>
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0E17] p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                <h2 className="text-sm font-bold text-white tracking-tight">Daily Planner</h2>
                 <Link
                   to="/app/roadmap"
-                  className="text-[11px] font-mono text-[#60A5FA] hover:underline"
+                  className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors font-medium shrink-0"
+                  title="Open full roadmap"
                 >
-                  Open Roadmap
+                  <span>Open Roadmap</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </Link>
               </div>
 
               {dailyPlanner && dailyPlanner.day.tasks.length > 0 && !dailyPlanner.day.isRestDay ? (
                 <div className="space-y-2.5">
-                  <div className="text-[11px] font-mono text-[#7C8BA6]">
+                  <div className="text-xs font-mono text-zinc-400">
                     Week {dailyPlanner.weekNumber} · {dailyPlanner.day.date}
                   </div>
                   <div className="space-y-2">
@@ -262,25 +274,25 @@ export const LearnView: React.FC = () => {
                         <Link
                           key={task.id}
                           to={href}
-                          className="flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl border border-[#171D2D] bg-[#0F131D] hover:border-[#3B82F6]/40 transition-colors"
+                          className="flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-[#0D121F]/80 hover:bg-[#131A2B] hover:border-cyan-500/30 transition-all text-xs"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             <span
                               className={cn(
                                 'w-1.5 h-1.5 rounded-full shrink-0',
-                                done ? 'bg-[#00B8A3]' : 'bg-[#475569]'
+                                done ? 'bg-emerald-400' : 'bg-zinc-600'
                               )}
                             />
                             <span
                               className={cn(
-                                'text-xs truncate',
-                                done ? 'line-through text-[#6D7B94]' : 'text-[#E2E8F5]'
+                                'truncate font-medium',
+                                done ? 'line-through text-zinc-500' : 'text-zinc-200'
                               )}
                             >
                               {task.title}
                             </span>
                           </div>
-                          <span className="text-[10px] font-mono text-[#60A5FA] shrink-0">
+                          <span className="text-xs font-mono text-cyan-400 shrink-0">
                             {task.estimatedMinutes}m
                           </span>
                         </Link>
@@ -289,22 +301,22 @@ export const LearnView: React.FC = () => {
                   </div>
                   <Link
                     to="/app/roadmap/adaptive"
-                    className="w-full py-2 rounded-xl border border-dashed border-[#243B6B] bg-[#0F172A]/60 hover:bg-[#152443] text-xs font-medium text-[#93C5FD] flex items-center justify-center transition-colors"
+                    className="w-full py-2.5 rounded-xl border border-white/10 bg-[#0F172A]/60 hover:bg-[#152443] text-xs font-medium text-cyan-300 hover:text-white flex items-center justify-center transition-all"
                   >
                     Manage Adaptive Schedule
                   </Link>
                 </div>
               ) : (
-                <div className="py-5 px-4 rounded-xl border border-[#171D2D] bg-[#0F131D] text-center space-y-3">
+                <div className="py-5 px-4 rounded-xl border border-white/[0.06] bg-[#0D121F]/60 text-center space-y-3">
                   <div className="space-y-1">
-                    <div className="text-xs font-medium text-[#E2E8F5]">No tasks for today</div>
-                    <p className="text-[11px] text-[#7C8BA6] leading-relaxed">
+                    <div className="text-xs font-medium text-white">No tasks for today</div>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
                       Add tracks or build an Adaptive Roadmap to schedule daily coding &amp; study tasks here.
                     </p>
                   </div>
                   <Link
                     to="/app/roadmap"
-                    className="w-full py-2 rounded-xl border border-dashed border-[#253352] hover:border-[#3B82F6]/60 bg-[#0B0E16] hover:bg-[#131B2E] text-xs font-medium text-[#C3CEE0] hover:text-white inline-flex items-center justify-center transition-colors"
+                    className="w-full py-2.5 rounded-xl border border-white/10 hover:border-cyan-500/40 bg-[#0A0E17] hover:bg-white/[0.06] text-xs font-medium text-zinc-300 hover:text-white inline-flex items-center justify-center transition-all"
                   >
                     Add tasks
                   </Link>
@@ -313,19 +325,25 @@ export const LearnView: React.FC = () => {
             </div>
 
             {resumeLesson && (
-              <div className="rounded-2xl border border-[#181F30] bg-gradient-to-b from-[#101522] to-[#0B0E16] p-5 space-y-3">
-                <div className="text-[11px] font-mono text-[#22D3EE]">Resume Focus Mode</div>
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0E17] p-5 space-y-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" aria-hidden="true" />
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold">
+                    Resume Focus Mode
+                  </span>
+                </div>
                 <div>
-                  <div className="text-[11px] text-[#7C8BA6]">{resumeLesson.track.shortTitle}</div>
-                  <div className="text-sm font-medium text-[#F8FAFF] mt-0.5 line-clamp-2">
+                  <span className="text-xs text-zinc-400">{resumeLesson.track.shortTitle}</span>
+                  <h3 className="text-base font-semibold text-white mt-0.5 line-clamp-2 tracking-tight">
                     {resumeLesson.lesson.title}
-                  </div>
+                  </h3>
                 </div>
                 <Link
                   to={`/app/learn/${resumeLesson.track.slug}/${resumeLesson.lesson.slug}`}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#243B6B] bg-[#152443] hover:bg-[#1C3159] text-xs font-medium text-[#F3F6FF] inline-flex items-center justify-center transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs inline-flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all"
                 >
-                  Continue Lesson
+                  <span>Continue Lesson</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </Link>
               </div>
             )}
