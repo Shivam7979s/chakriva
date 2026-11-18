@@ -255,6 +255,18 @@ export const RegisterView: React.FC = () => {
           >
             Create account
           </Button>
+
+          {/* Statutory DPDP & Terms Notice */}
+          <p className="text-[11px] text-white/50 text-center leading-relaxed px-1 mt-2">
+            By creating an account, you agree to our{' '}
+            <Link to="/terms" className="text-white/80 hover:text-white underline underline-offset-2">
+              Terms of Service
+            </Link>{' '}
+            and consent to educational data processing under our{' '}
+            <Link to="/privacy" className="text-white/80 hover:text-white underline underline-offset-2">
+              Privacy Policy (DPDP Act 2023)
+            </Link>.
+          </p>
         </form>
 
         {/* Footer Navigation */}

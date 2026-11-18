@@ -1645,27 +1645,30 @@ export const ChakrivaLandingView: React.FC = () => {
               </div>
             </div>
 
-            {/* Col 4: Platform & Legal */}
+            {/* Col 4: Platform & Legal (Required for Payment Gateways & DPDP) */}
             <div>
               <div className="text-white font-semibold mb-3 tracking-wider uppercase text-[11px]">
-                Platform
+                Platform &amp; Legal
               </div>
               <div className="flex flex-col gap-2">
                 <span className="text-emerald-400 font-mono text-[11px] flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Judge Kernel: 99.98% Healthy</span>
                 </span>
-                <a href="#privacy" className="hover:text-white transition-colors">
-                  Privacy Policy
-                </a>
-                <a href="#terms" className="hover:text-white transition-colors">
-                  Terms of Service
-                </a>
-                <a href="#security" className="hover:text-white transition-colors">
-                  Sandboxed Execution Isolation
-                </a>
-                <a href="#changelog" className="hover:text-white transition-colors">
-                  Chakriva v2.4 Changelog
+                <Link to="/privacy" className="hover:text-white transition-colors">
+                  Privacy Policy (DPDP 2023)
+                </Link>
+                <Link to="/terms" className="hover:text-white transition-colors">
+                  Terms of Service &amp; AUP
+                </Link>
+                <Link to="/cookies" className="hover:text-white transition-colors">
+                  Cookie &amp; Storage Policy
+                </Link>
+                <Link to="/refunds" className="hover:text-white transition-colors">
+                  Refund &amp; Cancellation
+                </Link>
+                <a href="mailto:grievance@chakriva.com" className="hover:text-sky-400 transition-colors text-[11px] font-mono">
+                  Grievance Officer &rarr;
                 </a>
               </div>
             </div>
@@ -1675,10 +1678,16 @@ export const ChakrivaLandingView: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <ChakrivaLogoMark className="w-4 h-4" />
               <span className="font-semibold text-white/80">CHAKRIVA</span>
-              <span>&copy; {new Date().getFullYear()} All rights reserved.</span>
+              <span>&copy; {new Date().getFullYear()} Chakriva Labs Private Limited. All rights reserved.</span>
             </div>
-            <div className="text-[11px] text-white/40">
-              Personalized DSA &amp; Competitive Programming Architecture
+            <div className="flex items-center gap-4 text-[11px] text-white/40 font-mono">
+              <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+              <span>&bull;</span>
+              <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <span>&bull;</span>
+              <Link to="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+              <span>&bull;</span>
+              <Link to="/refunds" className="hover:text-white transition-colors">Refunds</Link>
             </div>
           </div>
         </footer>

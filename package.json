@@ -16,7 +16,8 @@
     "dataset:validate": "python -m backend.importer.cli validate",
     "dataset:report": "python -m backend.importer.cli report",
     "curriculum:audit": "node --experimental-strip-types scripts/audit_curriculum_catalog.mjs",
-    "test:curriculum": "node --experimental-strip-types frontend/src/tests/curriculumCatalogReadiness.test.mjs"
+    "test:curriculum": "node --experimental-strip-types frontend/src/tests/curriculumCatalogReadiness.test.mjs",
+    "test:legal": "node --experimental-strip-types frontend/src/tests/legalPolicyPages.test.mjs"
   },
   "keywords": [
     "verniq",

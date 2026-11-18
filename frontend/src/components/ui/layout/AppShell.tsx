@@ -2,6 +2,7 @@ import type React from 'react';
 import { ThemeProvider } from '@/hooks/useTheme';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ToastProvider } from '../feedback/Toast';
+import { CookieConsentBanner } from '../feedback/CookieConsentBanner';
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -16,6 +17,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
             Skip to main content
           </a>
           {children}
+          <CookieConsentBanner />
         </ToastProvider>
       </AuthProvider>
     </ThemeProvider>

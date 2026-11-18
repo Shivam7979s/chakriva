@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   ChevronRight,
@@ -1015,21 +1016,27 @@ export const AuraLandingView: React.FC = () => {
         </section>
 
         {/* Footer info */}
-        <footer className="w-full max-w-6xl mx-auto px-6 py-8 border-t border-white/10 text-xs text-white/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <footer className="w-full max-w-6xl mx-auto px-6 py-8 border-t border-white/10 text-xs text-white/40 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono">
           <div className="flex items-center gap-2">
             <LogoMark className="w-4 h-4" />
-            <span>&copy; {new Date().getFullYear()} Aura Inc. All rights reserved.</span>
+            <span>&copy; {new Date().getFullYear()} Chakriva Labs Private Limited. All rights reserved.</span>
           </div>
-          <div className="flex items-center gap-6">
-            <a href="#privacy" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-4 text-[11px]">
+            <Link to="/privacy" className="hover:text-white transition-colors">
               Privacy
-            </a>
-            <a href="#terms" className="hover:text-white transition-colors">
+            </Link>
+            <span>&bull;</span>
+            <Link to="/terms" className="hover:text-white transition-colors">
               Terms
-            </a>
-            <a href="#security" className="hover:text-white transition-colors">
-              Security
-            </a>
+            </Link>
+            <span>&bull;</span>
+            <Link to="/cookies" className="hover:text-white transition-colors">
+              Cookies
+            </Link>
+            <span>&bull;</span>
+            <Link to="/refunds" className="hover:text-white transition-colors">
+              Refunds
+            </Link>
           </div>
         </footer>
       </div>

@@ -203,6 +203,13 @@ export const LoginView: React.FC = () => {
               Create an account →
             </Link>
           </p>
+          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-center gap-3 text-[10px] text-white/30 font-mono">
+            <Link to="/privacy" className="hover:text-white/60 transition-colors">Privacy Policy</Link>
+            <span>&bull;</span>
+            <Link to="/terms" className="hover:text-white/60 transition-colors">Terms</Link>
+            <span>&bull;</span>
+            <Link to="/refunds" className="hover:text-white/60 transition-colors">Refunds</Link>
+          </div>
         </div>
       </div>
     </div>

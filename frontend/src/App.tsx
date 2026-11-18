@@ -41,6 +41,10 @@ import { AdminRoute } from '@/components/auth/AdminRoute';
 import { ProblemAuthoringView } from '@/routes/ProblemAuthoringView';
 import { AuraLandingView } from '@/routes/AuraLandingView';
 import { ChakrivaLandingView } from '@/routes/ChakrivaLandingView';
+import { PrivacyPolicyView } from '@/routes/PrivacyPolicyView';
+import { TermsOfServiceView } from '@/routes/TermsOfServiceView';
+import { CookiePolicyView } from '@/routes/CookiePolicyView';
+import { RefundPolicyView } from '@/routes/RefundPolicyView';
 
 const LegacySheetDetailRedirect: React.FC = () => {
   const { sheetId } = useParams<{ sheetId: string }>();
@@ -129,6 +133,46 @@ export const App: React.FC = () => {
               </PublicLayout>
             }
           />
+
+          {/* Platform Legal & Regulatory Disclosures (DPDP Act, IT Act, Payment Gateway KYC) */}
+          <Route
+            path="/privacy"
+            element={
+              <PublicLayout>
+                <PrivacyPolicyView />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/terms"
+            element={
+              <PublicLayout>
+                <TermsOfServiceView />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/cookies"
+            element={
+              <PublicLayout>
+                <CookiePolicyView />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/refunds"
+            element={
+              <PublicLayout>
+                <RefundPolicyView />
+              </PublicLayout>
+            }
+          />
+          <Route path="/cancellation-refund" element={<Navigate to="/refunds" replace />} />
+          <Route path="/legal" element={<Navigate to="/privacy" replace />} />
+          <Route path="/legal/privacy" element={<Navigate to="/privacy" replace />} />
+          <Route path="/legal/terms" element={<Navigate to="/terms" replace />} />
+          <Route path="/legal/cookies" element={<Navigate to="/cookies" replace />} />
+          <Route path="/legal/refunds" element={<Navigate to="/refunds" replace />} />
 
           {/* Authentication Routes */}
           <Route

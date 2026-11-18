@@ -25,7 +25,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className = '' }) =>
       <div className="flex items-center gap-2 min-w-0">
         <Search className="w-3.5 h-3.5 text-white/40 group-hover:text-[#00d2ff] transition-colors shrink-0" />
         <span className="hidden sm:inline font-sans text-xs text-white/40 group-hover:text-white/60 truncate">
-          Search problems, topics, sheets...
+          Search problems...
         </span>
         <span className="inline sm:hidden font-sans text-xs text-white/40">Search...</span>
       </div>

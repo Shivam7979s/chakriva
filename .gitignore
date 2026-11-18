@@ -65,13 +65,19 @@ pip-wheel-metadata/
 Thumbs.db
 desktop.ini
 
-# Editor directories (keep recommended settings)
+# Editor and Agent directories
 .idea/
 *.sublime-project
 *.sublime-workspace
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+.agent/
+.agents/
+.codex/
+.gemini/
+.gsd/
+
 
 backend/supabase/.temp/
 .cache/
@@ -79,3 +85,14 @@ backend/supabase/.temp/
 
 # Judge generated compilation/runtime cache
 backend/judge/.cache/
+
+# Local deployment archives and binaries
+*.tar
+*.msi
+*.png
+scratch/
+check-judge-state.json
+download-fixed-worker.json
+inspect-worker*.json
+ssm-params.json
+

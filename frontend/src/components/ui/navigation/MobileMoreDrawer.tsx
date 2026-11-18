@@ -189,6 +189,22 @@ export const MobileMoreDrawer: React.FC<MobileMoreDrawerProps> = ({ isOpen, onCl
             <span>Sign out of CHAKRIVA</span>
           </button>
         </div>
+
+        {/* Mobile Legal & Regulatory Disclosures */}
+        <div className="px-5 py-3 border-t border-white/[0.06] text-center bg-white/[0.01]">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] font-mono text-white/40">
+            <Link to="/privacy" onClick={onClose} className="hover:text-white transition-colors">Privacy</Link>
+            <span>&bull;</span>
+            <Link to="/terms" onClick={onClose} className="hover:text-white transition-colors">Terms</Link>
+            <span>&bull;</span>
+            <Link to="/cookies" onClick={onClose} className="hover:text-white transition-colors">Cookies</Link>
+            <span>&bull;</span>
+            <Link to="/refunds" onClick={onClose} className="hover:text-white transition-colors">Refunds</Link>
+          </div>
+          <div className="text-[10px] text-white/30 font-mono mt-1.5">
+            DPDP Act 2023 Compliant &bull; Chakriva Labs
+          </div>
+        </div>
       </div>
     </div>
   );

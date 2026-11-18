@@ -410,14 +410,17 @@ export const ProblemsView: React.FC = () => {
       .map(([name, count]) => ({ name, count }));
   }, [problems]);
 
-  // Target curated companies for Right Rail linking to sheets
-  const targetCompanies = [
-    { name: 'Amazon', count: 442 },
-    { name: 'Google', count: 471 },
-    { name: 'Microsoft', count: 470 },
-    { name: 'Meta', count: 346 },
-    { name: 'Uber', count: 438 },
-  ];
+  // Target curated companies for Right Rail linking to sheets (sorted descending by volume for rank consistency)
+  const targetCompanies = useMemo(() => {
+    const list = [
+      { name: 'Amazon', count: 442 },
+      { name: 'Google', count: 471 },
+      { name: 'Microsoft', count: 470 },
+      { name: 'Meta', count: 346 },
+      { name: 'Uber', count: 438 },
+    ];
+    return list.sort((a, b) => b.count - a.count);
+  }, []);
 
   // Smart pagination page numbers (inspired by TakeUForward & LeetCode)
   const getPageNumbers = () => {
@@ -579,11 +582,12 @@ export const ProblemsView: React.FC = () => {
         <aside
           className="w-48 xl:w-52 shrink-0 hidden lg:flex flex-col gap-3 h-full min-h-0 overflow-y-auto no-scrollbar pb-2 overscroll-contain"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          aria-label="Practice Domains and Tracks"
         >
           <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8] px-2.5 pb-2 select-none">
-              Practice
-            </h3>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 px-2.5 pb-2 select-none">
+              Domains & Tracks
+            </h2>
 
             {/* Category Navigation Items */}
             <div className="space-y-0.5">
@@ -598,23 +602,23 @@ export const ProblemsView: React.FC = () => {
                     className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all group ${
                       isActive
                         ? 'bg-[#22D3EE]/10 text-[#22D3EE] border border-[#22D3EE]/30 shadow-sm'
-                        : 'text-[#94A3B8] hover:text-[#F3F4F6] hover:bg-white/[0.04]'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
                       <Icon
                         className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                          isActive ? 'text-[#22D3EE]' : 'text-[#717B8D] group-hover:text-zinc-300'
+                          isActive ? 'text-[#22D3EE]' : 'text-zinc-500 group-hover:text-zinc-300'
                         }`}
                       />
                       <span className="truncate">{cat.label}</span>
                     </div>
 
                     <span
-                      className={`text-[10px] font-mono tabular-nums px-1.5 py-0.2 rounded-full shrink-0 ${
+                      className={`text-xs font-mono tabular-nums px-2 py-0.5 rounded-full shrink-0 font-medium ${
                         isActive
                           ? 'bg-[#22D3EE]/20 text-[#22D3EE]'
-                          : 'text-[#717B8D] group-hover:text-zinc-400'
+                          : 'text-zinc-400 group-hover:text-zinc-200 bg-[#111521]'
                       }`}
                     >
                       {cat.count}
@@ -628,24 +632,24 @@ export const ProblemsView: React.FC = () => {
             <div className="pt-3 mt-3 border-t border-[#1C2230] space-y-0.5">
               <Link
                 to="/app/sheets?category=company"
-                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-[#F3F4F6] hover:bg-white/[0.04] transition-all group"
+                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all group"
               >
                 <div className="flex items-center gap-2">
-                  <Building2 className="w-3.5 h-3.5 text-[#717B8D] group-hover:text-zinc-300" />
+                  <Building2 className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300" />
                   <span>Companies</span>
                 </div>
-                <ChevronRight className="w-3 h-3 text-[#717B8D] group-hover:text-zinc-300" />
+                <ChevronRight className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300" />
               </Link>
 
               <Link
                 to="/contests"
-                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-[#F3F4F6] hover:bg-white/[0.04] transition-all group"
+                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all group"
               >
                 <div className="flex items-center gap-2">
-                  <Trophy className="w-3.5 h-3.5 text-[#717B8D] group-hover:text-zinc-300" />
+                  <Trophy className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300" />
                   <span>Contests</span>
                 </div>
-                <ChevronRight className="w-3 h-3 text-[#717B8D] group-hover:text-zinc-300" />
+                <ChevronRight className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300" />
               </Link>
 
               <button
@@ -657,18 +661,18 @@ export const ProblemsView: React.FC = () => {
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all group ${
                   revisionOnly
                     ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30'
-                    : 'text-[#94A3B8] hover:text-[#F3F4F6] hover:bg-white/[0.04]'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <Clock
                     className={`w-3.5 h-3.5 ${
-                      revisionOnly ? 'text-amber-400' : 'text-[#717B8D] group-hover:text-zinc-300'
+                      revisionOnly ? 'text-amber-400' : 'text-zinc-500 group-hover:text-zinc-300'
                     }`}
                   />
                   <span>Revision</span>
                 </div>
-                <span className="text-[10px] font-mono text-amber-400 tabular-nums">
+                <span className="text-xs font-mono text-amber-400 tabular-nums">
                   {user ? revisionCount : '—'}
                 </span>
               </button>
@@ -682,18 +686,18 @@ export const ProblemsView: React.FC = () => {
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all group ${
                   revisionOnly
                     ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30'
-                    : 'text-[#94A3B8] hover:text-[#F3F4F6] hover:bg-white/[0.04]'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <Bookmark
                     className={`w-3.5 h-3.5 ${
-                      revisionOnly ? 'text-amber-400' : 'text-[#717B8D] group-hover:text-zinc-300'
+                      revisionOnly ? 'text-amber-400' : 'text-zinc-500 group-hover:text-zinc-300'
                     }`}
                   />
                   <span>Bookmarks</span>
                 </div>
-                <span className="text-[10px] font-mono text-amber-400 tabular-nums">
+                <span className="text-xs font-mono text-amber-400 tabular-nums">
                   {user ? revisionCount : '—'}
                 </span>
               </button>
@@ -703,17 +707,17 @@ export const ProblemsView: React.FC = () => {
           {/* Need a Plan Card */}
           <div className="bg-[#0B0F19] border border-[#1C2230] rounded-xl p-3.5 space-y-2 shadow-sm mt-auto">
             <div>
-              <h4 className="text-xs font-semibold text-white">Need a plan?</h4>
-              <p className="text-[11px] text-[#94A3B8] leading-relaxed mt-0.5">
+              <h3 className="text-xs font-semibold text-white">Need a plan?</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed mt-1">
                 Create a personalized roadmap based on your goal and time.
               </p>
             </div>
             <Link
               to="/app/plan"
-              className="inline-flex items-center justify-center gap-1.5 w-full py-1.5 px-2.5 rounded-lg bg-[#22D3EE]/10 hover:bg-[#22D3EE] text-[#22D3EE] hover:text-black border border-[#22D3EE]/30 text-xs font-mono font-medium transition-all group shadow-sm"
+              className="inline-flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-lg bg-[#22D3EE]/10 hover:bg-[#22D3EE] text-[#22D3EE] hover:text-black border border-[#22D3EE]/30 text-xs font-mono font-medium transition-all group shadow-sm"
             >
               <span>Create Roadmap</span>
-              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
         </aside>
@@ -732,24 +736,24 @@ export const ProblemsView: React.FC = () => {
             </p>
           </div>
 
-          {/* Compact Search & Filter Toolbar (Pinned, Non-scrolling) */}
-          <div className="shrink-0 p-2.5 sm:p-3 rounded-xl border border-[#1C2230] bg-[#0B0F19] space-y-2 shadow-md">
+          {/* Unified Search & Filter Toolbar */}
+          <div className="shrink-0 p-3 rounded-xl border border-[#1C2230] bg-[#0B0F19] space-y-2.5 shadow-md">
             {/* Search Input Row */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="w-3.5 h-3.5 text-[#717B8D] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Search by title, topic, or ID (e.g. CKR-000001)..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-[#111521] border border-[#1C2230] focus:border-[#22D3EE]/50 focus:ring-1 focus:ring-[#22D3EE]/30 rounded-lg pl-8 pr-8 py-1.5 text-xs text-[#F3F4F6] placeholder-[#717B8D] transition-all font-sans outline-none"
+                  className="w-full bg-[#111521] border border-[#1C2230] focus:border-[#22D3EE]/50 focus:ring-1 focus:ring-[#22D3EE]/30 rounded-lg pl-8 pr-8 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 transition-all font-sans outline-none"
                 />
                 {search && (
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#717B8D] hover:text-white rounded transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white rounded transition-colors"
                     title="Clear search"
                   >
                     <X className="w-3 h-3" />
@@ -761,16 +765,16 @@ export const ProblemsView: React.FC = () => {
                 type="button"
                 onClick={() => refetch()}
                 title="Refresh problem catalog"
-                className="p-2 rounded-lg bg-[#111521] hover:bg-white/[0.08] border border-[#1C2230] text-[#94A3B8] hover:text-white transition-all shrink-0"
+                className="p-2 rounded-lg bg-[#111521] hover:bg-white/[0.08] border border-[#1C2230] text-zinc-400 hover:text-white transition-all shrink-0"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#22D3EE]' : ''}`} />
               </button>
             </div>
 
-            {/* Segmented Controls & Dropdowns */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+            {/* Segmented Controls & Dropdowns (Clean Two-Zone Grouping) */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-[#1C2230]/40">
               {/* Left: Quick Pill Filters */}
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 {/* Difficulty Segmented Filter */}
                 <div className="inline-flex items-center p-0.5 rounded-lg bg-[#111521] border border-[#1C2230]">
                   {(['all', 'easy', 'medium', 'hard'] as const).map((diff) => {
@@ -780,7 +784,7 @@ export const ProblemsView: React.FC = () => {
                         key={diff}
                         type="button"
                         onClick={() => setSelectedDifficulty(diff)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-medium transition-all capitalize ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-medium transition-all capitalize ${
                           isActive
                             ? diff === 'easy'
                               ? 'bg-[#00B8A3]/20 text-[#00B8A3] border border-[#00B8A3]/40 shadow-sm'
@@ -789,7 +793,7 @@ export const ProblemsView: React.FC = () => {
                               : diff === 'hard'
                               ? 'bg-[#FB4765]/20 text-[#FB4765] border border-[#FB4765]/40 shadow-sm'
                               : 'bg-[#22D3EE]/20 text-[#22D3EE] border border-[#22D3EE]/40 shadow-sm'
-                            : 'text-[#94A3B8] hover:text-white'
+                            : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
                         }`}
                       >
                         {diff === 'easy' && <span className="w-1.5 h-1.5 rounded-full bg-[#00B8A3]" />}
@@ -810,14 +814,14 @@ export const ProblemsView: React.FC = () => {
                         key={st}
                         type="button"
                         onClick={() => setSelectedStatus(st)}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-medium transition-all capitalize ${
+                        className={`px-2.5 py-1 rounded-md text-xs font-mono font-medium transition-all capitalize ${
                           isActive
                             ? st === 'solved'
                               ? 'bg-[#00B8A3]/20 text-[#00B8A3] border border-[#00B8A3]/40 shadow-sm'
                               : st === 'attempted'
                               ? 'bg-[#FFC01E]/20 text-[#FFC01E] border border-[#FFC01E]/40 shadow-sm'
                               : 'bg-[#22D3EE]/20 text-[#22D3EE] border border-[#22D3EE]/40 shadow-sm'
-                            : 'text-[#94A3B8] hover:text-white'
+                            : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
                         }`}
                       >
                         {st === 'all' ? 'All' : st}
@@ -830,24 +834,25 @@ export const ProblemsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setRevisionOnly(!revisionOnly)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium border transition-all ${
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-medium border transition-all ${
                     revisionOnly
                       ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                      : 'bg-[#111521] text-[#94A3B8] border-[#1C2230] hover:text-white'
+                      : 'bg-[#111521] text-zinc-400 border-[#1C2230] hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
-                  <Star className={`w-3 h-3 ${revisionOnly ? 'fill-amber-400 text-amber-400' : 'text-[#717B8D]'}`} />
+                  <Star className={`w-3.5 h-3.5 ${revisionOnly ? 'fill-amber-400 text-amber-400' : 'text-zinc-500'}`} />
                   <span>Revision ({user ? revisionCount : '—'})</span>
                 </button>
               </div>
 
               {/* Right: Topic, Domain, Scope Dropdowns */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <div className="relative min-w-[120px]">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative min-w-[125px]">
                   <select
                     value={selectedTag}
                     onChange={(e) => setSelectedTag(e.target.value)}
-                    className="w-full bg-[#111521] border border-[#1C2230] text-[11px] font-mono text-[#94A3B8] rounded-lg px-2.5 py-1.5 appearance-none focus:outline-none focus:border-[#22D3EE]/40 transition-colors pr-7 cursor-pointer"
+                    aria-label="Filter by topic"
+                    className="w-full bg-[#111521] border border-[#1C2230] text-xs font-mono text-zinc-300 rounded-lg px-2.5 py-1.5 appearance-none focus:outline-none focus:border-[#22D3EE]/40 transition-colors pr-7 cursor-pointer"
                   >
                     <option value="all">All Topics</option>
                     {availableTags.map((t) => (
@@ -856,14 +861,21 @@ export const ProblemsView: React.FC = () => {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="w-3 h-3 text-[#717B8D] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDown className="w-3 h-3 text-zinc-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
 
-                <div className="relative min-w-[110px]">
+                <div className="relative min-w-[115px]">
                   <select
                     value={selectedDomain}
-                    onChange={(e) => setSelectedDomain(e.target.value)}
-                    className="w-full bg-[#111521] border border-[#1C2230] text-[11px] font-mono text-[#94A3B8] rounded-lg px-2.5 py-1.5 appearance-none focus:outline-none focus:border-[#22D3EE]/40 transition-colors pr-7 cursor-pointer"
+                    onChange={(e) => {
+                      const dom = e.target.value;
+                      setSelectedDomain(dom);
+                      if (dom === 'all') setSelectedCategory('all');
+                      else if (dom.toLowerCase() === 'dsa') setSelectedCategory('dsa');
+                      else if (dom.toLowerCase() === 'database') setSelectedCategory('database');
+                    }}
+                    aria-label="Filter by domain"
+                    className="w-full bg-[#111521] border border-[#1C2230] text-xs font-mono text-zinc-300 rounded-lg px-2.5 py-1.5 appearance-none focus:outline-none focus:border-[#22D3EE]/40 transition-colors pr-7 cursor-pointer"
                   >
                     <option value="all">All Domains</option>
                     {availableDomains.map((dom) => (
@@ -872,20 +884,21 @@ export const ProblemsView: React.FC = () => {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="w-3 h-3 text-[#717B8D] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDown className="w-3 h-3 text-zinc-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
 
-                <div className="relative min-w-[105px]">
+                <div className="relative min-w-[110px]">
                   <select
                     value={selectedWorkflow}
                     onChange={(e) => setSelectedWorkflow(e.target.value)}
-                    className="w-full bg-[#111521] border border-[#1C2230] text-[11px] font-mono text-[#94A3B8] rounded-lg px-2.5 py-1.5 appearance-none focus:outline-none focus:border-[#22D3EE]/40 transition-colors pr-7 cursor-pointer"
+                    aria-label="Filter by catalog scope"
+                    className="w-full bg-[#111521] border border-[#1C2230] text-xs font-mono text-zinc-300 rounded-lg px-2.5 py-1.5 appearance-none focus:outline-none focus:border-[#22D3EE]/40 transition-colors pr-7 cursor-pointer"
                   >
                     <option value="all">All Catalog</option>
                     <option value="published">Published</option>
                     <option value="draft">Drafts</option>
                   </select>
-                  <ChevronDown className="w-3 h-3 text-[#717B8D] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDown className="w-3 h-3 text-zinc-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -896,13 +909,13 @@ export const ProblemsView: React.FC = () => {
                 {activeChips.map((chip) => (
                   <span
                     key={chip.key}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#111521] border border-[#1C2230] text-[#F3F4F6] text-[10px] font-mono shadow-sm"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#111521] border border-[#1C2230] text-zinc-200 text-xs font-mono shadow-sm"
                   >
                     <span>{chip.label}</span>
                     <button
                       type="button"
                       onClick={chip.onRemove}
-                      className="text-[#717B8D] hover:text-[#22D3EE] transition-colors ml-0.5"
+                      className="text-zinc-500 hover:text-[#22D3EE] transition-colors ml-0.5"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -913,14 +926,14 @@ export const ProblemsView: React.FC = () => {
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="text-[#22D3EE] hover:text-cyan-300 hover:underline text-[10px] font-mono ml-1"
+                    className="text-[#22D3EE] hover:text-cyan-300 hover:underline text-xs font-mono ml-1"
                   >
                     Clear all
                   </button>
                 )}
               </div>
 
-              <div className="text-[#94A3B8] text-[10px]">
+              <div className="text-zinc-400 text-xs">
                 Showing{' '}
                 <strong className="text-white">
                   {filteredProblems.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
@@ -942,20 +955,20 @@ export const ProblemsView: React.FC = () => {
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               <table className="w-full table-fixed text-left border-collapse text-xs font-mono">
-                <thead className="sticky top-0 z-20 bg-[#111521] border-b border-[#1C2230] text-[#717B8D] select-none text-[10px] uppercase tracking-wider font-semibold">
-                  <tr className="h-9">
+                <thead className="sticky top-0 z-20 bg-[#111521] border-b border-[#1C2230] text-zinc-400 select-none text-[10px] uppercase tracking-wider font-semibold">
+                  <tr className="h-10">
                     {/* Row Index # */}
-                    <th className="py-2 px-1 w-9 text-center text-[#717B8D] shrink-0">
+                    <th className="py-2.5 px-1 w-10 text-center text-zinc-500 shrink-0">
                       #
                     </th>
 
                     {/* Status Column */}
-                    <th className="py-2 px-1 w-12 text-center shrink-0 uppercase tracking-wider font-semibold">
-                      Status
+                    <th className="py-2.5 px-1 w-14 text-center shrink-0 uppercase tracking-wider font-semibold">
+                      <div className="flex items-center justify-center">Status</div>
                     </th>
 
                     {/* Canonical ID Column */}
-                    <th className="py-2 px-2 w-20 shrink-0">
+                    <th className="py-2.5 px-2 w-24 shrink-0">
                       <button
                         type="button"
                         onClick={() => {
@@ -968,12 +981,12 @@ export const ProblemsView: React.FC = () => {
                         className="flex items-center gap-1 hover:text-white uppercase tracking-wider font-semibold"
                       >
                         <span>ID</span>
-                        <ArrowUpDown className={`w-3 h-3 ${sortField === 'id' ? 'text-[#22D3EE]' : 'text-[#717B8D]'}`} />
+                        <ArrowUpDown className={`w-3 h-3 ${sortField === 'id' ? 'text-[#22D3EE]' : 'text-zinc-500'}`} />
                       </button>
                     </th>
 
                     {/* Title Column (Auto-expanding, takes remaining width) */}
-                    <th className="py-2 px-3 w-auto min-w-0">
+                    <th className="py-2.5 px-3 w-auto min-w-0">
                       <button
                         type="button"
                         onClick={() => {
@@ -986,12 +999,12 @@ export const ProblemsView: React.FC = () => {
                         className="flex items-center gap-1 hover:text-white uppercase tracking-wider font-semibold"
                       >
                         <span>Title & Topic</span>
-                        <ArrowUpDown className={`w-3 h-3 ${sortField === 'title' ? 'text-[#22D3EE]' : 'text-[#717B8D]'}`} />
+                        <ArrowUpDown className={`w-3 h-3 ${sortField === 'title' ? 'text-[#22D3EE]' : 'text-zinc-500'}`} />
                       </button>
                     </th>
 
                     {/* Difficulty Column */}
-                    <th className="py-2 px-2 w-24 shrink-0">
+                    <th className="py-2.5 px-2 w-24 shrink-0">
                       <button
                         type="button"
                         onClick={() => {
@@ -1004,12 +1017,12 @@ export const ProblemsView: React.FC = () => {
                         className="flex items-center gap-1 hover:text-white uppercase tracking-wider font-semibold"
                       >
                         <span>Difficulty</span>
-                        <ArrowUpDown className={`w-3 h-3 ${sortField === 'difficulty' ? 'text-[#22D3EE]' : 'text-[#717B8D]'}`} />
+                        <ArrowUpDown className={`w-3 h-3 ${sortField === 'difficulty' ? 'text-[#22D3EE]' : 'text-zinc-500'}`} />
                       </button>
                     </th>
 
                     {/* Acceptance Column */}
-                    <th className="py-2 px-2 w-24 shrink-0 hidden sm:table-cell">
+                    <th className="py-2.5 px-2 w-24 shrink-0 hidden sm:table-cell">
                       <button
                         type="button"
                         onClick={() => {
@@ -1022,22 +1035,22 @@ export const ProblemsView: React.FC = () => {
                         className="flex items-center gap-1 hover:text-white uppercase tracking-wider font-semibold"
                       >
                         <span>Acceptance</span>
-                        <ArrowUpDown className={`w-3 h-3 ${sortField === 'acceptance' ? 'text-[#22D3EE]' : 'text-[#717B8D]'}`} />
+                        <ArrowUpDown className={`w-3 h-3 ${sortField === 'acceptance' ? 'text-[#22D3EE]' : 'text-zinc-500'}`} />
                       </button>
                     </th>
 
-                    {/* Tags Column */}
-                    <th className="py-2 px-2 w-28 xl:w-32 shrink-0 hidden md:table-cell uppercase tracking-wider font-semibold">
+                    {/* Tags Column - expanded width to prevent tag truncation */}
+                    <th className="py-2.5 px-3 w-48 xl:w-60 shrink-0 hidden md:table-cell uppercase tracking-wider font-semibold">
                       Tags
                     </th>
 
                     {/* Saved Star Column */}
-                    <th className="py-2 px-1 w-10 text-center shrink-0 uppercase tracking-wider font-semibold">
-                      Saved
+                    <th className="py-2.5 px-1 w-12 text-center shrink-0 uppercase tracking-wider font-semibold">
+                      <div className="flex items-center justify-center">Saved</div>
                     </th>
 
-                    {/* Action Column */}
-                    <th className="py-2 px-2 w-20 text-right pr-2 shrink-0 uppercase tracking-wider font-semibold">
+                    {/* Action Column - expanded with right padding */}
+                    <th className="py-2.5 px-3 w-24 text-right pr-4 shrink-0 uppercase tracking-wider font-semibold">
                       Action
                     </th>
                   </tr>
@@ -1047,16 +1060,16 @@ export const ProblemsView: React.FC = () => {
                   {loading && paginatedProblems.length === 0 ? (
                     // Skeleton loading rows
                     Array.from({ length: 8 }).map((_, idx) => (
-                      <tr key={idx} className="h-[52px] bg-[#0B0F19] animate-pulse">
-                        <td className="py-2 px-1 text-center"><div className="h-3 w-4 bg-white/[0.06] rounded mx-auto" /></td>
-                        <td className="py-2 px-1 text-center"><div className="h-3.5 w-3.5 bg-white/[0.06] rounded-full mx-auto" /></td>
-                        <td className="py-2 px-2"><div className="h-4 w-14 bg-white/[0.06] rounded" /></td>
-                        <td className="py-2 px-3 min-w-0 max-w-0 overflow-hidden"><div className="h-4 w-40 bg-white/[0.06] rounded" /></td>
-                        <td className="py-2 px-2"><div className="h-4 w-14 bg-white/[0.06] rounded-full" /></td>
-                        <td className="py-2 px-2 hidden sm:table-cell"><div className="h-4 w-14 bg-white/[0.06] rounded" /></td>
-                        <td className="py-2 px-2 hidden md:table-cell max-w-0 overflow-hidden"><div className="h-4 w-16 bg-white/[0.06] rounded" /></td>
-                        <td className="py-2 px-1 text-center"><div className="h-3.5 w-3.5 bg-white/[0.06] rounded mx-auto" /></td>
-                        <td className="py-2 px-2 text-right pr-2"><div className="h-5 w-12 bg-white/[0.06] rounded ml-auto" /></td>
+                      <tr key={idx} className="h-[56px] bg-[#0B0F19] animate-pulse">
+                        <td className="py-3 px-1 text-center"><div className="h-3 w-4 bg-white/[0.06] rounded mx-auto" /></td>
+                        <td className="py-3 px-1 text-center"><div className="h-3.5 w-3.5 bg-white/[0.06] rounded-full mx-auto" /></td>
+                        <td className="py-3 px-2"><div className="h-4 w-14 bg-white/[0.06] rounded" /></td>
+                        <td className="py-3 px-3 min-w-0 max-w-0 overflow-hidden"><div className="h-4 w-40 bg-white/[0.06] rounded" /></td>
+                        <td className="py-3 px-2"><div className="h-4 w-14 bg-white/[0.06] rounded-full" /></td>
+                        <td className="py-3 px-2 hidden sm:table-cell"><div className="h-4 w-14 bg-white/[0.06] rounded" /></td>
+                        <td className="py-3 px-3 hidden md:table-cell max-w-0 overflow-hidden"><div className="h-4 w-16 bg-white/[0.06] rounded" /></td>
+                        <td className="py-3 px-1 text-center"><div className="h-3.5 w-3.5 bg-white/[0.06] rounded mx-auto" /></td>
+                        <td className="py-3 px-3 text-right pr-4"><div className="h-5 w-12 bg-white/[0.06] rounded ml-auto" /></td>
                       </tr>
                     ))
                   ) : paginatedProblems.length > 0 ? (
@@ -1087,56 +1100,58 @@ export const ProblemsView: React.FC = () => {
                       return (
                         <tr
                           key={prob.id}
-                          className="hover:bg-[#111521]/70 bg-[#0B0F19] transition-colors group h-[52px]"
+                          className="hover:bg-[#111521]/70 bg-[#0B0F19] transition-colors group min-h-[56px]"
                         >
                           {/* Row Index # */}
-                          <td className="py-2 px-1 text-center text-[#717B8D] font-mono text-[11px] tabular-nums select-none">
+                          <td className="py-3 px-1 text-center text-zinc-500 font-mono text-xs tabular-nums select-none align-middle">
                             {rowNumber}
                           </td>
 
                           {/* Authoritative Status Indicator */}
-                          <td className="py-2 px-1 text-center">
-                            {status === 'solved' && (
-                              <span
-                                role="status"
-                                aria-label="Solved"
-                                title="Solved — Verified Accepted Submission"
-                                className="inline-flex items-center justify-center p-0.5 rounded-full bg-[#00B8A3]/10 text-[#00B8A3]"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                              </span>
-                            )}
-                            {status === 'attempted' && (
-                              <span
-                                role="status"
-                                aria-label="Attempted"
-                                title="Attempted — Code submitted without Accepted verdict"
-                                className="inline-flex items-center justify-center p-0.5 rounded-full bg-[#FFC01E]/10 text-[#FFC01E]"
-                              >
-                                <span className="w-2 h-2 rounded-full bg-[#FFC01E] ring-2 ring-[#FFC01E]/20" aria-hidden="true" />
-                              </span>
-                            )}
-                            {status === 'todo' && (
-                              <span
-                                role="status"
-                                aria-label="Unattempted"
-                                title="Todo — No qualifying submission recorded"
-                                className="text-[#717B8D] text-xs font-mono select-none"
-                              >
-                                —
-                              </span>
-                            )}
+                          <td className="py-3 px-1 text-center align-middle">
+                            <div className="flex items-center justify-center">
+                              {status === 'solved' && (
+                                <span
+                                  role="status"
+                                  aria-label="Solved"
+                                  title="Solved — Verified Accepted Submission"
+                                  className="inline-flex items-center justify-center p-0.5 rounded-full bg-[#00B8A3]/10 text-[#00B8A3]"
+                                >
+                                  <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                                </span>
+                              )}
+                              {status === 'attempted' && (
+                                <span
+                                  role="status"
+                                  aria-label="Attempted"
+                                  title="Attempted — Code submitted without Accepted verdict"
+                                  className="inline-flex items-center justify-center p-0.5 rounded-full bg-[#FFC01E]/10 text-[#FFC01E]"
+                                >
+                                  <span className="w-2.5 h-2.5 rounded-full bg-[#FFC01E] ring-2 ring-[#FFC01E]/20" aria-hidden="true" />
+                                </span>
+                              )}
+                              {status === 'todo' && (
+                                <span
+                                  role="status"
+                                  aria-label="Unattempted"
+                                  title="Todo — No qualifying submission recorded"
+                                  className="text-zinc-500 text-xs font-mono select-none"
+                                >
+                                  —
+                                </span>
+                              )}
+                            </div>
                           </td>
 
                           {/* Canonical ID */}
-                          <td className="py-2 px-2 text-[#717B8D] font-mono text-[10px] whitespace-nowrap">
-                            <span className="bg-[#111521] text-[#94A3B8] px-1.5 py-0.5 rounded border border-[#1C2230] text-[10px] tracking-tight">
+                          <td className="py-3 px-2 text-zinc-400 font-mono text-xs whitespace-nowrap align-middle">
+                            <span className="bg-[#111521] text-zinc-300 px-2 py-0.5 rounded border border-[#1C2230] text-xs tracking-tight">
                               {displayId}
                             </span>
                           </td>
 
                           {/* Title & Topic - Single-line with accessible tooltip */}
-                          <td className="py-2 px-3 min-w-0 max-w-0 overflow-hidden">
+                          <td className="py-3 px-3 min-w-0 max-w-0 overflow-hidden align-middle">
                             <div className="flex items-center gap-1.5 min-w-0">
                               <Link
                                 to={problemTargetUrl}
@@ -1148,14 +1163,14 @@ export const ProblemsView: React.FC = () => {
 
                               {/* Specialized Domain Pill */}
                               {prob.domain && prob.domain !== 'DSA' && (
-                                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-purple-950/60 text-purple-300 border border-purple-800/40 shrink-0 select-none">
+                                <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-purple-950/60 text-purple-300 border border-purple-800/40 shrink-0 select-none">
                                   {prob.domain}
                                 </span>
                               )}
 
                               {/* Draft Badge */}
                               {isDraft && (
-                                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-amber-950/60 text-amber-400 border border-amber-800/40 shrink-0 select-none">
+                                <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-amber-950/60 text-amber-400 border border-amber-800/40 shrink-0 select-none">
                                   Draft
                                 </span>
                               )}
@@ -1164,7 +1179,7 @@ export const ProblemsView: React.FC = () => {
                               <Link
                                 to={problemTargetUrl}
                                 title="Open problem workspace"
-                                className="opacity-0 group-hover:opacity-100 text-[#717B8D] hover:text-[#22D3EE] transition-opacity ml-0.5 shrink-0"
+                                className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-[#22D3EE] transition-opacity ml-0.5 shrink-0"
                               >
                                 <BookOpen className="w-3.5 h-3.5" />
                               </Link>
@@ -1172,37 +1187,37 @@ export const ProblemsView: React.FC = () => {
                           </td>
 
                           {/* Difficulty Badge */}
-                          <td className="py-2 px-2">
-                            <DifficultyBadge difficulty={prob.difficulty} className="text-[11px] px-2 py-0.2" />
+                          <td className="py-3 px-2 align-middle">
+                            <DifficultyBadge difficulty={prob.difficulty} className="text-xs px-2 py-0.5" />
                           </td>
 
                           {/* Acceptance Rate Progress Bar */}
-                          <td className="py-2 px-2 hidden sm:table-cell">
+                          <td className="py-3 px-2 hidden sm:table-cell align-middle">
                             {prob.acceptance_rate != null && prob.acceptance_rate > 0 ? (
                               <div className="flex items-center gap-1.5">
-                                <div className="w-8 bg-[#1C2230] h-1.5 rounded-full overflow-hidden shrink-0">
+                                <div className="w-10 bg-[#1C2230] h-2 rounded-full overflow-hidden shrink-0">
                                   <div
                                     className="bg-[#22D3EE] h-full rounded-full"
                                     style={{ width: `${Math.min(100, Math.max(0, prob.acceptance_rate))}%` }}
                                   />
                                 </div>
-                                <span className="font-mono tabular-nums text-[#94A3B8] text-[10px]">
+                                <span className="font-mono tabular-nums text-zinc-300 text-xs">
                                   {prob.acceptance_rate}%
                                 </span>
                               </div>
                             ) : (
-                              <span className="text-[#717B8D] font-mono text-[10px]">—</span>
+                              <span className="text-zinc-500 font-mono text-xs">—</span>
                             )}
                           </td>
 
-                          {/* Topic Tags - Compact chips with max-w and truncation */}
-                          <td className="py-2 px-2 hidden md:table-cell max-w-0 overflow-hidden">
-                            <div className="flex items-center gap-1 overflow-hidden whitespace-nowrap">
+                          {/* Topic Tags - Legible chips without truncation */}
+                          <td className="py-3 px-3 hidden md:table-cell max-w-0 overflow-hidden align-middle">
+                            <div className="flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
                               {(prob.tags || []).slice(0, 2).map((tag) => (
                                 <span
                                   key={tag}
                                   title={tag}
-                                  className="bg-[#111521] text-[#94A3B8] text-[9px] px-1.5 py-0.2 rounded font-mono border border-[#1C2230] truncate max-w-[44px] shrink-0"
+                                  className="bg-[#111521] text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono border border-[#1C2230] truncate max-w-[130px] shrink-0"
                                 >
                                   {tag}
                                 </span>
@@ -1210,7 +1225,7 @@ export const ProblemsView: React.FC = () => {
                               {(prob.tags || []).length > 2 && (
                                 <span
                                   title={(prob.tags || []).slice(2).join(', ')}
-                                  className="text-[9px] text-[#717B8D] font-mono bg-[#111521] px-1 py-0.2 rounded border border-[#1C2230] shrink-0"
+                                  className="text-xs text-zinc-400 font-mono bg-[#111521] px-1.5 py-0.5 rounded-md border border-[#1C2230] shrink-0"
                                 >
                                   +{(prob.tags || []).length - 2}
                                 </span>
@@ -1219,36 +1234,38 @@ export const ProblemsView: React.FC = () => {
                           </td>
 
                           {/* Saved Revision Star */}
-                          <td className="py-2 px-1 text-center">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                toggleRevision(prob.id);
-                              }}
-                              className="p-1 rounded-md hover:bg-white/[0.08] transition-colors"
-                              title={
-                                isMarked
-                                  ? 'In Revision Queue (Click to remove)'
-                                  : 'Bookmark for Spaced Repetition Revision'
-                              }
-                            >
-                              <Star
-                                className={`w-3.5 h-3.5 transition-colors ${
+                          <td className="py-3 px-1 text-center align-middle">
+                            <div className="flex items-center justify-center">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleRevision(prob.id);
+                                }}
+                                className="p-1 rounded-md hover:bg-white/[0.08] transition-colors"
+                                title={
                                   isMarked
-                                    ? 'fill-[#FFC01E] text-[#FFC01E]'
-                                    : 'text-[#717B8D] hover:text-[#FFC01E]'
-                                }`}
-                              />
-                            </button>
+                                    ? 'In Revision Queue (Click to remove)'
+                                    : 'Bookmark for Spaced Repetition Revision'
+                                }
+                              >
+                                <Star
+                                  className={`w-4 h-4 transition-colors ${
+                                    isMarked
+                                      ? 'fill-[#FFC01E] text-[#FFC01E]'
+                                      : 'text-zinc-500 hover:text-[#FFC01E]'
+                                  }`}
+                                />
+                              </button>
+                            </div>
                           </td>
 
                           {/* Action Solve Link */}
-                          <td className="py-2 px-2 text-right pr-2">
+                          <td className="py-3 px-3 text-right pr-4 align-middle">
                             <Link
                               to={problemTargetUrl}
-                              className="inline-flex items-center justify-center gap-0.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-[#22D3EE]/10 hover:bg-[#22D3EE] text-[#22D3EE] hover:text-black border border-[#22D3EE]/30 transition-all shadow-sm"
+                              className="inline-flex items-center justify-center gap-1 px-3 py-1 rounded text-xs font-mono font-medium bg-[#22D3EE]/10 hover:bg-[#22D3EE] text-[#22D3EE] hover:text-black border border-[#22D3EE]/30 transition-all shadow-sm"
                             >
                               <span>{isDraft ? 'Review' : 'Solve'}</span>
                               <ChevronRight className="w-3 h-3" />
@@ -1391,12 +1408,12 @@ export const ProblemsView: React.FC = () => {
           {/* Card 1: Your Progress */}
           <div className="bg-[#0B0F19] border border-[#1C2230] rounded-xl p-3.5 sm:p-4 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-white uppercase tracking-wider">
+              <h2 className="text-xs font-semibold text-white uppercase tracking-wider">
                 Your Progress
-              </h4>
+              </h2>
               <Link
                 to="/app/progress"
-                className="text-[11px] font-mono text-[#22D3EE] hover:text-cyan-300 inline-flex items-center gap-0.5"
+                className="text-xs font-mono text-[#22D3EE] hover:text-cyan-300 inline-flex items-center gap-0.5"
               >
                 <span>View all</span>
                 <ChevronRight className="w-3 h-3" />
@@ -1431,75 +1448,78 @@ export const ProblemsView: React.FC = () => {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className="text-lg font-bold font-mono text-white leading-none">
+                    <span className="text-xl font-bold font-mono text-white leading-none">
                       {solvedCount}
                     </span>
-                    <span className="text-[10px] font-mono text-[#717B8D] mt-1">
+                    <span className="text-xs font-mono font-medium text-zinc-400 mt-1">
                       / {problems.length}
                     </span>
                   </div>
                 </div>
 
                 {/* Difficulty Breakdown Bars */}
-                <div className="space-y-2 pt-1 border-t border-[#1C2230]/60 text-xs font-mono">
+                <div className="space-y-2.5 pt-2 border-t border-[#1C2230]/60 text-xs font-mono">
                   {/* Easy */}
-                  <div className="space-y-0.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="inline-flex items-center gap-1 text-[#00B8A3]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#00B8A3]" />
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="inline-flex items-center gap-1.5 text-[#00B8A3] font-medium">
+                        <span className="w-2 h-2 rounded-full bg-[#00B8A3]" />
                         Easy
                       </span>
-                      <span className="text-[#94A3B8] tabular-nums text-[10px]">
+                      <span className="text-zinc-400 tabular-nums text-xs">
                         {easyStats.solved} / {easyStats.total}
                       </span>
                     </div>
-                    <div className="w-full bg-[#1C2230] h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-[#1C2230] h-2.5 rounded-full overflow-hidden p-0.5 border border-white/[0.04]">
                       <div
                         className="bg-[#00B8A3] h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${easyStats.total > 0 ? (easyStats.solved / easyStats.total) * 100 : 0}%`,
+                          minWidth: easyStats.solved > 0 ? '6px' : '0',
                         }}
                       />
                     </div>
                   </div>
 
                   {/* Medium */}
-                  <div className="space-y-0.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="inline-flex items-center gap-1 text-[#FFC01E]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFC01E]" />
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="inline-flex items-center gap-1.5 text-[#FFC01E] font-medium">
+                        <span className="w-2 h-2 rounded-full bg-[#FFC01E]" />
                         Medium
                       </span>
-                      <span className="text-[#94A3B8] tabular-nums text-[10px]">
+                      <span className="text-zinc-400 tabular-nums text-xs">
                         {mediumStats.solved} / {mediumStats.total}
                       </span>
                     </div>
-                    <div className="w-full bg-[#1C2230] h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-[#1C2230] h-2.5 rounded-full overflow-hidden p-0.5 border border-white/[0.04]">
                       <div
                         className="bg-[#FFC01E] h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${mediumStats.total > 0 ? (mediumStats.solved / mediumStats.total) * 100 : 0}%`,
+                          minWidth: mediumStats.solved > 0 ? '6px' : '0',
                         }}
                       />
                     </div>
                   </div>
 
                   {/* Hard */}
-                  <div className="space-y-0.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="inline-flex items-center gap-1 text-[#FB4765]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#FB4765]" />
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="inline-flex items-center gap-1.5 text-[#FB4765] font-medium">
+                        <span className="w-2 h-2 rounded-full bg-[#FB4765]" />
                         Hard
                       </span>
-                      <span className="text-[#94A3B8] tabular-nums text-[10px]">
+                      <span className="text-zinc-400 tabular-nums text-xs">
                         {hardStats.solved} / {hardStats.total}
                       </span>
                     </div>
-                    <div className="w-full bg-[#1C2230] h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-[#1C2230] h-2.5 rounded-full overflow-hidden p-0.5 border border-white/[0.04]">
                       <div
                         className="bg-[#FB4765] h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${hardStats.total > 0 ? (hardStats.solved / hardStats.total) * 100 : 0}%`,
+                          minWidth: hardStats.solved > 0 ? '6px' : '0',
                         }}
                       />
                     </div>
@@ -1508,7 +1528,7 @@ export const ProblemsView: React.FC = () => {
               </>
             ) : (
               <div className="py-4 text-center space-y-2.5">
-                <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+                <p className="text-xs text-zinc-400 leading-relaxed">
                   Sign in to track your personal solved problems, submission history, and spaced repetition queue.
                 </p>
                 <Link
@@ -1525,13 +1545,13 @@ export const ProblemsView: React.FC = () => {
           {/* Card 2: Trending Topics */}
           <div className="bg-[#0B0F19] border border-[#1C2230] rounded-xl p-3.5 sm:p-4 space-y-2.5 shadow-sm">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-white uppercase tracking-wider">
+              <h2 className="text-xs font-semibold text-white uppercase tracking-wider">
                 Trending Topics
-              </h4>
+              </h2>
               <button
                 type="button"
                 onClick={() => setSelectedTag('all')}
-                className="text-[11px] font-mono text-[#22D3EE] hover:text-cyan-300 inline-flex items-center gap-0.5"
+                className="text-xs font-mono text-[#22D3EE] hover:text-cyan-300 inline-flex items-center gap-0.5"
               >
                 <span>View all</span>
                 <ChevronRight className="w-3 h-3" />
@@ -1552,17 +1572,17 @@ export const ProblemsView: React.FC = () => {
                     className={`w-full flex items-center justify-between p-1.5 rounded-lg text-xs font-medium transition-all group ${
                       isSelected
                         ? 'bg-[#22D3EE]/15 text-[#22D3EE] border border-[#22D3EE]/30'
-                        : 'text-[#94A3B8] hover:text-[#F3F4F6] hover:bg-white/[0.04]'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
-                      <span className="w-4 h-4 rounded bg-[#111521] border border-[#1C2230] flex items-center justify-center font-mono text-[9px] text-[#717B8D] shrink-0">
+                      <span className="w-5 h-5 rounded bg-[#111521] border border-[#1C2230] flex items-center justify-center font-mono text-[10px] text-zinc-400 shrink-0">
                         {idx + 1}
                       </span>
                       <span className="truncate">{topic.name}</span>
                     </div>
 
-                    <span className="text-[10px] font-mono text-[#717B8D] group-hover:text-zinc-300 tabular-nums shrink-0">
+                    <span className="text-xs font-mono text-zinc-500 group-hover:text-zinc-300 tabular-nums shrink-0">
                       {topic.count}
                     </span>
                   </button>
@@ -1574,12 +1594,12 @@ export const ProblemsView: React.FC = () => {
           {/* Card 3: Top Companies */}
           <div className="bg-[#0B0F19] border border-[#1C2230] rounded-xl p-3.5 sm:p-4 space-y-2.5 shadow-sm">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-white uppercase tracking-wider">
+              <h2 className="text-xs font-semibold text-white uppercase tracking-wider">
                 Top Companies
-              </h4>
+              </h2>
               <Link
                 to="/app/sheets?category=company"
-                className="text-[11px] font-mono text-[#22D3EE] hover:text-cyan-300 inline-flex items-center gap-0.5"
+                className="text-xs font-mono text-[#22D3EE] hover:text-cyan-300 inline-flex items-center gap-0.5"
               >
                 <span>View all</span>
                 <ChevronRight className="w-3 h-3" />
@@ -1591,16 +1611,16 @@ export const ProblemsView: React.FC = () => {
                 <Link
                   key={comp.name}
                   to="/app/sheets?category=company"
-                  className="w-full flex items-center justify-between p-1.5 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-[#F3F4F6] hover:bg-white/[0.04] transition-all group"
+                  className="w-full flex items-center justify-between p-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all group"
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <span className="w-4 h-4 rounded bg-[#111521] border border-[#1C2230] flex items-center justify-center font-mono text-[9px] text-[#717B8D] shrink-0">
+                    <span className="w-5 h-5 rounded bg-[#111521] border border-[#1C2230] flex items-center justify-center font-mono text-[10px] text-zinc-400 shrink-0">
                       {idx + 1}
                     </span>
                     <span className="truncate">{comp.name}</span>
                   </div>
 
-                  <span className="text-[10px] font-mono text-[#717B8D] group-hover:text-zinc-300 tabular-nums shrink-0">
+                  <span className="text-xs font-mono text-zinc-500 group-hover:text-zinc-300 tabular-nums shrink-0">
                     {comp.count}
                   </span>
                 </Link>
