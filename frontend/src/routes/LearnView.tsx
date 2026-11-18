@@ -169,15 +169,10 @@ export const LearnView: React.FC = () => {
 
                   return (
                     <section key={group.label} className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-2.5">
+                      <div>
                         <h2 className="text-sm sm:text-base font-semibold text-white tracking-tight">
                           {group.label}
                         </h2>
-                        {group.badge && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-blue-950/60 text-blue-300 border border-blue-500/30">
-                            {group.badge}
-                          </span>
-                        )}
                       </div>
 
                       <div className={cn('grid gap-4', gridColsClass)}>
@@ -200,15 +195,10 @@ export const LearnView: React.FC = () => {
                               )}
                             >
                               <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0 space-y-1.5">
+                                <div className="min-w-0">
                                   <h3 className="text-sm sm:text-base font-semibold text-white group-hover:text-cyan-300 transition-colors leading-snug">
                                     {track.title}
                                   </h3>
-                                  {inActivePlan && (
-                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-950/60 text-cyan-300 border border-cyan-500/30">
-                                      Active Roadmap Subject
-                                    </span>
-                                  )}
                                 </div>
 
                                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-all shrink-0">
@@ -326,12 +316,6 @@ export const LearnView: React.FC = () => {
 
             {resumeLesson && (
               <div className="rounded-2xl border border-white/[0.08] bg-[#0A0E17] p-5 space-y-3.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" aria-hidden="true" />
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold">
-                    Resume Focus Mode
-                  </span>
-                </div>
                 <div>
                   <span className="text-xs text-zinc-400">{resumeLesson.track.shortTitle}</span>
                   <h3 className="text-base font-semibold text-white mt-0.5 line-clamp-2 tracking-tight">
